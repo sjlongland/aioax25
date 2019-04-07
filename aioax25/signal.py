@@ -4,8 +4,8 @@
 Convenience wrappers around `signalslot`
 """
 
-from signalslot import Signal as BaseSignal, BaseSlot
-from weakref import Ref
+from signalslot import Signal as BaseSignal, Slot as BaseSlot
+from weakref import ref
 import logging
 
 
@@ -16,7 +16,7 @@ class Slot(BaseSlot):
     slot function handles its own exceptions.
     """
     def __init__(self, slot_fn, *args, **kwargs):
-        self._slot_fn = slot_fn
+        super(Slot, self).__init__(slot_fn)
         self._slot_args = args
         self._slot_kwargs = kwargs
 
@@ -25,10 +25,10 @@ class Slot(BaseSlot):
             call_args = self._slot_args + args
             call_kwargs = self._slot_kwargs.copy()
             call_kwargs.update(kwargs)
-            self._slot_fn(*call_args, **call_kwargs)
+            super(Slot, self).__call__(*call_args, **call_kwargs)
         except:
             logging.getLogger(self.__class__.__module__).exception(
-                    'Exception in slot %s', self._slot_fn
+                    'Exception in slot %s', self.func
             )
 
 
@@ -37,7 +37,7 @@ class OneshotSlot(Slot):
     Helper class that calls a slot exactly once.
     """
     def __init__(self, signal, *args, **kwargs):
-        self._signal = Ref(signal)
+        self._signal = ref(signal)
         super(OneshotSlot, self).__init__(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
@@ -73,7 +73,7 @@ class Signal(BaseSignal):
         """
         for maybe_slot in super(Signal, self).slots:
             if isinstance(maybe_slot, Slot) and \
-                    (maybe_slot._slot_fn is slot):
+                    (maybe_slot.func is slot):
                 # Here it is
                 return maybe_slot
             elif maybe_slot is slot:
@@ -93,6 +93,6 @@ class Signal(BaseSignal):
         Check if a callback slot is connected to this signal.
         """
         if isinstance(slot, Slot):
-            return super(Signal, self).is_connected(slot._slot_fn)
+            return super(Signal, self).is_connected(slot.func)
         else:
             return super(Signal, self).is_connected(slot)

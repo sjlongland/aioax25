@@ -10,6 +10,7 @@ from asyncio import Protocol, get_event_loop
 from serial import Serial, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
 from weakref import WeakValueDictionary
 from .signal import Signal
+from binascii import b2a_hex
 import logging
 
 
@@ -106,7 +107,7 @@ class KISSCommand(object):
         """
         Decode a raw KISS frame.
         """
-        frame = cls._unstuff_bytes(frame)
+        frame = bytearray(cls._unstuff_bytes(frame))
         port = frame[0] >> 4
         cmd  = frame[0] & 0x0f
         subclass = cls._KNOWN_COMMANDS.get(cmd, cls)
@@ -125,7 +126,15 @@ class KISSCommand(object):
             out += self._payload
 
         # Encode the byte sequences
-        return bytearray(self._stuff_bytes(out))
+        return bytes(self._stuff_bytes(out))
+
+    def __str__(self):
+        return '%s{Port %d, Cmd 0x%02x, Payload %s}' % (
+                self.__class__.__name__,
+                self.port,
+                self.cmd,
+                b2a_hex(self.payload).decode()
+        )
 
     @property
     def port(self):
@@ -146,12 +155,15 @@ class KISSCmdReturn(KISSCommand):
     """
     def __init__(self):
         super(KISSCmdReturn, self).__init__(port=15, cmd=CMD_RETURN)
+KISSCommand._register(CMD_RETURN, KISSCmdReturn)
 
 
 class KISSCmdData(KISSCommand):
-    def __init__(self, port, payload):
+    def __init__(self, port, payload, cmd=CMD_DATA):
+        assert cmd == CMD_DATA
         super(KISSCmdData, self).__init__(port=port,
                 cmd=CMD_DATA, payload=payload)
+KISSCommand._register(CMD_DATA, KISSCmdData)
 
 
 # KISS device interface
@@ -162,14 +174,17 @@ class BaseKISSDevice(object):
     Base class for a KISS device.  This may have between 1 and 16 KISS
     ports hanging off it.
     """
-    def __init__(self, reset_on_close=True, loop=None):
+    def __init__(self, reset_on_close=True, log=None, loop=None):
+        if log is None:
+            log = logging.getLogger(self.__class__.__module__)
         if loop is None:
             loop = get_event_loop()
+        self._log = log
         self._protocol = None
         self._rx_buffer = bytearray()
         self._tx_buffer = bytearray()
         self._loop = loop
-        self._port = WeakValueDictionary()
+        self._port = {}
         self._state = KISSDeviceState.CLOSED
         self._reset_on_close = True
 
@@ -178,6 +193,8 @@ class BaseKISSDevice(object):
         Handle incoming data by appending to our receive buffer.  The
         data given may contain partial frames.
         """
+        if self._log.isEnabledFor(logging.DEBUG):
+            self._log.debug('RECV RAW %r', b2a_hex(data).decode())
         self._rx_buffer += data
         self._loop.call_soon(self._receive_frame)
 
@@ -185,10 +202,13 @@ class BaseKISSDevice(object):
         """
         Send a frame via the underlying transport.
         """
+        if self._log.isEnabledFor(logging.DEBUG):
+            self._log.debug('XMIT FRAME %r', b2a_hex(rawframe).decode())
+
         if not self._tx_buffer.endswith(bytearray([BYTE_FEND])):
             self._tx_buffer += bytearray([BYTE_FEND])
 
-        self._tx_buffer += bytes(rawframe)
+        self._tx_buffer += bytes(rawframe) \
                          + bytearray([BYTE_FEND])
         self._loop.call_soon(self._send_data)
 
@@ -203,7 +223,10 @@ class BaseKISSDevice(object):
             start = self._rx_buffer.index(BYTE_FEND)
         except ValueError:
             # No frames waiting
+            self._rx_buffer = bytearray()
             return
+
+        self._log.debug('RECV FRAME start at %d', start)
 
         # Discard the proceeding junk
         self._rx_buffer = self._rx_buffer[start:]
@@ -217,9 +240,14 @@ class BaseKISSDevice(object):
             # Uhh huh, so frame is incomplete.
             return
 
+        self._log.debug('RECV FRAME end at %d', end)
+
         # Everything between those points is our frame.
         frame = self._rx_buffer[1:end]
         self._rx_buffer = self._rx_buffer[end:]
+
+        if self._log.isEnabledFor(logging.DEBUG):
+            self._log.debug('RECEIVED FRAME %s', b2a_hex(frame).decode())
 
         # Two consecutive FEND bytes are valid, ignore these "empty" frames
         if len(frame) > 0:
@@ -236,15 +264,15 @@ class BaseKISSDevice(object):
         Pass a frame to the underlying interface.
         """
         try:
-            # First byte contains the port number and command.
-            # Port number is the high 4 bits.
-            port = self._port[frame[0] >> 4]
+            port = self._port[frame.port]
         except KeyError:
             # Port not defined.
+            self._log.debug('RECV FRAME dropped %s', frame)
             return
 
         # Dispatch this frame to the port.  Swallow exceptions so we
         # don't choke the IO loop.
+        self._log.debug('RECV FRAME dispatch %s', frame)
         try:
             port._receive_frame(frame)
         except:
@@ -259,6 +287,10 @@ class BaseKISSDevice(object):
         """
         data = self._tx_buffer
         self._tx_buffer = bytearray()
+
+        if self._log.isEnabledFor(logging.DEBUG):
+            self._log.debug('XMIT RAW %r', data)
+
         self._send_raw_data(data)
 
         # If we are closing, wait for this to be sent
@@ -269,7 +301,7 @@ class BaseKISSDevice(object):
         assert self.state == KISSDeviceState.OPENING, \
                 'Device is not opening'
         # For now, just blindly send a INT KISS command followed by a RESET.
-        self._send_raw_data('\rINT KISS\rRESET\r')
+        self._send_raw_data(b'\rKISS ON\rRESTART\r')
         self._state = KISSDeviceState.OPEN
 
     def __getitem__(self, port):
@@ -281,7 +313,8 @@ class BaseKISSDevice(object):
         except KeyError:
             pass
 
-        p = KISSPort(self, port)
+        self._log.debug('OPEN new port %d', port)
+        p = KISSPort(self, port, log=self._log.getChild('port%d' % port))
         self._port[port] = p
         return p
 
@@ -292,12 +325,14 @@ class BaseKISSDevice(object):
     def open(self):
         assert self.state == KISSDeviceState.CLOSED, \
                 'Device is not closed'
+        self._log.debug('Opening device')
         self._state = KISSDeviceState.OPENING
         self._open()
 
     def close(self):
         assert self.state == KISSDeviceState.OPEN, \
                 'Device is not open'
+        self._log.debug('Closing device')
         self._state = KISSDeviceState.CLOSING
         if self._reset_on_close:
             self._send(KISSCmdReturn())
@@ -317,15 +352,12 @@ class SerialKISSDevice(BaseKISSDevice):
                 bytesize=EIGHTBITS, parity=PARITY_NONE, stopbits=STOPBITS_ONE,
                 timeout=None, xonxoff=False, rtscts=False, write_timeout=None,
                 dsrdtr=False, inter_byte_timeout=None)
-        self._serial.open()
         self._loop.add_reader(self._serial.fileno(), self._on_recv_ready)
-        self._loop.add_writer(self._serial.fileno(), self._on_xmit_ready)
         self._loop.call_soon(self._init_kiss)
 
     def _close(self):
         # Remove handlers
         self._loop.remove_reader(self._serial.fileno())
-        self._loop.remove_writer(self._serial.fileno())
 
         # Wait for all data to be sent.
         self._serial.flush()
@@ -334,6 +366,12 @@ class SerialKISSDevice(BaseKISSDevice):
         self._serial.close()
         self._serial = None
         self._state = KISSDeviceState.CLOSED
+
+    def _on_recv_ready(self):
+        self._receive(self._serial.read(self._serial.in_waiting))
+
+    def _send_raw_data(self, data):
+        self._serial.write(data)
 
 
 # Port interface
@@ -344,28 +382,35 @@ class KISSPort(object):
     A KISS port represents a port interface on a KISS device.  There can be
     a maximum of 16 ports per device, identified by a 4-bit integer.
     """
-    def __init__(self, device, port):
+    def __init__(self, device, port, log):
         """
         Create a new port attached to the given device.
         """
         self._device = device
         self._port = port
+        self._log = log
 
         # Signal for receiving packets
         self.received = Signal()
+
+    @property
+    def port(self):
+        return self._port
 
     def send(self, frame):
         """
         Send a raw AX.25 frame to the TNC via this port.
         """
-        self._device._send(KISSCmdData(self._port, bytes(frame)))
+        self._device._send(KISSCmdData(self.port, bytes(frame)))
 
     def _receive_frame(self, frame):
         """
         Receive and emit an incoming frame from the port.
         """
+        self._log.debug('Received frame %s', frame)
+
         if not isinstance(frame, KISSCmdData):
             # TNC is not supposed to send this!
             return
 
-        self.received.emit(frame=frame)
+        self.received.emit(frame=frame.payload)
