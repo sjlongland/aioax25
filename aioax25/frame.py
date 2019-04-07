@@ -93,6 +93,9 @@ class AX25Frame(object):
         # Append
         return frame_data + fcs
 
+    def __str__(self):
+        return str(self._header)
+
     @property
     def header(self):
         return self._header
@@ -224,6 +227,12 @@ class AX25UnnumberedInformationFrame(AX25UnnumberedFrame):
     @property
     def payload(self):
         return self._payload
+
+    def __str__(self):
+        return '%s: PID=0x%02x Payload=%r' % (
+                self.header,
+                self.pid,
+                self.payload)
 
 
 class AX25FrameRejectFrame(AX25UnnumberedFrame):
@@ -363,7 +372,7 @@ class AX25FrameHeader(object):
         """
         # Decode the addresses
         addresses = []
-        while data and (not (addresses or addresses[-1].extension)):
+        while data and (not (addresses and addresses[-1].extension)):
             addresses.append(AX25Address.decode(data))
             data = data[7:]
 
@@ -415,11 +424,40 @@ class AX25FrameHeader(object):
                 for byte in rpt:
                     yield byte
 
+    def __str__(self):
+        """
+        Dump the frame header in human-readable form.
+        """
+        return '%s>%s%s' % (
+                self._source,
+                self._destination,
+                ' v %s' % ','.join([
+                    str(r)
+                    for r in (self._repeaters or [])
+                ])
+        )
+
     def __bytes__(self):
         """
         Encode the AX.25 frame header
         """
         return bytes(self._encode())
+
+    @property
+    def destination(self):
+        return self._destination
+
+    @property
+    def source(self):
+        return self._source
+
+    @property
+    def repeaters(self):
+        return self._repeaters
+
+    @property
+    def cr(self):
+        return self._cr
 
 
 class AX25Address(object):
@@ -434,7 +472,7 @@ class AX25Address(object):
         callsign = bytes([
             b >> 1
             for b in data[0:6]
-        ]).decode('US-ASCII')
+        ]).decode('US-ASCII').strip()
         ssid        = (data[7]          & 0b00011110) >> 1
         ch          = bool(data[7]      & 0b10000000)
         res1        = bool(data[7]      & 0b01000000)
@@ -480,7 +518,11 @@ class AX25Address(object):
         """
         Return the call-sign and SSID as a string.
         """
-        address = self.callsign
+        address = ''
+        if self.ch:
+            address += '*'
+
+        address += self.callsign
         if self.ssid > 0:
             address += '-%d' % self.ssid
         return address
