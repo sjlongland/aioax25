@@ -4,16 +4,6 @@
 AX.25 framing
 """
 
-from struct import Struct
-from crcmod.predefined import mkCrcFun
-
-# Frame-check sequence generation
-gen_fcs = mkCrcFun('x-25')
-
-# Frame-check sequence structure
-FCS_STRUCT = Struct('>H')
-
-
 # Frame type classes
 
 class AX25Frame(object):
@@ -74,7 +64,7 @@ class AX25Frame(object):
 
     def _encode(self):
         """
-        Generate the encoded AX.25 frame, minus the frame-check sequence.
+        Generate the encoded AX.25 frame.
         """
         # Send the addressing header
         for byte in self.header:
@@ -87,11 +77,7 @@ class AX25Frame(object):
         """
         Encode the AX.25 frame
         """
-        frame_data = bytes(self._encode())
-        # Compute FCS
-        fcs = FCS_STRUCT.pack(gen_fcs(frame_data))
-        # Append
-        return frame_data + fcs
+        return bytes(self._encode())
 
     def __str__(self):
         return str(self._header)
