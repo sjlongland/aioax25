@@ -198,10 +198,12 @@ class BaseKISSDevice(object):
         self._rx_buffer += data
         self._loop.call_soon(self._receive_frame)
 
-    def _send(self, rawframe):
+    def _send(self, frame):
         """
         Send a frame via the underlying transport.
         """
+        rawframe = bytes(frame)
+
         if self._log.isEnabledFor(logging.DEBUG):
             self._log.debug('XMIT FRAME %r', b2a_hex(rawframe).decode())
 
@@ -285,11 +287,11 @@ class BaseKISSDevice(object):
         """
         Send the next block of data waiting in the buffer.
         """
-        data = self._tx_buffer
-        self._tx_buffer = bytearray()
+        data = self._tx_buffer[:128]
+        self._tx_buffer = self._tx_buffer[128:]
 
         if self._log.isEnabledFor(logging.DEBUG):
-            self._log.debug('XMIT RAW %r', data)
+            self._log.debug('XMIT RAW %r', b2a_hex(data).decode())
 
         self._send_raw_data(data)
 
@@ -297,11 +299,14 @@ class BaseKISSDevice(object):
         if self._state == KISSDeviceState.CLOSING:
             self._close()
 
+        if self._tx_buffer:
+            self._loop.call_later(0.1, self._send_data)
+
     def _init_kiss(self):
         assert self.state == KISSDeviceState.OPENING, \
                 'Device is not opening'
         # For now, just blindly send a INT KISS command followed by a RESET.
-        self._send_raw_data(b'\rKISS ON\rRESTART\r')
+        self._send_raw_data(b'\rINT KISS\rRESET\r')
         self._state = KISSDeviceState.OPEN
 
     def __getitem__(self, port):
@@ -368,7 +373,10 @@ class SerialKISSDevice(BaseKISSDevice):
         self._state = KISSDeviceState.CLOSED
 
     def _on_recv_ready(self):
-        self._receive(self._serial.read(self._serial.in_waiting))
+        try:
+            self._receive(self._serial.read(self._serial.in_waiting))
+        except:
+            self._log.exception('Failed to read from serial device')
 
     def _send_raw_data(self, data):
         self._serial.write(data)
@@ -401,6 +409,7 @@ class KISSPort(object):
         """
         Send a raw AX.25 frame to the TNC via this port.
         """
+        self._log.debug('XMIT AX.25 %s', frame)
         self._device._send(KISSCmdData(self.port, bytes(frame)))
 
     def _receive_frame(self, frame):

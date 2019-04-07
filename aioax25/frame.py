@@ -67,7 +67,7 @@ class AX25Frame(object):
         Generate the encoded AX.25 frame.
         """
         # Send the addressing header
-        for byte in self.header:
+        for byte in bytes(self.header):
             yield byte
 
         # Send the control byte
@@ -388,14 +388,14 @@ class AX25FrameHeader(object):
         # CH bit should be 1 for command, 0 for response
         self._destination.extension = False
         self._destination.ch = self._cr
-        for byte in self._destination:
+        for byte in bytes(self._destination):
             yield byte
 
         # Extension bit should be 0 if digipeaters follow, 1 otherwise
         # CH bit should be 0 for command, 1 for response
-        self._source.extension = bool(self._repeaters)
+        self._source.extension = not bool(self._repeaters)
         self._source.ch = not self._cr
-        for byte in self._source:
+        for byte in bytes(self._source):
             yield byte
 
         # Digipeaters
@@ -407,7 +407,7 @@ class AX25FrameHeader(object):
             self._repeaters[-1].extension = True
 
             for rpt in self._repeaters:
-                for byte in rpt:
+                for byte in bytes(rpt):
                     yield byte
 
     def __str__(self):
@@ -459,15 +459,15 @@ class AX25Address(object):
             b >> 1
             for b in data[0:6]
         ]).decode('US-ASCII').strip()
-        ssid        = (data[7]          & 0b00011110) >> 1
-        ch          = bool(data[7]      & 0b10000000)
-        res1        = bool(data[7]      & 0b01000000)
-        res0        = bool(data[7]      & 0b00100000)
-        extension   = bool(data[7]      & 0b00000001)
+        ssid        = (data[6]          & 0b00011110) >> 1
+        ch          = bool(data[6]      & 0b10000000)
+        res1        = bool(data[6]      & 0b01000000)
+        res0        = bool(data[6]      & 0b00100000)
+        extension   = bool(data[6]      & 0b00000001)
         return cls(callsign, ssid, ch, res0, res1, extension)
 
     def __init__(self, callsign, ssid=0,
-            ch=False, res0=False, res1=False, extension=False):
+            ch=False, res0=True, res1=True, extension=False):
         self._callsign  = str(callsign).upper()
         self._ssid      = int(ssid) & 0b00001111
         self._ch        = bool(ch)
@@ -480,7 +480,7 @@ class AX25Address(object):
         Generate the encoded AX.25 address.
         """
         for byte in self._callsign[0:6].ljust(6).encode('US-ASCII'):
-            yield byte << 1
+            yield (byte << 1)
 
         # SSID byte
         ssid = self._ssid << 1
