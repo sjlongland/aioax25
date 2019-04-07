@@ -23,6 +23,12 @@ class AX25Frame(object):
 
     POLL_FINAL  = 0b00010000
 
+    CONTROL_I_MASK  = 0b00000001
+    CONTROL_I_VAL   = 0b00000000
+    CONTROL_US_MASK = 0b00000011
+    CONTROL_S_VAL   = 0b00000001
+    CONTROL_U_VAL   = 0b00000011
+
     @classmethod
     def decode(cls, data):
         """
@@ -36,13 +42,27 @@ class AX25Frame(object):
         control = data[0]
         data = data[1:]
 
-        if (control & 0b00000001) == 0b00000000:
-            # This is an I frame
-            return AX25InformationFrame.decode(header, control, data)
-        elif (control & 0b00000011) == 0b00000001:
-            # This is a S frame
-            return AX25SupervisoryFrame.decode(header, control, data)
-        elif (control & 0b00000011) == 0b00000011:
+        if (control & cls.CONTROL_I_MASK) == cls.CONTROL_I_VAL:
+            # This is an I frame - TODO
+            #return AX25InformationFrame.decode(header, control, data)
+            return AX25RawFrame(
+                    destination=header.destination,
+                    source=header.source,
+                    repeaters=header.repeaters,
+                    cr=header.cr,
+                    payload=data
+            )
+        elif (control & cls.CONTROL_US_MASK) == cls.CONTROL_S_VAL:
+            # This is a S frame - TODO
+            #return AX25SupervisoryFrame.decode(header, control, data)
+            return AX25RawFrame(
+                    destination=header.destination,
+                    source=header.source,
+                    repeaters=header.repeaters,
+                    cr=header.cr,
+                    payload=data
+            )
+        elif (control & cls.CONTROL_US_MASK) == cls.CONTROL_U_VAL:
             # This is a U frame
             return AX25UnnumberedFrame.decode(header, control, data)
         else:
@@ -209,6 +229,8 @@ class AX25UnnumberedInformationFrame(AX25UnnumberedFrame):
 class AX25FrameRejectFrame(AX25UnnumberedFrame):
     """
     A representation of a Frame Reject (FRMR) frame.
+
+    Not much effort has been made to decode the meaning of these bits.
     """
 
     MODIFIER = 0b00000011
