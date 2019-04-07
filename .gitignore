@@ -1,0 +1,8 @@
+.*.swp
+*.swp
+*~
+__pycache__
+.coverage
+coverage/
+testreports.xml
+dist/
