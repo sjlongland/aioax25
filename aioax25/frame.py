@@ -21,6 +21,21 @@ class AX25Frame(object):
     CONTROL_S_VAL   = 0b00000001
     CONTROL_U_VAL   = 0b00000011
 
+    # PID codes
+    PID_ISO8208_CCITT   = 0x01
+    PID_VJ_IP4_COMPRESS = 0x06
+    PID_VJ_IP4          = 0x07
+    PID_SEGMENTATION    = 0x08
+    PID_TEXNET          = 0xc3
+    PID_LINKQUALITY     = 0xc4
+    PID_APPLETALK       = 0xca
+    PID_APPLETALK_ARP   = 0xcb
+    PID_ARPA_IP4        = 0xcc
+    PID_APRA_ARP        = 0xcd
+    PID_FLEXNET         = 0xce
+    PID_NETROM          = 0xcf
+    PID_ESCAPE          = 0xff
+
     @classmethod
     def decode(cls, data):
         """
