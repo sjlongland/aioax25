@@ -34,6 +34,7 @@ class AX25Frame(object):
     PID_APRA_ARP        = 0xcd
     PID_FLEXNET         = 0xce
     PID_NETROM          = 0xcf
+    PID_NO_L3           = 0xf0
     PID_ESCAPE          = 0xff
 
     @classmethod
