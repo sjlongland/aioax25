@@ -598,3 +598,10 @@ class AX25Address(object):
         )
         mydata.update(overrides)
         return self.__class__(**mydata)
+
+    def normalise(self):
+        """
+        Return a normalised copy of this address.  (Set reserved bits to ones,
+        clear the CH bit and extension bit.)
+        """
+        return self.copy(res0=True, res1=True, ch=False, extension=False)
