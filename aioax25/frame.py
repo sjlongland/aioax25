@@ -4,6 +4,8 @@
 AX.25 framing
 """
 
+import re
+
 # Frame type classes
 
 class AX25Frame(object):
@@ -450,21 +452,41 @@ class AX25Address(object):
     """
     A representation of an AX.25 address (callsign + SSID)
     """
+
+    CALL_RE = re.compile(r'^([0-9A-Z]+)(?:-([0-9]{1,2}))?(\*?)$')
+
     @classmethod
     def decode(cls, data):
         """
         Decode an AX.25 address from a frame.
         """
-        callsign = bytes([
-            b >> 1
-            for b in data[0:6]
-        ]).decode('US-ASCII').strip()
-        ssid        = (data[6]          & 0b00011110) >> 1
-        ch          = bool(data[6]      & 0b10000000)
-        res1        = bool(data[6]      & 0b01000000)
-        res0        = bool(data[6]      & 0b00100000)
-        extension   = bool(data[6]      & 0b00000001)
-        return cls(callsign, ssid, ch, res0, res1, extension)
+        if isinstance(data, bytes):
+            # This is a binary representation in the AX.25 frame header
+            callsign = bytes([
+                b >> 1
+                for b in data[0:6]
+            ]).decode('US-ASCII').strip()
+            ssid        = (data[6]          & 0b00011110) >> 1
+            ch          = bool(data[6]      & 0b10000000)
+            res1        = bool(data[6]      & 0b01000000)
+            res0        = bool(data[6]      & 0b00100000)
+            extension   = bool(data[6]      & 0b00000001)
+            return cls(callsign, ssid, ch, res0, res1, extension)
+        elif isinstance(data, str):
+            # This is a human-readable representation
+            match = CALL_RE.match(data.upper())
+            if not match:
+                raise ValueError('Not a valid SSID: %s' % data)
+            return cls(
+                    callsign=match.group(1),
+                    ssid=int(match.group(2) or 0),
+                    ch=match.group(3) == '*'
+            )
+        elif isinstance(data, AX25Address):
+            # Clone factory
+            return data.copy()
+        else:
+            raise TypeError("Don't know how to decode %r" % data)
 
     def __init__(self, callsign, ssid=0,
             ch=False, res0=True, res1=True, extension=False):
@@ -504,14 +526,31 @@ class AX25Address(object):
         """
         Return the call-sign and SSID as a string.
         """
-        address = ''
-        if self.ch:
-            address += '*'
-
-        address += self.callsign
+        address = self.callsign
         if self.ssid > 0:
             address += '-%d' % self.ssid
+
+        if self.ch:
+            address += '*'
         return address
+
+    def __eq__(self, other):
+        if not isinstance(other, AX25Address):
+            return NotImplemented
+
+        for field in ('callsign', 'ssid', 'extension',
+                    'res0', 'res1', 'ch'):
+            if getattr(self, field) != getattr(other, field):
+                return False
+
+        return True
+
+    def __hash__(self):
+        return hash(tuple([
+            getattr(self, field)
+            for field in
+            ('callsign', 'ssid', 'extension', 'res0', 'res1', 'ch')
+        ]))
 
     @property
     def callsign(self):
@@ -544,3 +583,18 @@ class AX25Address(object):
     @ch.setter
     def ch(self, value):
         self._ch = bool(value)
+
+    def copy(self, **overrides):
+        """
+        Return a copy of this address, optionally with fields overridden.
+        """
+        mydata = dict(
+                callsign=self.callsign,
+                ssid=self.ssid,
+                ch=self.ch,
+                res0=self.res0,
+                res1=self.res1,
+                extension=self.extension
+        )
+        mydata.update(overrides)
+        return self.__class__(**mydata)
