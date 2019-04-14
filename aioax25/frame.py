@@ -287,6 +287,7 @@ class AX25UnnumberedInformationFrame(AX25UnnumberedFrame):
                 repeaters=self.header.repeaters,
                 cr=self.header.cr,
                 pf=self.pf,
+                pid=self.pid,
                 payload=self.payload
         )
 
@@ -540,7 +541,7 @@ class AX25Address(object):
         """
         Decode an AX.25 address from a frame.
         """
-        if isinstance(data, bytes):
+        if isinstance(data, (bytes, bytearray)):
             # This is a binary representation in the AX.25 frame header
             callsign = bytes([
                 b >> 1
@@ -554,7 +555,7 @@ class AX25Address(object):
             return cls(callsign, ssid, ch, res0, res1, extension)
         elif isinstance(data, str):
             # This is a human-readable representation
-            match = CALL_RE.match(data.upper())
+            match = cls.CALL_RE.match(data.upper())
             if not match:
                 raise ValueError('Not a valid SSID: %s' % data)
             return cls(
