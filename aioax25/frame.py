@@ -95,6 +95,15 @@ class AX25Frame(object):
         """
         return b''
 
+    def copy(self, header=None):
+        """
+        Make a copy of this frame with a new header for digipeating.
+        """
+        clone = self._copy()
+        if header is not None:
+            clone._header = header
+        return clone
+
 
 class AX25RawFrame(AX25Frame):
     """
@@ -118,6 +127,15 @@ class AX25RawFrame(AX25Frame):
     @property
     def payload(self):
         return self._payload
+
+    def _copy(self):
+        return self.__class__(
+                destination=self.header.destination,
+                source=self.header.source,
+                repeaters=self.header.repeaters,
+                cr=self.header.cr,
+                payload=self.payload
+        )
 
 
 class AX25UnnumberedFrame(AX25Frame):
@@ -168,6 +186,30 @@ class AX25UnnumberedFrame(AX25Frame):
         if self._pf:
             control |= self.POLL_FINAL
         return control
+
+    @property
+    def pf(self):
+        """
+        Return the state of the poll/final bit
+        """
+        return self._pf
+
+    @property
+    def modifier(self):
+        """
+        Return the modifier bits
+        """
+        return self._modifier
+
+    def _copy(self):
+        return self.__class__(
+                destination=self.header.destination,
+                source=self.header.source,
+                repeaters=self.header.repeaters,
+                modifier=self.header.modifier,
+                cr=self.header.cr,
+                pf=self.pf
+        )
 
 
 class AX25UnnumberedInformationFrame(AX25UnnumberedFrame):
@@ -221,6 +263,16 @@ class AX25UnnumberedInformationFrame(AX25UnnumberedFrame):
                 self.header,
                 self.pid,
                 self.payload)
+
+    def _copy(self):
+        return self.__class__(
+                destination=self.header.destination,
+                source=self.header.source,
+                repeaters=self.header.repeaters,
+                cr=self.header.cr,
+                pf=self.pf,
+                payload=self.payload
+        )
 
 
 class AX25FrameRejectFrame(AX25UnnumberedFrame):
@@ -344,6 +396,18 @@ class AX25FrameRejectFrame(AX25UnnumberedFrame):
     @property
     def frmr_control(self):
         return self._frmr_control
+
+    def _copy(self):
+        return self.__class__(
+                destination=self.header.destination,
+                source=self.header.source,
+                repeaters=self.header.repeaters,
+                w=self.w, x=self.x, y=self.y, z=self.z,
+                frmr_cr=self.frmr_cr, vr=self.vr, vs=self.vs,
+                frmr_control=self.frmr_control,
+                cr=self.header.cr, pf=self.pf,
+                payload=self.payload
+        )
 
 
 # Helper classes
