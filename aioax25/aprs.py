@@ -434,7 +434,7 @@ class APRSFrame(AX25UnnumberedInformationFrame):
             log.debug('APRS frame data: %s', aprsdata)
 
             return cls.KNOWN_FORMATS[aprsdata['format']].decode(
-                    uiframe, aprsdata
+                    uiframe, aprsdata, log
             )
         except:
             # Not decodable, leave as-is
@@ -458,10 +458,12 @@ class APRSMessageFrame(APRSFrame):
     ACKREJ_RE = re.compile(r':(ack|rej)([0-9A-Za-z]+)$')
 
     @classmethod
-    def decode(cls, uiframe, aprsdata):
-        msgid = aprsdata.get('msgno')
+    def decode(cls, uiframe, aprsdata, log):
+        msgid = aprsdata.get('msgNo')
         if msgid:
             msgid = str(msgid)
+
+        log.debug('Message ID is %s', msgid)
         if 'response' in aprsdata:
             if aprsdata['response'] == 'ack':
                 # This is an ACK
