@@ -459,9 +459,15 @@ class AX25FrameHeader(object):
     def __init__(self, destination, source, repeaters=None,
             cr=False):
         self._cr = bool(cr)
-        self._destination = destination
-        self._source = source
-        self._repeaters = repeaters or None
+        self._destination = AX25Address.decode(destination)
+        self._source = AX25Address.decode(source)
+        if repeaters is not None:
+            self._repeaters = [
+                    AX25Address.decode(call)
+                    for call in repeaters
+            ]
+        else:
+            self._repeaters = None
 
     def _encode(self):
         """
