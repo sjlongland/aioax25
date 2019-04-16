@@ -6,6 +6,7 @@ from aioax25 import __version__
 requirements = [
         'pyserial',
         'signalslot',
+        'aprslib',
 ]
 
 setup(
