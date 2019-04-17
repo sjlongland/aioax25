@@ -111,11 +111,7 @@ class APRSHandler(object):
                                 # This is one of our "mydigi" calls, digipeat
                                 # this
                                 self._on_digipeat(idx, message)
-                                return
-
-                        # We're still here, that means we've seen a frame we're not
-                        # (yet) responsible for, bail here.
-                        return
+                                break
 
             # We've got to the end of the digipeater chain, handle the message.
             self._on_receive_msg(message)
