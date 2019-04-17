@@ -451,22 +451,28 @@ class APRSFrame(AX25UnnumberedInformationFrame):
 class APRSMessageFrame(APRSFrame):
 
     MSGID_RE = re.compile(r'{([0-9A-Za-z]+)$')
-    ACKREJ_RE = re.compile(r':(ack|rej)([0-9A-Za-z]+)$')
+    ACKREJ_RE = re.compile(r'^(ack|rej)([0-9A-Za-z]+)$')
 
     @classmethod
     def decode(cls, uiframe, aprsdata, log):
-        msgid = aprsdata.get('msgNo')
-        if msgid:
-            msgid = str(msgid)
+        # aprslib message decoding is buggy
+        rawtext = uiframe.payload.decode('US-ASCII')
+        if (rawtext[0] != ':') and (rawtext[10] != ':'):
+            raise ValueError('Not a message frame: %r' % rawtext)
 
-        log.debug('Message ID is %s', msgid)
-        if 'response' in aprsdata:
-            if aprsdata['response'] == 'ack':
+        addressee = AX25Address.decode(rawtext[1:10].strip())
+        message = rawtext[11:]
+
+        match = cls.ACKREJ_RE.match(message)
+        if match:
+            ackrej = match.group(1)
+            msgid = match.group(2)
+            if ackrej == 'ack':
                 # This is an ACK
                 return APRSMessageAckFrame(
                     destination=uiframe.header.destination,
                     source=uiframe.header.source,
-                    addressee=aprsdata['addresse'],
+                    addressee=addressee,
                     msgid=msgid,
                     repeaters=uiframe.header.repeaters,
                     pf=uiframe.pf, cr=uiframe.header.cr
@@ -476,21 +482,28 @@ class APRSMessageFrame(APRSFrame):
                 return APRSMessageRejFrame(
                     destination=uiframe.header.destination,
                     source=uiframe.header.source,
-                    addressee=aprsdata['addresse'],
+                    addressee=addressee,
                     msgid=msgid,
                     repeaters=uiframe.header.repeaters,
                     pf=uiframe.pf, cr=uiframe.header.cr
                 )
+
+        match = cls.MSGID_RE.search(message)
+        if match:
+            msgid = match.group(1)
+            message = message[:-(len(msgid)+1)]
         else:
-            return cls(
-                    destination=uiframe.header.destination,
-                    source=uiframe.header.source,
-                    addressee=aprsdata['addresse'],
-                    message=aprsdata['message_text'],
-                    msgid=msgid,
-                    repeaters=uiframe.header.repeaters,
-                    pf=uiframe.pf, cr=uiframe.header.cr
-            )
+            msgid = None
+
+        return cls(
+                destination=uiframe.header.destination,
+                source=uiframe.header.source,
+                addressee=addressee,
+                message=message,
+                msgid=msgid,
+                repeaters=uiframe.header.repeaters,
+                pf=uiframe.pf, cr=uiframe.header.cr
+        )
 
     def __init__(self, destination, source, addressee, message,
             msgid=None, repeaters=None, pf=False, cr=False):
