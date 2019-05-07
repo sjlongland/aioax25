@@ -11,9 +11,43 @@ import random
 import asyncio
 import logging
 import signalslot
-import aprslib
+from enum import Enum
+
 from aioax25.frame import AX25Frame, AX25UnnumberedInformationFrame, \
 		AX25Address, AX25FrameHeader
+
+
+# APRS data types
+class APRSDataType(Enum):
+    """
+    APRS message types, given as the first byte in the information field,
+    not including unused or reserved types.  Page 17 of APRS 1.0.1 spec.
+    """
+    MIC_E_BETA0         = 0x1c
+    MIC_E_OLD_BETA0     = 0x1d
+    POSITION            = ord('!')
+    PEET_BROS_WX1       = ord('#')
+    RAW_GPRS_ULT2K      = ord('$')
+    AGRELO_DFJR         = ord('%')
+    RESERVED_MAP        = ord('&')
+    MIC_E_OLD           = ord("'")
+    ITEM                = ord(')')
+    PEET_BROS_WX2       = ord('*')
+    TEST_DATA           = ord(',')
+    POSITION_TS         = ord('/')
+    MESSAGE             = ord(':')
+    OBJECT              = ord(';')
+    STATIONCAP          = ord('<')
+    POSITION_MSGCAP     = ord('=')
+    STATUS              = ord('>')
+    QUERY               = ord('?')
+    POSITION_TS_MSGCAP  = ord('@')
+    TELEMETRY           = ord('T')
+    MAIDENHEAD          = ord('[')
+    WX                  = ord('_')
+    MIC_E               = ord('`')
+    USER_DEFINED        = ord('{')
+    THIRD_PARTY         = ord('}')
 
 
 class APRSHandler(object):
@@ -408,7 +442,7 @@ class APRSFrame(AX25UnnumberedInformationFrame):
     AX.25 frames.
     """
 
-    KNOWN_FORMATS = {}
+    DATA_TYPE_HANDLERS = {}
 
     @classmethod
     def decode(cls, uiframe, log):
@@ -422,17 +456,20 @@ class APRSFrame(AX25UnnumberedInformationFrame):
             log.debug('Frame has wrong PID for APRS')
             return uiframe
 
+        if len(uiframe.payload) == 0:
+            log.debug('Frame has no payload data')
+            return uiframe
+
         try:
+            # Inspect the first byte.
+            type_code = APRSDataType(uiframe.payload[0])
+            handler_class = cls.DATA_TYPE_HANDLERS[type_code]
+
             # Decode the payload as text
             payload = uiframe.payload.decode('US-ASCII')
 
-            # Munge the incoming data to something aprslib understands.
-            aprsdata = aprslib.parse('FROM>TO:%s' % payload)
             log.debug('APRS frame data: %s', aprsdata)
-
-            return cls.KNOWN_FORMATS[aprsdata['format']].decode(
-                    uiframe, aprsdata, log
-            )
+            return handler_class.decode(uiframe, payload, log)
         except:
             # Not decodable, leave as-is
             log.debug('Failed to decode as APRS', exc_info=1)
@@ -451,18 +488,17 @@ class APRSFrame(AX25UnnumberedInformationFrame):
 
 class APRSMessageFrame(APRSFrame):
 
-    MSGID_RE = re.compile(r'{([0-9A-Za-z]+)$')
+    MSGID_RE = re.compile(r'{([0-9A-Za-z]+)(\r?)$')
     ACKREJ_RE = re.compile(r'^(ack|rej)([0-9A-Za-z]+)$')
 
     @classmethod
-    def decode(cls, uiframe, aprsdata, log):
+    def decode(cls, uiframe, payload, log):
         # aprslib message decoding is buggy
-        rawtext = uiframe.payload.decode('US-ASCII')
-        if (rawtext[0] != ':') and (rawtext[10] != ':'):
-            raise ValueError('Not a message frame: %r' % rawtext)
+        if (payload[0] != ':') and (payload[10] != ':'):
+            raise ValueError('Not a message frame: %r' % payload)
 
-        addressee = AX25Address.decode(rawtext[1:10].strip())
-        message = rawtext[11:]
+        addressee = AX25Address.decode(payload[1:10].strip())
+        message = payload[11:]
 
         match = cls.ACKREJ_RE.match(message)
         if match:
@@ -541,7 +577,7 @@ class APRSMessageFrame(APRSFrame):
     @property
     def message(self):
         return self._message
-APRSFrame.KNOWN_FORMATS['message'] = APRSMessageFrame
+APRSFrame.DATA_TYPE_HANDLERS[APRSDataType.MESSAGE] = APRSMessageFrame
 
 
 class APRSMessageAckFrame(APRSMessageFrame):
