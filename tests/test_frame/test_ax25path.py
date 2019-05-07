@@ -13,7 +13,6 @@ def test_decode():
     eq_(path._path[1]._callsign, 'VK4RZB')
     eq_(path._path[2]._callsign, 'VK4RZA')
 
-
 def test_addresses():
     """
     Test given a list of AX25Addresses, AX25Path passes them in.
