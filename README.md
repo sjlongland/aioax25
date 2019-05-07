@@ -1,5 +1,8 @@
 # `aioax25`: AX.25 and APRS library in `asyncio`
 
+[![Build Status](https://travis-ci.org/sjlongland/aioax25.svg?branch=master)](https://travis-ci.org/sjlongland/aioax25)
+[![Coverage Status](https://coveralls.io/repos/github/sjlongland/aioax25/badge.svg?branch=master)](https://coveralls.io/github/sjlongland/aioax25?branch=master)
+
 The aim of this project is to implement a simple-to-understand asynchronous
 AX.25 library built on `asyncio` and `pyserial`, implementing a AX.25 and APRS
 stack in pure Python.
