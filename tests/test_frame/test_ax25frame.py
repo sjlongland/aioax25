@@ -35,7 +35,8 @@ def test_decode_iframe():
             )
     )
     assert isinstance(frame, AX25RawFrame), 'Did not decode to raw frame'
-    hex_cmp(frame.payload, '00 11 22 33 44 55 66 77')
+    eq_(frame.control, 0x00)
+    hex_cmp(frame.payload, '11 22 33 44 55 66 77')
 
 def test_decode_sframe():
     """
@@ -50,7 +51,8 @@ def test_decode_sframe():
             )
     )
     assert isinstance(frame, AX25RawFrame), 'Did not decode to raw frame'
-    hex_cmp(frame.payload, '01 11 22 33 44 55 66 77')
+    eq_(frame.control, 0x01)
+    hex_cmp(frame.payload, '11 22 33 44 55 66 77')
 
 def test_decode_uframe():
     """
@@ -68,6 +70,23 @@ def test_decode_uframe():
     eq_(frame.modifier, 0xc3)
     hex_cmp(frame.frame_payload, '')
 
+def test_decode_uframe_payload():
+    """
+    Test that U-frames other than FRMR and UI are forbidden to have payloads.
+    """
+    try:
+        AX25Frame.decode(
+                from_hex(
+                    'ac 96 68 84 ae 92 e0'      # Destination
+                    'ac 96 68 9a a6 98 61'      # Source
+                    'c3 11 22 33'               # Control byte
+                )
+        )
+        assert False, 'Should not have worked'
+    except ValueError as e:
+        eq_(str(e), 'Unnumbered frames (other than UI and '\
+                            'FRMR) do not have payloads')
+
 def test_decode_frmr():
     """
     Test that a FRMR gets decoded to a frame reject frame.
@@ -76,7 +95,8 @@ def test_decode_frmr():
             from_hex(
                 'ac 96 68 84 ae 92 e0'      # Destination
                 'ac 96 68 9a a6 98 61'      # Source
-                '87 11 22 33'               # Control byte
+                '87'                        # Control byte
+                '11 22 33'                  # Payload
             )
     )
     assert isinstance(frame, AX25FrameRejectFrame), \
@@ -89,6 +109,23 @@ def test_decode_frmr():
     eq_(frame.vr, 1)
     eq_(frame.frmr_cr, False)
     eq_(frame.vs, 1)
+
+def test_decode_frmr_len():
+    """
+    Test that a FRMR must have 3 byte payload.
+    """
+    try:
+        AX25Frame.decode(
+                from_hex(
+                    'ac 96 68 84 ae 92 e0'      # Destination
+                    'ac 96 68 9a a6 98 61'      # Source
+                    '87'                        # Control byte
+                    '11 22'                     # Payload
+                )
+        )
+        assert False, 'Should not have worked'
+    except ValueError as e:
+        eq_(str(e), 'Payload of FRMR must be 3 bytes')
 
 def test_decode_ui():
     """
@@ -105,3 +142,93 @@ def test_decode_ui():
             'Did not decode to UI frame'
     eq_(frame.pid, 0x11)
     hex_cmp(frame.payload, '22 33')
+
+def test_decode_frmr_len():
+    """
+    Test that a UI must have at least one byte payload.
+    """
+    try:
+        AX25Frame.decode(
+                from_hex(
+                    'ac 96 68 84 ae 92 e0'      # Destination
+                    'ac 96 68 9a a6 98 61'      # Source
+                    '03'                        # Control byte
+                )
+        )
+        assert False, 'Should not have worked'
+    except ValueError as e:
+        eq_(str(e), 'Payload of UI must be at least one byte')
+
+def test_encode_raw():
+    """
+    Test that we can encode a raw frame.
+    """
+    # Yes, this is really a UI frame.
+    frame = AX25RawFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+            cr=True,
+            control=0x03,
+            payload=b'\xf0This is a test'
+    )
+    hex_cmp(bytes(frame),
+            'ac 96 68 84 ae 92 e0'                          # Destination
+            'ac 96 68 9a a6 98 61'                          # Source
+            '03'                                            # Control
+            'f0 54 68 69 73 20 69 73 20 61 20 74 65 73 74'  # Payload
+    )
+
+def test_encode_uframe():
+    """
+    Test that we can encode a U-frame.
+    """
+    frame = AX25UnnumberedFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+            modifier=0xe7,
+            cr=True
+    )
+    hex_cmp(bytes(frame),
+            'ac 96 68 84 ae 92 e0'                          # Destination
+            'ac 96 68 9a a6 98 61'                          # Source
+            'e7'                                            # Control
+    )
+
+def test_encode_frmr():
+    """
+    Test that we can encode a FRMR.
+    """
+    frame = AX25FrameRejectFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+            w=True, x=False, y=True, z=False,
+            vr=1, frmr_cr=False, vs=2, frmr_control=0xaa,
+            cr=True
+    )
+    hex_cmp(bytes(frame),
+            'ac 96 68 84 ae 92 e0'                          # Destination
+            'ac 96 68 9a a6 98 61'                          # Source
+            '87'                                            # Control
+            '05'                                            # W/X/Y/Z
+            '24'                                            # VR/CR/VS
+            'aa'                                            # FRMR Control
+    )
+
+def test_encode_ui():
+    """
+    Test that we can encode a UI frame.
+    """
+    frame = AX25UnnumberedInformationFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+            cr=True,
+            pid=0xf0,
+            payload=b'This is a test'
+    )
+    hex_cmp(bytes(frame),
+            'ac 96 68 84 ae 92 e0'                          # Destination
+            'ac 96 68 9a a6 98 61'                          # Source
+            '03'                                            # Control
+            'f0'                                            # PID
+            '54 68 69 73 20 69 73 20 61 20 74 65 73 74'     # Payload
+    )
