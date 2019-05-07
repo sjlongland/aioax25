@@ -268,3 +268,19 @@ def test_normalised():
     assert b._ch is False
     assert b._res0 is True
     assert b._res1 is True
+
+def test_ch_setter():
+    """
+    Test we can mutate the C/H bit.
+    """
+    a = AX25Address('VK4MSL', 15, ch=False)
+    a.ch = True
+    assert a._ch is True
+
+def test_extension_setter():
+    """
+    Test we can mutate the extension bit.
+    """
+    a = AX25Address('VK4MSL', 15, extension=False)
+    a.extension = True
+    assert a._extension is True
