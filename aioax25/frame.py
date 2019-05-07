@@ -617,6 +617,10 @@ class AX25Address(object):
         Decode an AX.25 address from a frame.
         """
         if isinstance(data, (bytes, bytearray)):
+            # Ensure the data is at least 7 bytes!
+            if len(data) < 7:
+                raise ValueError('AX.25 addresses must be 7 bytes!')
+
             # This is a binary representation in the AX.25 frame header
             callsign = bytes([
                 b >> 1

@@ -4,6 +4,18 @@ from aioax25.frame import AX25Address
 from nose.tools import eq_
 
 
+def test_decode_bytes_short():
+    """
+    Test decoding a truncated address does not crash.
+    """
+    try:
+        AX25Address.decode(
+                b'\xac\x96\x68\x9a\xa6'
+        )
+        assert False, 'This should not work'
+    except ValueError as e:
+        eq_(str(e), 'AX.25 addresses must be 7 bytes!')
+
 def test_decode_bytes():
     """
     Test we can decode a plain AX.25 address in binary.
