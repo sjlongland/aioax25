@@ -2,6 +2,7 @@
 
 from aioax25.frame import AX25Address
 from nose.tools import eq_
+from ..hex import from_hex, to_hex
 
 def test_decode_wrongtype():
     """
@@ -19,7 +20,7 @@ def test_decode_bytes_short():
     """
     try:
         AX25Address.decode(
-                b'\xac\x96\x68\x9a\xa6'
+                from_hex('ac 96 68 9a a6')
         )
         assert False, 'This should not work'
     except ValueError as e:
@@ -30,7 +31,7 @@ def test_decode_bytes():
     Test we can decode a plain AX.25 address in binary.
     """
     addr = AX25Address.decode(
-            b'\xac\x96\x68\x9a\xa6\x98\x00'
+            from_hex('ac 96 68 9a a6 98 00')
     )
     eq_(addr._callsign, 'VK4MSL')
 
@@ -39,7 +40,7 @@ def test_decode_bytes_spaces():
     Test trailing spaces are truncated in call-signs.
     """
     addr = AX25Address.decode(
-            b'\xac\x96\x68\x84\x82\x40\x00'
+            from_hex('ac 96 68 84 82 40 00')
     )
     eq_(addr._callsign, 'VK4BA')
 
@@ -48,7 +49,7 @@ def test_decode_bytes_ext():
     Test we can decode the extension bit set in binary.
     """
     addr = AX25Address.decode(
-            b'\xac\x96\x68\x9a\xa6\x98\x01'
+            from_hex('ac 96 68 9a a6 98 01')
     )
     eq_(addr._extension, True)
 
@@ -57,7 +58,7 @@ def test_decode_bytes_ssid():
     Test we can decode the SSID in binary.
     """
     addr = AX25Address.decode(
-            b'\xac\x96\x68\x9a\xa6\x98\x14'
+            from_hex('ac 96 68 9a a6 98 14')
     )
     eq_(addr._ssid, 10)
 
@@ -66,7 +67,7 @@ def test_decode_bytes_res0():
     Test we can decode the first reserved bit in binary.
     """
     addr = AX25Address.decode(
-            b'\xac\x96\x68\x9a\xa6\x98\x20'
+            from_hex('ac 96 68 9a a6 98 20')
     )
     eq_(addr._res0, True)
 
@@ -75,7 +76,7 @@ def test_decode_bytes_res1():
     Test we can decode the first reserved bit in binary.
     """
     addr = AX25Address.decode(
-            b'\xac\x96\x68\x9a\xa6\x98\x40'
+            from_hex('ac 96 68 9a a6 98 40')
     )
     eq_(addr._res1, True)
 
@@ -84,7 +85,7 @@ def test_decode_bytes_ch():
     Test we can decode the C/H bit in binary.
     """
     addr = AX25Address.decode(
-            b'\xac\x96\x68\x9a\xa6\x98\x80'
+            from_hex('ac 96 68 9a a6 98 80')
     )
     eq_(addr._ch, True)
 
@@ -169,10 +170,10 @@ def test_encode_bytes():
     Test we can encode a AX25Address as binary
     """
     eq_(
-            bytes(AX25Address('VK4MSL', 0,
+            to_hex(bytes(AX25Address('VK4MSL', 0,
                 res0=False, res1=False, ch=False,
-                extension=False)),
-            b'\xac\x96\x68\x9a\xa6\x98\x00'
+                extension=False))),
+            'ac 96 68 9a a6 98 00'
     )
 
 def test_encode_bytes_ssid():
@@ -180,10 +181,10 @@ def test_encode_bytes_ssid():
     Test we can encode a AX25Address as binary
     """
     eq_(
-            bytes(AX25Address('VK4MSL', 11,
+            to_hex(bytes(AX25Address('VK4MSL', 11,
                 res0=False, res1=False, ch=False,
-                extension=False)),
-            b'\xac\x96\x68\x9a\xa6\x98\x16'
+                extension=False))),
+            'ac 96 68 9a a6 98 16'
     )
 
 def test_encode_bytes_ch():
@@ -191,10 +192,10 @@ def test_encode_bytes_ch():
     Test we can encode a AX25Address' C/H bit as binary
     """
     eq_(
-            bytes(AX25Address('VK4MSL',
+            to_hex(bytes(AX25Address('VK4MSL',
                 res0=False, res1=False, ch=True,
-                extension=False)),
-            b'\xac\x96\x68\x9a\xa6\x98\x80'
+                extension=False))),
+            'ac 96 68 9a a6 98 80'
     )
 
 def test_encode_bytes_ext():
@@ -202,10 +203,10 @@ def test_encode_bytes_ext():
     Test we can encode a AX25Address' extension bit as binary
     """
     eq_(
-            bytes(AX25Address('VK4MSL',
+            to_hex(bytes(AX25Address('VK4MSL',
                 res0=False, res1=False, ch=False,
-                extension=True)),
-            b'\xac\x96\x68\x9a\xa6\x98\x01'
+                extension=True))),
+            'ac 96 68 9a a6 98 01'
     )
 
 def test_encode_bytes_res1():
@@ -213,10 +214,10 @@ def test_encode_bytes_res1():
     Test we can encode a AX25Address' Reserved 1 bit as binary
     """
     eq_(
-            bytes(AX25Address('VK4MSL',
+            to_hex(bytes(AX25Address('VK4MSL',
                 res0=False, res1=True, ch=False,
-                extension=False)),
-            b'\xac\x96\x68\x9a\xa6\x98\x40'
+                extension=False))),
+            'ac 96 68 9a a6 98 40'
     )
 
 def test_encode_bytes_res0():
@@ -224,10 +225,10 @@ def test_encode_bytes_res0():
     Test we can encode a AX25Address' Reserved 0 bit as binary
     """
     eq_(
-            bytes(AX25Address('VK4MSL',
+            to_hex(bytes(AX25Address('VK4MSL',
                 res0=True, res1=False, ch=False,
-                extension=False)),
-            b'\xac\x96\x68\x9a\xa6\x98\x20'
+                extension=False))),
+            'ac 96 68 9a a6 98 20'
     )
 
 def test_eq_match():
