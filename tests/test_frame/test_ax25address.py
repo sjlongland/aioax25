@@ -3,6 +3,15 @@
 from aioax25.frame import AX25Address
 from nose.tools import eq_
 
+def test_decode_wrongtype():
+    """
+    Test that incorrect types are handled.
+    """
+    try:
+        AX25Address.decode(12345)
+        assert False, 'Should not have worked'
+    except TypeError as e:
+        eq_(str(e), "Don't know how to decode 12345")
 
 def test_decode_bytes_short():
     """
@@ -87,6 +96,18 @@ def test_decode_str():
             'VK4MSL'
     )
     eq_(addr._callsign, 'VK4MSL')
+
+def test_decode_str_invalid():
+    """
+    Test that strings are correctly validated.
+    """
+    try:
+        AX25Address.decode(
+                'VK4-MSL'
+        )
+        assert False, 'Should not have worked'
+    except ValueError as e:
+        eq_(str(e), 'Not a valid SSID: VK4-MSL')
 
 def test_decode_str_ssid():
     """
