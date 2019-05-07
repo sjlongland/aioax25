@@ -4,6 +4,18 @@ from aioax25.frame import AX25Address, AX25FrameHeader
 from nose.tools import eq_
 
 
+def test_decode_incomplete():
+    """
+    Test that an incomplete frame does not cause a crash.
+    """
+    try:
+        AX25FrameHeader.decode(
+                b'\xac\x96\x68\x84\xae\x92\xe0' # Destination
+        )
+        assert False, 'This should not have worked'
+    except ValueError as e:
+        eq_(str(e), 'Too few addresses')
+
 def test_decode_no_digis():
     """
     Test we can decode an AX.25 frame without digipeaters.
