@@ -135,6 +135,14 @@ def test_encode_str_ch():
     """
     eq_(str(AX25Address('VK4MSL', ch=True)), 'VK4MSL*')
 
+def test_encode_repr():
+    """
+    Test we can represent the AX25Address as a Python string
+    """
+    eq_(repr(AX25Address('VK4MSL', ch=True)), \
+            ('AX25Address(callsign=VK4MSL, ssid=0, ch=True, '\
+             'res0=True, res1=True, extension=False)'))
+
 def test_encode_bytes():
     """
     Test we can encode a AX25Address as binary
@@ -166,6 +174,17 @@ def test_encode_bytes_ch():
                 res0=False, res1=False, ch=True,
                 extension=False)),
             b'\xac\x96\x68\x9a\xa6\x98\x80'
+    )
+
+def test_encode_bytes_ext():
+    """
+    Test we can encode a AX25Address' extension bit as binary
+    """
+    eq_(
+            bytes(AX25Address('VK4MSL',
+                res0=False, res1=False, ch=False,
+                extension=True)),
+            b'\xac\x96\x68\x9a\xa6\x98\x01'
     )
 
 def test_encode_bytes_res1():
@@ -207,7 +226,14 @@ def test_eq_notmatch():
     b = AX25Address('VK4MSL', 12, ch=True)
     assert a != b
 
-def test_eq_hash():
+def test_eq_notaddr():
+    """
+    Test the __eq__ operator does not attempt to compare non-addresses.
+    """
+    a = AX25Address('VK4MSL', 12, ch=False)
+    assert a != 'foobar'
+
+def test_hash():
     """
     Test we can obtain a reliable hash.
     """
