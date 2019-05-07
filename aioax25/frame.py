@@ -5,6 +5,7 @@ AX.25 framing
 """
 
 import re
+from collections.abc import Sequence
 
 # Frame type classes
 
@@ -462,10 +463,10 @@ class AX25FrameHeader(object):
         self._destination = AX25Address.decode(destination)
         self._source = AX25Address.decode(source)
         if repeaters is not None:
-            self._repeaters = [
+            self._repeaters = AX25Path(*[
                     AX25Address.decode(call)
                     for call in repeaters
-            ]
+            ])
         else:
             self._repeaters = None
 
@@ -506,10 +507,8 @@ class AX25FrameHeader(object):
         return '%s>%s%s' % (
                 self._source,
                 self._destination,
-                ' v %s' % ','.join([
-                    str(r)
-                    for r in (self._repeaters or [])
-                ])
+                (',%s' % self._repeaters) \
+                        if self._repeaters else ''
         )
 
     def __bytes__(self):
@@ -533,6 +532,65 @@ class AX25FrameHeader(object):
     @property
     def cr(self):
         return self._cr
+
+
+class AX25Path(Sequence):
+    """
+    A representation of a digipeater path.
+    """
+    def __init__(self, *path):
+        """
+        Construct a path using the given path.
+        """
+        self._path = tuple([
+            digi if isinstance(digi, AX25Address) \
+                    else AX25Address.decode(digi)
+            for digi in path
+        ])
+
+    def __len__(self):
+        """
+        Return the path length
+        """
+        return len(self._path)
+
+    def __getitem__(self, index):
+        """
+        Return the Nth path element.
+        """
+        return self._path[index]
+
+    def __str__(self):
+        """
+        Return a string representation of the digipeater path.
+        """
+        return ','.join(
+                str(addr) for addr in self._path
+        )
+
+    @property
+    def reply(self):
+        """
+        Return the reply path (the "consumed" digipeaters in reverse order).
+        """
+        return self.__class__(
+                *tuple(filter(
+                    lambda digi : digi.ch,
+                    reversed(self._path)
+                ))
+        )
+
+    def replace(self, alias, address):
+        """
+        Replace an address alias (e.g. WIDE1-1) with the given address
+        (e.g. the address of this station).
+        """
+        alias = alias.normalised
+        return self.__class__(
+                *tuple([
+                    address if (digi.normalised == alias) else digi
+                ])
+        )
 
 
 class AX25Address(object):
