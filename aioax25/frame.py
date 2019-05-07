@@ -463,10 +463,7 @@ class AX25FrameHeader(object):
         self._destination = AX25Address.decode(destination)
         self._source = AX25Address.decode(source)
         if repeaters is not None:
-            self._repeaters = AX25Path(*[
-                    AX25Address.decode(call)
-                    for call in repeaters
-            ])
+            self._repeaters = AX25Path(*repeaters)
         else:
             self._repeaters = None
 
@@ -543,8 +540,7 @@ class AX25Path(Sequence):
         Construct a path using the given path.
         """
         self._path = tuple([
-            digi if isinstance(digi, AX25Address) \
-                    else AX25Address.decode(digi)
+            AX25Address.decode(digi)
             for digi in path
         ])
 
