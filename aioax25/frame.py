@@ -462,10 +462,7 @@ class AX25FrameHeader(object):
         self._cr = bool(cr)
         self._destination = AX25Address.decode(destination)
         self._source = AX25Address.decode(source)
-        if repeaters is not None:
-            self._repeaters = AX25Path(*repeaters)
-        else:
-            self._repeaters = None
+        self._repeaters = AX25Path(*(repeaters or []))
 
     def _encode(self):
         """
