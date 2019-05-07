@@ -161,7 +161,8 @@ class APRSHandler(object):
                 message, ack)
         self.send_message(
                 addressee=message.header.source.normalised,
-                path=list(reversed(message.header.repeaters or [])),
+                path=message.header.repeaters.reply \
+                        if message.header.repeaters else [],
                 message='%s%s' % ('ack' if ack else 'rej', message.msgid),
                 oneshot=True
         )
