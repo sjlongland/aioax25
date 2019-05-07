@@ -33,6 +33,26 @@ def test_str():
     path = AX25Path('VK4MSL', 'VK4RZB', 'VK4RZA')
     eq_(str(path), 'VK4MSL,VK4RZB,VK4RZA')
 
+def test_repr():
+    """
+    Test we can return the Python representation for a repeater path.
+    """
+    path = AX25Path('VK4MSL', 'VK4RZB', 'VK4RZA')
+    eq_(repr(path), ('AX25Path('\
+                        'AX25Address('\
+                            'callsign=VK4MSL, ssid=0, ch=False, '\
+                            'res0=True, res1=True, extension=False'\
+                        '), '\
+                        'AX25Address('\
+                            'callsign=VK4RZB, ssid=0, ch=False, '\
+                            'res0=True, res1=True, extension=False'\
+                        '), '\
+                        'AX25Address('\
+                            'callsign=VK4RZA, ssid=0, ch=False, '\
+                            'res0=True, res1=True, extension=False'\
+                        ')'\
+                    ')'))
+
 def test_reply():
     """
     Test 'reply' returns a reverse path for sending replies.
