@@ -9,6 +9,6 @@ install:
 - pip install -r requirements.txt
 # command to run tests
 script: 
-  - nosetests --with-coverage --cover-package=aioax25 --where=tests
+  - nosetests --with-coverage --cover-package=aioax25
 after_success:
   - coveralls
