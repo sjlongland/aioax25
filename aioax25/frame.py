@@ -59,7 +59,7 @@ class AX25Frame(object):
                     source=header.source,
                     repeaters=header.repeaters,
                     cr=header.cr,
-                    payload=data
+                    payload=bytes([control]) + data
             )
         elif (control & cls.CONTROL_US_MASK) == cls.CONTROL_S_VAL:
             # This is a S frame - TODO
@@ -69,7 +69,7 @@ class AX25Frame(object):
                     source=header.source,
                     repeaters=header.repeaters,
                     cr=header.cr,
-                    payload=data
+                    payload=bytes([control]) + data
             )
         elif (control & cls.CONTROL_US_MASK) == cls.CONTROL_U_VAL:
             # This is a U frame
@@ -300,7 +300,7 @@ class AX25FrameRejectFrame(AX25UnnumberedFrame):
     Not much effort has been made to decode the meaning of these bits.
     """
 
-    MODIFIER = 0b00000011
+    MODIFIER = 0b10000111
     W_MASK   = 0b00000001
     X_MASK   = 0b00000010
     Y_MASK   = 0b00000100
