@@ -564,6 +564,15 @@ class AX25Path(Sequence):
                 str(addr) for addr in self._path
         )
 
+    def __repr__(self):
+        """
+        Return the Python representation of the digipeater path.
+        """
+        return '%s(%s)' % (
+                self.__class__.__name__,
+                ', '.join([repr(addr) for addr in self._path])
+        )
+
     @property
     def reply(self):
         """
@@ -680,6 +689,17 @@ class AX25Address(object):
         if self.ch:
             address += '*'
         return address
+
+    def __repr__(self):
+        """
+        Return the Python representation of this object.
+        """
+        return ('%s(callsign=%s, ssid=%d, ch=%r, res0=%r, '\
+                'res1=%r, extension=%r)') % (\
+                self.__class__.__name__,
+                self.callsign, self.ssid, self.ch,
+                self.res0, self.res1, self.extension
+        )
 
     def __eq__(self, other):
         if not isinstance(other, AX25Address):
