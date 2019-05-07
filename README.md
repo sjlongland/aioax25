@@ -11,7 +11,8 @@ stack in pure Python.
 
 * We can put a Kantronics KPC-3 TNC into KISS mode automatically
 * Multi-port KISS TNCs (tested with
-  [Direwolf](https://github.com/wb2osz/direwolf))
+  [Direwolf](https://github.com/wb2osz/direwolf) and the
+  [NWDR UDRC-II](https://nw-digital-radio.groups.io/g/udrc/wiki/home))
 * We can receive AX.25 UI frames
 * We can send AX.25 UI frames
 
