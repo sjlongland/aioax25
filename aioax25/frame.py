@@ -744,7 +744,8 @@ class AX25Address(object):
         mydata.update(overrides)
         return self.__class__(**mydata)
 
-    def normalise(self):
+    @property
+    def normalised(self):
         """
         Return a normalised copy of this address.  (Set reserved bits to ones,
         clear the CH bit and extension bit.)
