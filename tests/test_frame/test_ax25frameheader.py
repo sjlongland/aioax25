@@ -27,6 +27,7 @@ def test_decode_no_digis():
     )
     eq_(header.destination, AX25Address('VK4BWI', ch=True))
     eq_(header.source, AX25Address('VK4MSL', extension=True))
+    eq_(len(header.repeaters), 0)
     eq_(data, b'frame data goes here')
 
 def test_decode_with_1digi():
@@ -41,7 +42,6 @@ def test_decode_with_1digi():
     )
     eq_(header.destination, AX25Address('VK4BWI', ch=True))
     eq_(header.source, AX25Address('VK4MSL'))
-    eq_(len(header.repeaters), 1)
     eq_(header.repeaters[0], AX25Address('VK4RZB', extension=True))
     eq_(data, b'frame data goes here')
 
