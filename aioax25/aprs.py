@@ -38,7 +38,7 @@ class APRSHandler(object):
 
         # AX.25 set-up
         self._kissport = kissport
-        self._mycall = AX25Address.decode(mycall).normalise()
+        self._mycall = AX25Address.decode(mycall).normalised
         kissport.received.connect(self._on_receive_frame)
 
         # Message ID counter
@@ -46,7 +46,7 @@ class APRSHandler(object):
 
         if digipeating:
             self._mydigi = set([
-                AX25Address.decode(call).normalise()
+                AX25Address.decode(call).normalised
                 for call
                 in (mydigi or [])
             ])
@@ -58,11 +58,11 @@ class APRSHandler(object):
 
         # APRS destination address for broadcast messages
         self._aprs_destination = AX25Address.decode(
-                aprs_destination).normalise()
+                aprs_destination).normalised
 
         # APRS digi path
         self._aprs_path = [
-                AX25Address.decode(call).normalise()
+                AX25Address.decode(call).normalised
                 for call in
                 aprs_path or []
         ]
@@ -98,7 +98,7 @@ class APRSHandler(object):
             #
             # So handle digipeating if and only if our callsign isn't the
             # destination.
-            if message.header.destination.normalise() != self.mycall:
+            if message.header.destination.normalised != self.mycall:
                 for idx, digi in enumerate(message.header.repeaters or []):
                     # Has the frame passed through this particular repeater?
                     if not digi.ch:
@@ -160,7 +160,7 @@ class APRSHandler(object):
         self._log.debug('Responding to message %s with ack=%s',
                 message, ack)
         self.send_message(
-                addressee=message.header.source.normalise(),
+                addressee=message.header.source.normalised,
                 path=list(reversed(message.header.repeaters or [])),
                 message='%s%s' % ('ack' if ack else 'rej', message.msgid),
                 oneshot=True
@@ -286,7 +286,7 @@ class APRSMessageHandler(object):
                 message=message,
                 msgid=aprshandler._next_msgid,
                 repeaters=[
-                    AX25Address.decode(call).normalise() for call in path
+                    AX25Address.decode(call).normalised for call in path
                 ]
         )
 
@@ -508,7 +508,7 @@ class APRSMessageFrame(APRSFrame):
     def __init__(self, destination, source, addressee, message,
             msgid=None, repeaters=None, pf=False, cr=False):
 
-        self._addressee = AX25Address.decode(addressee).normalise()
+        self._addressee = AX25Address.decode(addressee).normalised
         self._msgid = msgid
         self._message = message
 
