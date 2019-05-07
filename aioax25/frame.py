@@ -574,10 +574,14 @@ class AX25Path(Sequence):
         Return the reply path (the "consumed" digipeaters in reverse order).
         """
         return self.__class__(
-                *tuple(filter(
-                    lambda digi : digi.ch,
-                    reversed(self._path)
-                ))
+                *tuple([
+                    digi.copy(ch=False)
+                    for digi in
+                    filter(
+                        lambda digi : digi.ch,
+                        reversed(self._path)
+                    )
+                ])
         )
 
     def replace(self, alias, address):
@@ -585,10 +589,12 @@ class AX25Path(Sequence):
         Replace an address alias (e.g. WIDE1-1) with the given address
         (e.g. the address of this station).
         """
-        alias = alias.normalised
+        alias = AX25Address.decode(alias).normalised
+        address = AX25Address.decode(address)
         return self.__class__(
                 *tuple([
                     address if (digi.normalised == alias) else digi
+                    for digi in self._path
                 ])
         )
 
