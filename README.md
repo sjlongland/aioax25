@@ -10,6 +10,8 @@ stack in pure Python.
 ## What works
 
 * We can put a Kantronics KPC-3 TNC into KISS mode automatically
+* Multi-port KISS TNCs (tested with
+  [Direwolf](https://github.com/wb2osz/direwolf))
 * We can receive AX.25 UI frames
 * We can send AX.25 UI frames
 
@@ -21,7 +23,6 @@ stack in pure Python.
 ## What isn't tested
 
 * Platforms other than GNU/Linux
-* Multi-port KISS TNCs (in theory, the support is there)
 
 ## Current plans
 
