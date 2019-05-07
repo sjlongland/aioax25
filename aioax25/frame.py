@@ -59,7 +59,8 @@ class AX25Frame(object):
                     source=header.source,
                     repeaters=header.repeaters,
                     cr=header.cr,
-                    payload=bytes([control]) + data
+                    control=control,
+                    payload=data
             )
         elif (control & cls.CONTROL_US_MASK) == cls.CONTROL_S_VAL:
             # This is a S frame - TODO
@@ -69,7 +70,8 @@ class AX25Frame(object):
                     source=header.source,
                     repeaters=header.repeaters,
                     cr=header.cr,
-                    payload=bytes([control]) + data
+                    control=control,
+                    payload=data
             )
         elif (control & cls.CONTROL_US_MASK) == cls.CONTROL_U_VAL:
             # This is a U frame
@@ -106,6 +108,10 @@ class AX25Frame(object):
         return self._header
 
     @property
+    def control(self):
+        return self._control
+
+    @property
     def frame_payload(self):
         """
         Return the bytes in the frame payload (following the control byte)
@@ -127,9 +133,10 @@ class AX25RawFrame(AX25Frame):
     A representation of a raw AX.25 frame.
     """
 
-    def __init__(self, destination, source, repeaters=None,
+    def __init__(self, destination, source, control, repeaters=None,
             cr=False, payload=None):
         self._header = AX25FrameHeader(destination, source, repeaters, cr)
+        self._control = control
         self._payload = payload or b''
 
     def _encode(self):
