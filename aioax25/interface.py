@@ -151,7 +151,7 @@ class AX25Interface(object):
             self.received_msg.emit,
             interface=self, frame=frame))
 
-        destination = frame.destination
+        destination = frame.header.destination
         callsign = destination.callsign
         ssid = destination.ssid
 
