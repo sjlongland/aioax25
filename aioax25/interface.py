@@ -197,7 +197,7 @@ class AX25Interface(object):
         delay = self._cts_expiry - self._loop.time()
         if delay > 0:
             self._log.debug('Scheduling next transmission in %s', delay)
-            self._tx_pending = self._loop.call_later(self._tx_next)
+            self._tx_pending = self._loop.call_later(delay, self._tx_next)
         else:
             self._log.debug('Scheduling next transmission ASAP')
             self._tx_pending = self._loop.call_soon(self._tx_next)
