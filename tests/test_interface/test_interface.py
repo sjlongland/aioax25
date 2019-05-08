@@ -210,7 +210,7 @@ def test_receive_re_filter():
 
 
 @asynctest
-def test_receive_str_filter_ssid():
+def test_receive_re_filter_ssid():
     """
     Test matching messages can trigger regex filters (with SSID).
     """
@@ -337,9 +337,6 @@ def test_transmit_cancel():
             payload=b'testing')
 
     my_interface = AX25Interface(my_port)
-
-    # The time before transmission
-    time_before = time.monotonic()
 
     # Send the message
     my_interface.transmit(my_frame)
