@@ -241,3 +241,71 @@ def test_receive_str_filter_ssid():
 
     yield from receive_future
     assert len(unmatched_filter_received) == 0
+
+
+def test_reception_resets_cts():
+    """
+    Check the clear-to-send expiry is updated with received traffic.
+    """
+    my_port = DummyKISS()
+    my_frame = AX25UnnumberedInformationFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+            pid=0xf0,
+            payload=b'testing')
+
+    my_interface = AX25Interface(my_port)
+    cts_before = my_interface._cts_expiry
+
+    # Pass in a message
+    my_port.received.emit(frame=my_frame)
+    cts_after = my_interface._cts_expiry
+
+    assert cts_before < cts_after
+    assert cts_after > time.monotonic()
+
+
+@asynctest
+def test_transmit_waits_cts():
+    """
+    Test sending a message waits for the channel to be clear.
+    """
+    my_port = DummyKISS()
+    my_frame = AX25UnnumberedInformationFrame(
+            destination='VK4BWI-4',
+            source='VK4MSL',
+            pid=0xf0,
+            payload=b'testing')
+    transmit_future = Future()
+
+    my_interface = AX25Interface(my_port)
+
+    def _on_transmit(interface, frame, **kwargs):
+        try:
+            assert len(kwargs) == 0, 'Too many arguments'
+            assert interface is my_interface, 'Wrong interface'
+            assert frame is my_frame, 'Wrong frame'
+            transmit_future.set_result(None)
+        except Exception as e:
+            transmit_future.set_exception(e)
+
+    def _on_timeout():
+        transmit_future.set_exception(AssertionError('Timed out'))
+
+    # The time before transmission
+    time_before = time.monotonic()
+
+    # Set a timeout
+    get_event_loop().call_later(1.0, _on_timeout)
+
+    # Send the message
+    my_interface.transmit(my_frame, _on_transmit)
+
+    yield from transmit_future
+
+    assert len(my_port.sent) == 1
+    (send_time, sent_frame) = my_port.sent.pop(0)
+
+    assert sent_frame is my_frame
+    assert (time.monotonic() - send_time) < 0.01
+    assert (send_time - time_before) >= 0.5
