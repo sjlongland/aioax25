@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from aioax25.frame import AX25Address, AX25Frame, AX25RawFrame, \
+from aioax25.frame import AX25Frame, AX25RawFrame, \
         AX25UnnumberedInformationFrame, AX25FrameRejectFrame, \
         AX25UnnumberedFrame
 from nose.tools import eq_
@@ -143,7 +143,7 @@ def test_decode_ui():
     eq_(frame.pid, 0x11)
     hex_cmp(frame.payload, '22 33')
 
-def test_decode_frmr_len():
+def test_decode_ui_len():
     """
     Test that a UI must have at least one byte payload.
     """
