@@ -8,6 +8,7 @@ import logging
 import asyncio
 from functools import partial
 from .signal import Signal
+import re
 
 from .frame import AX25Frame, AX25UnnumberedInformationFrame, \
 		AX25Address, AX25FrameHeader
