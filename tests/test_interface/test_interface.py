@@ -22,6 +22,19 @@ class DummyKISS(object):
         self.sent.append((time.monotonic(), frame))
 
 
+class UnreliableDummyKISS(DummyKISS):
+    def __init__(self):
+        super(UnreliableDummyKISS, self).__init__()
+        self.send_calls = 0
+
+    def send(self, frame):
+        self.send_calls += 1
+        if self.send_calls == 1:
+            raise IOError('Whoopsie')
+        super(UnreliableDummyKISS, self).send(frame)
+
+
+
 @asynctest
 def test_received_msg_signal():
     """
@@ -388,3 +401,58 @@ def test_transmit_sends_immediate_if_cts():
     assert sent_frame is my_frame
     assert (time.monotonic() - send_time) < 0.01
     assert (send_time - time_before) < 0.01
+
+
+@asynctest
+def test_transmit_handles_failure():
+    """
+    Test transmit failures don't kill the interface handling.
+    """
+    my_port = UnreliableDummyKISS()
+    my_frame_1 = AX25UnnumberedInformationFrame(
+            destination='VK4BWI-4',
+            source='VK4MSL',
+            pid=0xf0,
+            payload=b'testing 1')
+    my_frame_2 = AX25UnnumberedInformationFrame(
+            destination='VK4BWI-4',
+            source='VK4MSL',
+            pid=0xf0,
+            payload=b'testing 2')
+    transmit_future = Future()
+
+    my_interface = AX25Interface(my_port)
+
+    # Override clear to send expiry
+    my_interface._cts_expiry = 0
+
+    def _on_transmit(interface, frame, **kwargs):
+        try:
+            assert len(kwargs) == 0, 'Too many arguments'
+            assert interface is my_interface, 'Wrong interface'
+            assert frame is my_frame_2, 'Wrong frame'
+            transmit_future.set_result(None)
+        except Exception as e:
+            transmit_future.set_exception(e)
+
+    def _on_timeout():
+        transmit_future.set_exception(AssertionError('Timed out'))
+
+    # The time before transmission
+    time_before = time.monotonic()
+
+    # Set a timeout
+    get_event_loop().call_later(2.0, _on_timeout)
+
+    # Send the messages
+    my_interface.transmit(my_frame_1, _on_transmit) # This will fail
+    my_interface.transmit(my_frame_2, _on_transmit) # This will work
+
+    yield from transmit_future
+
+    assert len(my_port.sent) == 1
+    (send_time, sent_frame) = my_port.sent.pop(0)
+
+    assert sent_frame is my_frame_2
+    assert (time.monotonic() - send_time) < 0.01
+    assert (send_time - time_before) >= 0.50
