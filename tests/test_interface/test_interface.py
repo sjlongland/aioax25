@@ -5,7 +5,7 @@ from aioax25.interface import AX25Interface
 from aioax25.frame import AX25UnnumberedInformationFrame
 
 from ..async import asynctest
-from asyncio import Future, get_event_loop
+from asyncio import Future, get_event_loop, sleep
 
 import time
 
@@ -309,6 +309,36 @@ def test_transmit_waits_cts():
     assert sent_frame is my_frame
     assert (time.monotonic() - send_time) < 0.01
     assert (send_time - time_before) >= 0.5
+
+
+@asynctest
+def test_transmit_cancel():
+    """
+    Test that pending messages can be cancelled.
+    """
+    my_port = DummyKISS()
+    my_frame = AX25UnnumberedInformationFrame(
+            destination='VK4BWI-4',
+            source='VK4MSL',
+            pid=0xf0,
+            payload=b'testing')
+
+    my_interface = AX25Interface(my_port)
+
+    # The time before transmission
+    time_before = time.monotonic()
+
+    # Send the message
+    my_interface.transmit(my_frame)
+
+    # Cancel it!
+    my_interface.cancel_transmit(my_frame)
+
+    # Wait a second
+    yield from sleep(1)
+
+    # Nothing should have been sent.
+    assert len(my_port.sent) == 0
 
 
 @asynctest
