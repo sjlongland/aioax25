@@ -4,7 +4,7 @@
 Base KISS interface unit tests.
 """
 
-from aioax25.kiss import BaseKISSDevice, KISSDeviceState
+from aioax25.kiss import BaseKISSDevice, KISSDeviceState, KISSCommand
 from ..loop import DummyLoop
 
 from nose.tools import eq_
@@ -150,3 +150,55 @@ def test_receive_frame_empty():
 
     # It should leave the last FEND there and wait for more data.
     eq_(len(loop.calls), 0)
+
+def test_receive_frame_single():
+    """
+    Test _receive_frame hands a single frame to _dispatch_rx_frame.
+    """
+    loop = DummyLoop()
+    kissdev = DummyKISSDevice(
+            loop=loop, reset_on_close=True
+    )
+    kissdev._rx_buffer += b'\xc0\x00a single KISS frame\xc0'
+    kissdev._receive_frame()
+
+    # We should just have the last FEND
+    eq_(bytes(kissdev._rx_buffer), b'\xc0')
+
+    # We should have one call to _dispatch_rx_frame
+    eq_(len(loop.calls), 1)
+    (_, func, frame) = loop.calls.pop(0)
+    eq_(func, kissdev._dispatch_rx_frame)
+    assert isinstance(frame, KISSCommand)
+    eq_(frame.port, 0)
+    eq_(frame.cmd, 0)
+    eq_(frame.payload, b'a single KISS frame')
+
+def test_receive_frame_more():
+    """
+    Test _receive_frame calls itself when more data left.
+    """
+    loop = DummyLoop()
+    kissdev = DummyKISSDevice(
+            loop=loop, reset_on_close=True
+    )
+    kissdev._rx_buffer += b'\xc0\x00a single KISS frame\xc0more data'
+    kissdev._receive_frame()
+
+    # We should just have the left-over bit including the last FEND
+    eq_(bytes(kissdev._rx_buffer), b'\xc0more data')
+
+    # This should have generated two calls:
+    eq_(len(loop.calls), 2)
+
+    # We should have one call to _dispatch_rx_frame
+    (_, func, frame) = loop.calls.pop(0)
+    eq_(func, kissdev._dispatch_rx_frame)
+    assert isinstance(frame, KISSCommand)
+    eq_(frame.port, 0)
+    eq_(frame.cmd, 0)
+    eq_(frame.payload, b'a single KISS frame')
+
+    # We should have another to _receive_frame itself.
+    (_, func) = loop.calls.pop(0)
+    eq_(func, kissdev._receive_frame)
