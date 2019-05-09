@@ -9,6 +9,7 @@ import time
 from serial import EIGHTBITS, PARITY_NONE, STOPBITS_ONE
 
 from nose.tools import eq_, assert_less, assert_in
+from ..loop import DummyLoop
 
 class DummySerial(object):
     FILENO = 123
@@ -58,24 +59,6 @@ class DummySerial(object):
 
 # Stub the serial port class
 kiss.Serial = DummySerial
-
-
-class DummyLoop(object):
-    def __init__(self):
-        self.readers = {}
-        self.calls = []
-
-    def call_soon(self, callback, *args):
-        self.calls.append((time.monotonic(), callback) + args)
-
-    def call_later(self, delay, callback, *args):
-        self.calls.append((time.monotonic() + delay, callback) + args)
-
-    def add_reader(self, fileno, reader):
-        self.readers[fileno] = reader
-
-    def remove_reader(self, fileno):
-        self.readers.pop(fileno)
 
 
 def test_open():
