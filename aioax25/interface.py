@@ -106,7 +106,7 @@ class AX25Interface(object):
             call_receivers.pop(ssid)
 
         if len(call_receivers) == 0:
-            receivers.pop(key)
+            receivers.pop(callsign)
 
     def transmit(self, frame, callback=None):
         """
