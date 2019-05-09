@@ -249,13 +249,20 @@ class BaseKISSDevice(object):
         self._rx_buffer = self._rx_buffer[end:]
 
         if self._log.isEnabledFor(logging.DEBUG):
-            self._log.debug('RECEIVED FRAME %s', b2a_hex(frame).decode())
+            self._log.debug('RECEIVED FRAME %s, REMAINING %s',
+                    b2a_hex(frame).decode(),
+                    b2a_hex(self._rx_buffer).decode()
+            )
 
         # Two consecutive FEND bytes are valid, ignore these "empty" frames
         if len(frame) > 0:
             # Decode the frame
             self._loop.call_soon(self._dispatch_rx_frame,
                     KISSCommand.decode(frame))
+
+        # If we just have a FEND, stop here.
+        if bytes(self._rx_buffer) == bytearray([BYTE_FEND]):
+            return
 
         # If there is more to send, call ourselves via the IO loop
         if len(self._rx_buffer):
