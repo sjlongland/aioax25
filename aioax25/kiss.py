@@ -186,7 +186,7 @@ class BaseKISSDevice(object):
         self._loop = loop
         self._port = {}
         self._state = KISSDeviceState.CLOSED
-        self._reset_on_close = True
+        self._reset_on_close = reset_on_close
 
     def _receive(self, data):
         """
