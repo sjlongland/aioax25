@@ -7,7 +7,7 @@ Base KISS interface unit tests.
 from aioax25.kiss import BaseKISSDevice, KISSDeviceState, KISSCommand
 from ..loop import DummyLoop
 
-from nose.tools import eq_
+from nose.tools import eq_, assert_is
 
 
 class DummyKISSDevice(BaseKISSDevice):
@@ -202,3 +202,54 @@ def test_receive_frame_more():
     # We should have another to _receive_frame itself.
     (_, func) = loop.calls.pop(0)
     eq_(func, kissdev._receive_frame)
+
+def test_dispatch_rx_invalid_port():
+    """
+    Test that _dispatch_rx_port to an undefined port drops the frame.
+    """
+    loop = DummyLoop()
+    kissdev = DummyKISSDevice(loop=loop)
+    kissdev._dispatch_rx_frame(
+            KISSCommand(cmd=10, port=14, payload=b'this should be dropped')
+    )
+
+def test_dispatch_rx_exception():
+    """
+    Test that _dispatch_rx_port drops frame on exception.
+    """
+    class DummyPort(object):
+        def _receive_frame(self, frame):
+            raise IOError('Whoopsie')
+
+    port = DummyPort()
+    loop = DummyLoop()
+    kissdev = DummyKISSDevice(loop=loop)
+    kissdev._port[14] = port
+
+    # Deliver the frame
+    frame = KISSCommand(cmd=10, port=14, payload=b'this should be dropped')
+    kissdev._dispatch_rx_frame(frame)
+
+def test_dispatch_rx_valid_port():
+    """
+    Test that _dispatch_rx_port to a known port delivers to that port.
+    """
+    class DummyPort(object):
+        def __init__(self):
+            self.frames = []
+
+        def _receive_frame(self, frame):
+            self.frames.append(frame)
+
+    port = DummyPort()
+    loop = DummyLoop()
+    kissdev = DummyKISSDevice(loop=loop)
+    kissdev._port[14] = port
+
+    # Deliver the frame
+    frame = KISSCommand(cmd=10, port=14, payload=b'this should be delivered')
+    kissdev._dispatch_rx_frame(frame)
+
+    # Our port should have the frame
+    eq_(len(port.frames), 1)
+    assert_is(port.frames[0], frame)
