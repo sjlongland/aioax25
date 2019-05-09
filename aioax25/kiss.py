@@ -90,7 +90,10 @@ class KISSCommand(object):
         last = None
         for byte in data:
             if byte == BYTE_FESC:
-                last = BYTE_FESC
+                if last == BYTE_FESC:
+                    yield last
+                else:
+                    last = BYTE_FESC
             elif last == BYTE_FESC:
                 if byte == BYTE_TFEND:
                     yield BYTE_FEND
@@ -99,6 +102,7 @@ class KISSCommand(object):
                 else:
                     yield last
                     yield byte
+                last = None
             else:
                 yield byte
 
