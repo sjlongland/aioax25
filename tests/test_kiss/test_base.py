@@ -82,3 +82,54 @@ def test_close_reset():
     # A call to _send_data should be pending
     (_, func) = loop.calls.pop()
     eq_(func, kissdev._send_data)
+
+def test_receive():
+    """
+    Test that a call to _receive stashes the data then schedules _receive_frame.
+    """
+    loop = DummyLoop()
+    kissdev = DummyKISSDevice(
+            loop=loop, reset_on_close=True
+    )
+    kissdev._receive(b'test incoming data')
+
+    # Data should be waiting
+    eq_(bytes(kissdev._rx_buffer), b'test incoming data')
+
+    # A call to _receive_frame should be pending
+    (_, func) = loop.calls.pop()
+    eq_(func, kissdev._receive_frame)
+
+def test_receive_frame_invalid():
+    """
+    Test _receive_frame discards everything up to the first FEND byte.
+    """
+    loop = DummyLoop()
+    kissdev = DummyKISSDevice(
+            loop=loop, reset_on_close=True
+    )
+    kissdev._rx_buffer += b'this should be discarded\xc0this should be kept'
+    kissdev._receive_frame()
+
+    # We should just have the data including and following the FEND
+    eq_(bytes(kissdev._rx_buffer), b'\xc0this should be kept')
+
+    # As there's no complete frames, no calls should be scheduled
+    eq_(len(loop.calls), 0)
+
+def test_receive_frame_empty():
+    """
+    Test _receive_frame discards empty frames.
+    """
+    loop = DummyLoop()
+    kissdev = DummyKISSDevice(
+            loop=loop, reset_on_close=True
+    )
+    kissdev._rx_buffer += b'\xc0\xc0'
+    kissdev._receive_frame()
+
+    # We should just have the last FEND
+    eq_(bytes(kissdev._rx_buffer), b'\xc0')
+
+    # It should leave the last FEND there and wait for more data.
+    eq_(len(loop.calls), 0)
