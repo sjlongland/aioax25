@@ -100,7 +100,24 @@ def test_receive():
     (_, func) = loop.calls.pop()
     eq_(func, kissdev._receive_frame)
 
-def test_receive_frame_invalid():
+def test_receive_frame_garbage():
+    """
+    Test _receive_frame discards all data when no FEND byte found.
+    """
+    loop = DummyLoop()
+    kissdev = DummyKISSDevice(
+            loop=loop, reset_on_close=True
+    )
+    kissdev._rx_buffer += b'this should be discarded'
+    kissdev._receive_frame()
+
+    # We should just have the data including and following the FEND
+    eq_(bytes(kissdev._rx_buffer), b'')
+
+    # As there's no complete frames, no calls should be scheduled
+    eq_(len(loop.calls), 0)
+
+def test_receive_frame_garbage_start():
     """
     Test _receive_frame discards everything up to the first FEND byte.
     """
