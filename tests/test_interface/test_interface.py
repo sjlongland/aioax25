@@ -8,6 +8,7 @@ from ..async import asynctest
 from asyncio import Future, get_event_loop, sleep
 
 import time
+import re
 
 
 class DummyKISS(object):
@@ -254,6 +255,51 @@ def test_receive_re_filter_ssid():
 
     yield from receive_future
     assert len(unmatched_filter_received) == 0
+
+
+def test_unbind_str():
+    """
+    Test unbinding a string receiver removes the receiver and cleans up.
+    """
+    my_port = DummyKISS()
+    my_interface = AX25Interface(my_port)
+
+    my_receiver = lambda **k : None
+
+    # Inject a receiver
+    my_interface._receiver_str = {
+            'MYCALL': {
+                12: [
+                    my_receiver
+                ]
+            }
+    }
+    my_interface.unbind(my_receiver, 'MYCALL', ssid=12)
+
+    # This should now be empty
+    assert len(my_interface._receiver_str) == 0
+
+def test_unbind_re():
+    """
+    Test unbinding a regex receiver removes the receiver and cleans up.
+    """
+    my_port = DummyKISS()
+    my_interface = AX25Interface(my_port)
+
+    my_receiver = lambda **k : None
+
+    # Inject a receiver
+    my_interface._receiver_re = {
+            r'^MY': (re.compile(r'^MY'), {
+                12: [
+                    my_receiver
+                ]
+            })
+    }
+    my_interface.unbind(my_receiver, r'^MY', ssid=12, regex=True)
+
+    # This should now be empty
+    assert len(my_interface._receiver_re) == 0
 
 
 def test_reception_resets_cts():
