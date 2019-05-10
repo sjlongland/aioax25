@@ -7,6 +7,8 @@ from aioax25.frame import AX25UnnumberedInformationFrame
 from ..async import asynctest
 from asyncio import Future, get_event_loop, sleep
 
+from nose.tools import assert_greater, assert_less
+
 import time
 import re
 
@@ -320,9 +322,8 @@ def test_reception_resets_cts():
     my_port.received.emit(frame=bytes(my_frame))
     cts_after = my_interface._cts_expiry
 
-    assert cts_before < cts_after
-    assert cts_after > time.monotonic()
-
+    assert_less(cts_before, cts_after)
+    assert_greater(cts_after, time.monotonic())
 
 @asynctest
 def test_transmit_waits_cts():
@@ -367,7 +368,7 @@ def test_transmit_waits_cts():
 
     assert bytes(sent_frame) == bytes(my_frame)
     assert (time.monotonic() - send_time) < 0.01
-    assert (send_time - time_before) >= 0.5
+    assert (send_time - time_before) >= 0.25
 
 
 @asynctest
@@ -498,4 +499,4 @@ def test_transmit_handles_failure():
 
     assert bytes(sent_frame) == bytes(my_frame_2)
     assert (time.monotonic() - send_time) < 0.01
-    assert (send_time - time_before) >= 0.50
+    assert (send_time - time_before) >= 0.25
