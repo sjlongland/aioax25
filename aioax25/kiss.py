@@ -6,9 +6,8 @@ KISS-based TNCs, managing the byte stuffing/unstuffing.
 """
 
 from enum import Enum
-from asyncio import Protocol, get_event_loop
+from asyncio import get_event_loop
 from serial import Serial, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
-from weakref import WeakValueDictionary
 from .signal import Signal
 from binascii import b2a_hex
 import logging
