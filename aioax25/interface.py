@@ -6,6 +6,7 @@ AX.25 Interface handler
 
 import logging
 import asyncio
+import random
 from functools import partial
 from .signal import Signal
 import re
@@ -19,11 +20,12 @@ class AX25Interface(object):
     The interface handles basic queueing and routing of message traffic.
 
     Outgoing messages are queued and sent when there is a break of greater
-    than the cts_delay (500ms).  Messages may be cancelled prior to
-    transmission.
+    than the cts_delay (250ms) + a randomisation factor (cts_rand).
+    Messages may be cancelled prior to transmission.
     """
 
-    def __init__(self, kissport, cts_delay=0.5, log=None, loop=None):
+    def __init__(self, kissport, cts_delay=0.25,
+            cts_rand=0.25, log=None, loop=None):
         if log is None:
             log = logging.getLogger(self.__class__.__module__)
 
@@ -38,11 +40,14 @@ class AX25Interface(object):
         self._tx_queue = []
         self._tx_pending = None
 
-        # Clear-to-send delay
+        # Clear-to-send delay and randomisation factor
         self._cts_delay = cts_delay
+        self._cts_rand = cts_rand
 
         # Clear-to-send expiry
-        self._cts_expiry = loop.time() + cts_delay
+        self._cts_expiry = loop.time() \
+                + cts_delay \
+                + (random.random() * cts_rand)
 
         # Receivers
         self._receiver_str = {}
@@ -131,7 +136,8 @@ class AX25Interface(object):
         """
         Reset the clear-to-send timer.
         """
-        self._cts_expiry = self._loop.time() + self._cts_delay
+        self._cts_expiry = self._loop.time() \
+                + self._cts_delay + (random.random() * self._cts_rand)
         self._log.debug('Clear-to-send expiry at %s', self._cts_expiry)
         if self._tx_pending:
             # We were waiting for a clear-to-send, so re-schedule.
