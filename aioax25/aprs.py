@@ -92,8 +92,8 @@ class APRSHandler(object):
             listen_altnets=None,
             # Maximum message ID modulo function
             msgid_modulo=1000,
-            # Number of message hashes to store and compare against
-            deduplication_hashes=10,
+            # Length of time in seconds before duplicates expire
+            deduplication_expiry=28,
             # Logger and IOLoop instance
             log=None, loop=None):
         if log is None:
@@ -144,45 +144,16 @@ class APRSHandler(object):
         # Pending messages, by addressee and message ID
         self._pending_msg = {}
 
-        # Last N recent messages, in order
-        self._last_msgs_ordered = []
-        # and as a set
-        self._last_msgs_set = set()
-        # Number of messages to keep
-        self._last_msgs_size = deduplication_hashes
+        # The messages seen in the last `deduplication_expiry` seconds
+        self._msg_expiry = {}
+        # Length of time to keep message hashes
+        self._deduplication_expiry = deduplication_expiry
+        # Time-out handle for deduplication
+        self._deduplication_timeout = None
 
     @property
     def mycall(self):
         return self._mycall.copy()
-
-    def _hash_frame(self, frame):
-        """
-        Generate a hash of the given frame.
-        """
-        framehash = sha256()
-        framehash.update(bytes(frame.header.destination))
-        framehash.update(bytes(frame.header.source))
-        framehash.update(bytes(frame.control))
-        framehash.update(bytes(frame.frame_payload))
-        return framehash.digest()
-
-    def _test_or_add_frame(self, frame):
-        """
-        Hash the given frame, and test to see if it has been seen.
-        """
-        framedigest = self._hash_frame(frame)
-        if framedigest in self._last_msgs_set:
-            # We've seen this before.
-            return True
-
-        self._last_msgs_ordered.append(framedigest)
-        self._last_msgs_set.add(framedigest)
-        if len(self._last_msgs_ordered) > self._last_msgs_size:
-            # Pop the first message received
-            dropdigest = self._last_msgs_ordered.pop(0)
-            self._last_msgs_set.discard(dropdigest)
-
-        return False
 
     def send_message(self, addressee, message, path=None, oneshot=False):
         """
@@ -230,6 +201,63 @@ class APRSHandler(object):
                 message='%s%s' % ('ack' if ack else 'rej', message.msgid),
                 oneshot=True
         )
+
+    @classmethod
+    def _hash_frame(cls, frame):
+        """
+        Generate a hash of the given frame.
+        """
+        framehash = sha256()
+        framehash.update(bytes(frame.header.destination))
+        framehash.update(bytes(frame.header.source))
+        framehash.update(bytes(frame.control))
+        framehash.update(bytes(frame.frame_payload))
+        return framehash.digest()
+
+    def _test_or_add_frame(self, frame):
+        """
+        Hash the given frame, and test to see if it has been seen.
+        """
+        framedigest = self._hash_frame(frame)
+        expiry = self._msg_expiry.get(framedigest, 0)
+        if expiry > self._loop.time():
+            # We've seen this before.
+            return True
+
+        self._msg_expiry[framedigest] = \
+                self._loop.time() + self._deduplication_expiry
+        self._loop.call_soon(self._schedule_dedup_cleanup)
+        return False
+
+    def _schedule_dedup_cleanup(self):
+        """
+        Schedule a clean-up.
+        """
+        if len(self._msg_expiry) == 0:
+            return
+
+        if self._deduplication_timeout is not None:
+            self._deduplication_timeout.cancel()
+            self._deduplication_timeout = None
+
+        delay = min(self._msg_expiry.values()) - self._loop.time()
+        if delay > 0:
+            self._deduplication_timeout = \
+                    self._loop.call_later(delay, self._dedup_cleanup)
+        else:
+            self._loop.call_soon(self._dedup_cleanup)
+
+    def _dedup_cleanup(self):
+        """
+        Clean up the duplicated message cache.
+        """
+        now = self._loop.time()
+        self._deduplication_timeout = None
+        for digest, time in list(self._msg_expiry.items()):
+            if time < now:
+                self._msg_expiry.pop(digest, None)
+
+        self._loop.call_soon(self._schedule_dedup_cleanup)
 
     def _on_receive_msg(self, frame):
         """
