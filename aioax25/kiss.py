@@ -178,7 +178,9 @@ class BaseKISSDevice(object):
     Base class for a KISS device.  This may have between 1 and 16 KISS
     ports hanging off it.
     """
-    def __init__(self, reset_on_close=True, log=None, loop=None):
+    def __init__(self, reset_on_close=True,
+            send_block_size=128, send_block_delay=0.1,
+            log=None, loop=None):
         if log is None:
             log = logging.getLogger(self.__class__.__module__)
         if loop is None:
@@ -191,6 +193,8 @@ class BaseKISSDevice(object):
         self._port = {}
         self._state = KISSDeviceState.CLOSED
         self._reset_on_close = reset_on_close
+        self._send_block_size = send_block_size
+        self._send_block_delay = send_block_delay
 
     def _receive(self, data):
         """
@@ -298,8 +302,8 @@ class BaseKISSDevice(object):
         """
         Send the next block of data waiting in the buffer.
         """
-        data = self._tx_buffer[:128]
-        self._tx_buffer = self._tx_buffer[128:]
+        data = self._tx_buffer[:self._send_block_size]
+        self._tx_buffer = self._tx_buffer[self._send_block_size:]
 
         if self._log.isEnabledFor(logging.DEBUG):
             self._log.debug('XMIT RAW %r', b2a_hex(data).decode())
@@ -307,11 +311,13 @@ class BaseKISSDevice(object):
         self._send_raw_data(data)
 
         # If we are closing, wait for this to be sent
-        if self._state == KISSDeviceState.CLOSING:
+        if (self._state == KISSDeviceState.CLOSING) and \
+                (len(self._tx_buffer) == 0):
             self._close()
+            return
 
         if self._tx_buffer:
-            self._loop.call_later(0.1, self._send_data)
+            self._loop.call_later(self._send_block_delay, self._send_data)
 
     def _init_kiss(self):
         assert self.state == KISSDeviceState.OPENING, \
