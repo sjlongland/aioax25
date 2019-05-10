@@ -136,8 +136,14 @@ class AX25Interface(object):
         """
         Reset the clear-to-send timer.
         """
-        self._cts_expiry = self._loop.time() \
+        cts_expiry = self._loop.time() \
                 + self._cts_delay + (random.random() * self._cts_rand)
+
+        # Ensure CTS expiry never goes backwards!
+        while cts_expiry < self._cts_expiry:
+            cts_expiry += (random.random() * self._cts_rand)
+        self._cts_expiry = cts_expiry
+
         self._log.debug('Clear-to-send expiry at %s', self._cts_expiry)
         if self._tx_pending:
             # We were waiting for a clear-to-send, so re-schedule.
