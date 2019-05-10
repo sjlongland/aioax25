@@ -52,8 +52,8 @@ class APRSDataType(Enum):
 class APRSHandler(object):
     def __init__(self, kissint, mycall,
             # Retransmission parameters
-            retransmit_count=4, retransmit_timeout_base=5,
-            retransmit_timeout_rand=5, retransmit_timeout_scale=1.5,
+            retransmit_count=4, retransmit_timeout_base=30,
+            retransmit_timeout_rand=10, retransmit_timeout_scale=1.5,
             # Destination call to use for our traffic
             aprs_destination='APZAIO',
             # Path to use when sending APRS messages
