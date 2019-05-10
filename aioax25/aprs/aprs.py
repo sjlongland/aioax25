@@ -16,7 +16,7 @@ from .message import APRSMessageHandler, \
 
 
 class APRSHandler(object):
-    def __init__(self, kissint, mycall,
+    def __init__(self, ax25int, mycall,
             # Retransmission parameters
             retransmit_count=4, retransmit_timeout_base=30,
             retransmit_timeout_rand=10, retransmit_timeout_scale=1.5,
@@ -77,15 +77,16 @@ class APRSHandler(object):
         self._retransmit_count = retransmit_count
 
         # AX.25 set-up
-        self._kissint = kissint
+        self._ax25int = ax25int
         self._mycall = AX25Address.decode(mycall).normalised
 
-        # Bind to receive traffic:
+        # Bind to receive traffic (direct, standard APRS destinations, and
+        # user-defined alt-nets):
         for spec in [
                 dict(callsign=self._mycall.callsign,
                     ssid=self._mycall.ssid, regex=False)
                 ] + listen_destinations + (listen_altnets or []):
-            kissint.bind(self._on_receive_msg, **spec)
+            self._ax25int.bind(self._on_receive_msg, **spec)
 
         # Message ID counter
         self._msgid = 0
@@ -266,7 +267,7 @@ class APRSHandler(object):
         """
         self._log.info('Sending %s', message)
         try:
-            self._kissint.transmit(message)
+            self._ax25int.transmit(message)
         except:
             self._log.exception('Failed to send %s', message)
 
