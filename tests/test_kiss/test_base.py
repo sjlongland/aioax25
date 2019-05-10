@@ -4,7 +4,7 @@
 Base KISS interface unit tests.
 """
 
-from aioax25.kiss import BaseKISSDevice, KISSDeviceState, KISSCommand
+from aioax25.kiss import BaseKISSDevice, KISSDeviceState, KISSCommand, KISSPort
 from ..loop import DummyLoop
 
 from nose.tools import eq_, assert_is, assert_greater, assert_less
@@ -351,3 +351,31 @@ def test_send_data_block_size():
 
     # No close call made yet
     eq_(kissdev.close_calls, 0)
+
+def test_init_kiss():
+    """
+    Test _init_kiss blindly sends the 'INT KISS' command.
+    """
+    loop = DummyLoop()
+    kissdev = DummyKISSDevice(loop=loop)
+
+    # Force state
+    kissdev._state = KISSDeviceState.OPENING
+
+    # Initialise the KISS device
+    kissdev._init_kiss()
+
+    # We should see the initialisation commands
+    eq_(bytes(kissdev.transmitted), b'\rINT KISS\rRESET\r')
+
+    # We should now be in the open state
+    eq_(kissdev.state, KISSDeviceState.OPEN)
+
+def test_getitem():
+    """
+    Test __getitem__ returns a port instance.
+    """
+    kissdev = DummyKISSDevice(loop=DummyLoop())
+    port = kissdev[7]
+    assert isinstance(port, KISSPort)
+    assert_is(kissdev._port[7], port)
