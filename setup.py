@@ -6,7 +6,6 @@ from aioax25 import __version__
 requirements = [
         'pyserial',
         'signalslot',
-        'aprslib',
 ]
 
 setup(
@@ -18,6 +17,7 @@ setup(
         license='GPL-2.0-or-later',
         packages=[
             'aioax25',
+            'aioax25.aprs',
         ],
         requires=requirements,
         install_requires=requirements

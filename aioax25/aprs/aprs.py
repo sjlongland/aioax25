@@ -9,11 +9,11 @@ import weakref
 import random
 import asyncio
 import logging
-from signal import Signal
+from ..signal import Signal
 from hashlib import sha256
 from enum import Enum
 
-from aioax25.frame import AX25UnnumberedInformationFrame, AX25Address
+from ..frame import AX25UnnumberedInformationFrame, AX25Address
 
 
 # APRS data types
