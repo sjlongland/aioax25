@@ -10,8 +10,7 @@ from functools import partial
 from .signal import Signal
 import re
 
-from .frame import AX25Frame, AX25UnnumberedInformationFrame, \
-		AX25Address, AX25FrameHeader
+from .frame import AX25Frame
 
 
 class AX25Interface(object):
@@ -142,6 +141,8 @@ class AX25Interface(object):
         """
         Handle an incoming message.
         """
+        # Decode from raw bytes
+        frame = AX25Frame.decode(frame)
         self._log.debug('Handling incoming frame %s', frame)
 
         # Reset our CTS expiry since we just received a message.
