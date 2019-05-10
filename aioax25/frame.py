@@ -94,6 +94,10 @@ class AX25Frame(object):
         # Send the control byte
         yield self._control
 
+        # Send the payload
+        for byte in self.frame_payload:
+            yield byte
+
     def __bytes__(self):
         """
         Encode the AX.25 frame
@@ -139,23 +143,15 @@ class AX25RawFrame(AX25Frame):
         self._control = control
         self._payload = payload or b''
 
-    def _encode(self):
-        # Send the header
-        for byte in super(AX25RawFrame, self)._encode():
-            yield byte
-
-        # Send the payload
-        for byte in self._payload:
-            yield byte
-
     @property
-    def payload(self):
+    def frame_payload(self):
         return self._payload
 
     def _copy(self):
         return self.__class__(
                 destination=self.header.destination,
                 source=self.header.source,
+                control=self.control,
                 repeaters=self.header.repeaters,
                 cr=self.header.cr,
                 payload=self.payload
@@ -265,15 +261,6 @@ class AX25UnnumberedInformationFrame(AX25UnnumberedFrame):
         self._pid = int(pid) & 0xff
         self._payload = bytes(payload)
 
-    def _encode(self):
-        for byte in super(AX25UnnumberedInformationFrame, self)._encode():
-            yield byte
-
-        yield self._pid
-
-        for byte in self._payload:
-            yield byte
-
     @property
     def pid(self):
         return self._pid
@@ -281,6 +268,10 @@ class AX25UnnumberedInformationFrame(AX25UnnumberedFrame):
     @property
     def payload(self):
         return self._payload
+
+    @property
+    def frame_payload(self):
+        return bytearray([self.pid]) + self.payload
 
     def __str__(self):
         return '%s: PID=0x%02x Payload=%r' % (
@@ -366,10 +357,11 @@ class AX25FrameRejectFrame(AX25UnnumberedFrame):
         self._vr = int(vr)
         self._vs = int(vs)
 
-    def _encode(self):
-        for byte in super(AX25FrameRejectFrame, self)._encode():
-            yield byte
+    @property
+    def frame_payload(self):
+        return bytes(self._gen_frame_payload())
 
+    def _gen_frame_payload(self):
         wxyz = 0
         if self._w:
             wxyz |= self.W_MASK
@@ -430,8 +422,7 @@ class AX25FrameRejectFrame(AX25UnnumberedFrame):
                 w=self.w, x=self.x, y=self.y, z=self.z,
                 frmr_cr=self.frmr_cr, vr=self.vr, vs=self.vs,
                 frmr_control=self.frmr_control,
-                cr=self.header.cr, pf=self.pf,
-                payload=self.payload
+                cr=self.header.cr, pf=self.pf
         )
 
 

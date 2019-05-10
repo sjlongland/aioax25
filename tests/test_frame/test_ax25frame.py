@@ -36,7 +36,7 @@ def test_decode_iframe():
     )
     assert isinstance(frame, AX25RawFrame), 'Did not decode to raw frame'
     eq_(frame.control, 0x00)
-    hex_cmp(frame.payload, '11 22 33 44 55 66 77')
+    hex_cmp(frame.frame_payload, '11 22 33 44 55 66 77')
 
 def test_decode_sframe():
     """
@@ -52,7 +52,7 @@ def test_decode_sframe():
     )
     assert isinstance(frame, AX25RawFrame), 'Did not decode to raw frame'
     eq_(frame.control, 0x01)
-    hex_cmp(frame.payload, '11 22 33 44 55 66 77')
+    hex_cmp(frame.frame_payload, '11 22 33 44 55 66 77')
 
 def test_decode_uframe():
     """
