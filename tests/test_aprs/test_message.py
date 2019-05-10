@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import logging
+import gc
 
 from nose.tools import eq_, assert_greater
 
@@ -45,6 +46,9 @@ def test_msghandler_abort_on_no_aprshandler():
 
     # Blow away the APRS handler
     del aprshandler
+
+    # Force garbage collection for pypy's sake.
+    gc.collect()
 
     # Message handler is still in the INIT state
     eq_(msghandler.state, msghandler.HandlerState.INIT)
