@@ -7,7 +7,7 @@ Base KISS interface unit tests.
 from aioax25.kiss import BaseKISSDevice, KISSDeviceState, KISSCommand
 from ..loop import DummyLoop
 
-from nose.tools import eq_, assert_is
+from nose.tools import eq_, assert_is, assert_greater, assert_less
 
 
 class DummyKISSDevice(BaseKISSDevice):
@@ -253,3 +253,101 @@ def test_dispatch_rx_valid_port():
     # Our port should have the frame
     eq_(len(port.frames), 1)
     assert_is(port.frames[0], frame)
+
+def test_send_data():
+    """
+    Test that _send_data sends whatever data is buffered up to the block size.
+    """
+    loop = DummyLoop()
+    kissdev = DummyKISSDevice(loop=loop)
+    kissdev._tx_buffer += b'test output data'
+
+    # Send the data out.
+    kissdev._send_data()
+
+    # We should now see this was "sent" and now in 'transmitted'
+    eq_(bytes(kissdev.transmitted), b'test output data')
+
+    # That should be the lot
+    eq_(len(loop.calls), 0)
+
+def test_send_data_block_size():
+    """
+    Test that _send_data re-schedules itself when buffer exceeds block size
+    """
+    loop = DummyLoop()
+    kissdev = DummyKISSDevice(loop=loop, send_block_size=4, send_block_delay=1)
+    kissdev._tx_buffer += b'test output data'
+
+    # Send the data out.
+    kissdev._send_data()
+
+    # We should now see the first block was "sent" and now in 'transmitted'
+    eq_(bytes(kissdev.transmitted), b'test')
+
+    # The rest should be waiting
+    eq_(bytes(kissdev._tx_buffer), b' output data')
+
+    # There should be a pending call to send more:
+    eq_(len(loop.calls), 1)
+    (calltime, callfunc) = loop.calls.pop(0)
+
+    # It'll be roughly in a second's time calling the same function
+    assert_greater(calltime - loop.time(), 0.990)
+    assert_less(calltime - loop.time(), 1.0)
+    eq_(callfunc, kissdev._send_data)
+
+def test_send_data_close_after_send():
+    """
+    Test that _send_data when closing the device, closes after last send
+    """
+    loop = DummyLoop()
+    kissdev = DummyKISSDevice(loop=loop)
+    kissdev._tx_buffer += b'test output data'
+
+    # Force state
+    kissdev._state = KISSDeviceState.CLOSING
+
+    # No close call made yet
+    eq_(kissdev.close_calls, 0)
+
+    # Send the data out.
+    kissdev._send_data()
+
+    # We should now see the first block was "sent" and now in 'transmitted'
+    eq_(bytes(kissdev.transmitted), b'test output data')
+
+    # The device should now be closed.
+    eq_(kissdev.close_calls, 1)
+
+def test_send_data_block_size():
+    """
+    Test that _send_data waits until all data sent before closing.
+    """
+    loop = DummyLoop()
+    kissdev = DummyKISSDevice(loop=loop, send_block_size=4, send_block_delay=1)
+    kissdev._tx_buffer += b'test output data'
+
+    # Force state
+    kissdev._state = KISSDeviceState.CLOSING
+
+    # Send the data out.
+    kissdev._send_data()
+
+    # We should now see the first block was "sent" and now in 'transmitted'
+    eq_(bytes(kissdev.transmitted), b'test')
+
+    # The rest should be waiting
+    eq_(bytes(kissdev._tx_buffer), b' output data')
+
+    # There should be a pending call to send more:
+    eq_(len(loop.calls), 1)
+    (calltime, callfunc) = loop.calls.pop(0)
+
+    # It'll be roughly in a second's time calling the same function
+    assert_greater(calltime - loop.time(), 0.990)
+    assert_less(calltime - loop.time(), 1.0)
+    eq_(callfunc, kissdev._send_data)
+
+    # No close call made yet
+    eq_(kissdev.close_calls, 0)
