@@ -5,16 +5,15 @@ APRS messaging handler.
 """
 
 import re
-import enum
 import weakref
 import random
 import asyncio
 import logging
-import signalslot
+from signal import Signal
+from hashlib import sha256
 from enum import Enum
 
-from aioax25.frame import AX25Frame, AX25UnnumberedInformationFrame, \
-		AX25Address, AX25FrameHeader
+from aioax25.frame import AX25UnnumberedInformationFrame, AX25Address
 
 
 # APRS data types
@@ -51,11 +50,52 @@ class APRSDataType(Enum):
 
 
 class APRSHandler(object):
-    def __init__(self, kissport, mycall, digipeating=True,
-            mydigi=['WIDE1-1', 'WIDE2-1'], retransmit_count=4,
-            retransmit_timeout_base=5, retransmit_timeout_rand=5,
-            retransmit_timeout_scale=1.5, aprs_destination='APRS',
-            aprs_path=['WIDE1-1','WIDE2-1'], log=None, loop=None):
+    def __init__(self, kissint, mycall,
+            # Retransmission parameters
+            retransmit_count=4, retransmit_timeout_base=5,
+            retransmit_timeout_rand=5, retransmit_timeout_scale=1.5,
+            # Destination call to use for our traffic
+            aprs_destination='APZAIO',
+            # Path to use when sending APRS messages
+            aprs_path=['WIDE1-1','WIDE2-1'],
+            # AX.25 destination SSIDs to listen for
+            listen_destinations=[
+                # APRS 1.0.1 protocol specification page 13
+                dict(callsign='^AIR',   regex=True,     ssid=None), # Legacy
+                dict(callsign='^ALL',   regex=True,     ssid=None),
+                dict(callsign='^AP',    regex=True,     ssid=None),
+                dict(callsign='BEACON', regex=False,    ssid=None),
+                dict(callsign='^CQ',    regex=True,     ssid=None),
+                dict(callsign='^GPS',   regex=True,     ssid=None),
+                dict(callsign='^DF',    regex=True,     ssid=None),
+                dict(callsign='^DGPS',  regex=True,     ssid=None),
+                dict(callsign='^DRILL', regex=True,     ssid=None),
+                dict(callsign='^ID',    regex=True,     ssid=None),
+                dict(callsign='^JAVA',  regex=True,     ssid=None),
+                dict(callsign='^MAIL',  regex=True,     ssid=None),
+                dict(callsign='^MICE',  regex=True,     ssid=None),
+                dict(callsign='^QST',   regex=True,     ssid=None),
+                dict(callsign='^QTH',   regex=True,     ssid=None),
+                dict(callsign='^RTCM',  regex=True,     ssid=None),
+                dict(callsign='^SKY',   regex=True,     ssid=None),
+                dict(callsign='^SPACE', regex=True,     ssid=None),
+                dict(callsign='^SPC',   regex=True,     ssid=None),
+                dict(callsign='^SYM',   regex=True,     ssid=None),
+                dict(callsign='^TEL',   regex=True,     ssid=None),
+                dict(callsign='^TEST',  regex=True,     ssid=None),
+                dict(callsign='^TLM',   regex=True,     ssid=None),
+                dict(callsign='^WX',    regex=True,     ssid=None),
+                dict(callsign='^ZIP',   regex=True,     ssid=None)  # Legacy
+            ],
+            # listen_altnets uses the same format as listen_destinations
+            # and adds *additional* altnets using the same specification
+            listen_altnets=None,
+            # Maximum message ID modulo function
+            msgid_modulo=1000,
+            # Number of message hashes to store and compare against
+            deduplication_hashes=10,
+            # Logger and IOLoop instance
+            log=None, loop=None):
         if log is None:
             log = logging.getLogger(self.__class__.__module__)
         if loop is None:
@@ -71,24 +111,21 @@ class APRSHandler(object):
         self._retransmit_count = retransmit_count
 
         # AX.25 set-up
-        self._kissport = kissport
+        self._kissint = kissint
         self._mycall = AX25Address.decode(mycall).normalised
-        kissport.received.connect(self._on_receive_frame)
+
+        # Bind to receive traffic:
+        for spec in [
+                dict(callsign=self._mycall.callsign,
+                    ssid=self._mycall.ssid, regex=False)
+                ] + listen_destinations + (listen_altnets or []):
+            kissint.bind(self._on_receive_msg, **spec)
 
         # Message ID counter
         self._msgid = 0
 
-        if digipeating:
-            self._mydigi = set([
-                AX25Address.decode(call).normalised
-                for call
-                in (mydigi or [])
-            ])
-
-            self._mydigi.add(self._mycall)
-        else:
-            # Empty set, will disable digipeating
-            self._mydigi = set()
+        # Message ID modulo
+        self._msgid_modulo = msgid_modulo
 
         # APRS destination address for broadcast messages
         self._aprs_destination = AX25Address.decode(
@@ -102,57 +139,50 @@ class APRSHandler(object):
         ]
 
         # Signal for emitting new messages
-        self.received_msg = signalslot.Signal()
+        self.received_msg = Signal()
 
         # Pending messages, by addressee and message ID
         self._pending_msg = {}
+
+        # Last N recent messages, in order
+        self._last_msgs_ordered = []
+        # and as a set
+        self._last_msgs_set = set()
+        # Number of messages to keep
+        self._last_msgs_size = deduplication_hashes
 
     @property
     def mycall(self):
         return self._mycall.copy()
 
-    def _on_receive_frame(self, frame):
+    def _hash_frame(self, frame):
         """
-        Raw frame handler.  Decodes the raw AX.25 message encoded in the
-        given bytestring and processes the destination.
+        Generate a hash of the given frame.
         """
-        try:
-            message = AX25Frame.decode(frame)
-        except:
-            self._log.debug('Failed to decode frame: %s', frame, exc_info=1)
-            return
+        framehash = sha256()
+        framehash.update(bytes(frame.header.destination))
+        framehash.update(bytes(frame.header.source))
+        framehash.update(bytes(frame.control))
+        framehash.update(bytes(frame.frame_payload))
+        return framehash.digest()
 
-        self._log.debug('Received incoming message: %s (type %s)',
-                message, message.__class__.__name__)
+    def _test_or_add_frame(self, frame):
+        """
+        Hash the given frame, and test to see if it has been seen.
+        """
+        framedigest = self._hash_frame(frame)
+        if framedigest in self._last_msgs_set:
+            # We've seen this before.
+            return True
 
-        try:
-            # AX.25 standard says we should ignore uplink frames
-            # destined for digipeaters, but this is an issue if you're
-            # actually not in an area with repeaters present.
-            #
-            # So handle digipeating if and only if our callsign isn't the
-            # destination.
-            if message.header.destination.normalised != self.mycall:
-                for idx, digi in enumerate(message.header.repeaters or []):
-                    # Has the frame passed through this particular repeater?
-                    if not digi.ch:
-                        # Nope, Is this meant to go *via* us?
-                        # Normalise the CH/RES[01]/EXT bits for comparison
-                        digi_norm = digi.copy(res0=True, res1=True,
-                                ch=False, extension=False)
-                        for call in self._mydigi:
-                            if digi_norm == call:
-                                # This is one of our "mydigi" calls, digipeat
-                                # this
-                                self._on_digipeat(idx, message)
-                                break
+        self._last_msgs_ordered.append(framedigest)
+        self._last_msgs_set.add(framedigest)
+        if len(self._last_msgs_ordered) > self._last_msgs_size:
+            # Pop the first message received
+            dropdigest = self._last_msgs_ordered.pop(0)
+            self._last_msgs_set.discard(dropdigest)
 
-            # We've got to the end of the digipeater chain, handle the message.
-            self._on_receive_msg(message)
-        except:
-            self._log.exception(
-                    'Failed to process incoming message: %s', message
-            )
+        return False
 
     def send_message(self, addressee, message, path=None, oneshot=False):
         """
@@ -196,53 +226,21 @@ class APRSHandler(object):
         self.send_message(
                 addressee=message.header.source.normalised,
                 path=message.header.repeaters.reply \
-                        if message.header.repeaters else [],
+                        if message.header.repeaters is not None else None,
                 message='%s%s' % ('ack' if ack else 'rej', message.msgid),
                 oneshot=True
         )
 
-    def _on_digipeat(self, digi_idx, message):
+    def _on_receive_msg(self, frame):
         """
-        Handle a message for digipeating.
+        Handle the incoming frame.
         """
+        if self._test_or_add_frame(frame):
+            self._log.debug('Ignoring duplicate frame: %s', frame)
+            return
+
         try:
-            repeaters = (message.header.repeaters or [])
-
-            # Get the repeaters before and after
-            prior_repeaters = repeaters[0:digi_idx]
-            following_repeaters = repeaters[digi_idx+1:]
-
-            # Insert ourselves into the list
-            repeaters = prior_repeaters + [self.mycall.copy(
-                    # Message has passed to us, so set the C/H bit.
-                    ch=True,
-                    # If there are no further digipeaters, set the extension bit
-                    extension=(len(following_repeaters) == 0)
-            )]
-
-            # Build up a new header
-            header = AX25FrameHeader(
-                    # Same source/destination as before, CR bits untouched.
-                    destination=message.header.destination,
-                    source=message.header.source,
-                    cr=message.header.cr,
-                    # Replace the repeater list
-                    repeaters=repeaters
-            )
-
-            # Send the frame off with the new header
-            self._log.debug('Digipeating %s', message)
-            self._send(message.copy(header=header))
-        except:
-            self._log.exception('Failed to digipeat message %s (idx=%d)',
-                    message, digi_idx)
-
-    def _on_receive_msg(self, message):
-        """
-        Handle the incoming message.
-        """
-        try:
-            message = APRSFrame.decode(message, self._log.getChild('decode'))
+            message = APRSFrame.decode(frame, self._log.getChild('decode'))
             self._log.debug('Processing incoming message %s (type %s)',
                     message, message.__class__.__name__)
 
@@ -274,7 +272,7 @@ class APRSHandler(object):
         """
         self._log.info('Sending %s', message)
         try:
-            self._kissport.send(message)
+            self._kissint.transmit(message)
         except:
             self._log.exception('Failed to send %s', message)
 
@@ -283,7 +281,7 @@ class APRSHandler(object):
         """
         Return the next message ID
         """
-        self._msgid = (self._msgid + 1) % 100000
+        self._msgid = (self._msgid + 1) % self._msgid_modulo
         return str(self._msgid)
 
     def _on_msg_handler_finish(self, msgid):
@@ -295,7 +293,7 @@ class APRSMessageHandler(object):
     The APRS message handler is a helper class that handles the
     retransmissions, timeouts and responses to an APRS message.
     """
-    class HandlerState(enum.Enum):
+    class HandlerState(Enum):
         INIT    = 0
         SEND    = 1
         RETRY   = 2
@@ -329,7 +327,7 @@ class APRSMessageHandler(object):
         self._retransmit_timeout = None
         self._response = None
 
-        self.done = signalslot.Signal()
+        self.done = Signal()
         self._state = self.HandlerState.INIT
         self._log.debug('Initialised handler for %s state %s',
                 self.msgid, self.state)
@@ -468,7 +466,6 @@ class APRSFrame(AX25UnnumberedInformationFrame):
             # Decode the payload as text
             payload = uiframe.payload.decode('US-ASCII')
 
-            log.debug('APRS frame data: %s', aprsdata)
             return handler_class.decode(uiframe, payload, log)
         except:
             # Not decodable, leave as-is
