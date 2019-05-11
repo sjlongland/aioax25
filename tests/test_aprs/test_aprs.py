@@ -259,6 +259,93 @@ def test_send_response_rej():
     assert isinstance(frame, APRSMessageFrame)
     eq_(frame.payload, b':VK4MSL-10:rej123')
 
+def test_hash_frame_mismatch_dest():
+    """
+    Test that _hash_frame returns different hashes for mismatching destination
+    """
+    hash1 = APRSInterface._hash_frame(
+            APRSMessageFrame(
+                destination='VK4BWI-2',
+                source='VK4MSL-10',
+                addressee='VK4BWI-2',
+                message=b'testing',
+                msgid=123,
+                repeaters=['WIDE2-1','WIDE1-1']
+            )
+    )
+
+    hash2 = APRSInterface._hash_frame(
+            APRSMessageFrame(
+                destination='VK4BWI-3',
+                source='VK4MSL-10',
+                addressee='VK4BWI-2',
+                message=b'testing',
+                msgid=123,
+                repeaters=['WIDE2-1','WIDE1-1']
+            )
+    )
+
+    # These should not be the same
+    assert hash1 != hash2
+
+def test_hash_frame_mismatch_src():
+    """
+    Test that _hash_frame returns different hashes for mismatching source
+    """
+    hash1 = APRSInterface._hash_frame(
+            APRSMessageFrame(
+                destination='VK4BWI-2',
+                source='VK4MSL-10',
+                addressee='VK4BWI-2',
+                message=b'testing',
+                msgid=123,
+                repeaters=['WIDE2-1','WIDE1-1']
+            )
+    )
+
+    hash2 = APRSInterface._hash_frame(
+            APRSMessageFrame(
+                destination='VK4BWI-2',
+                source='VK4MSL-11',
+                addressee='VK4BWI-2',
+                message=b'testing',
+                msgid=123,
+                repeaters=['WIDE2-1','WIDE1-1']
+            )
+    )
+
+    # These should not be the same
+    assert hash1 != hash2
+
+def test_hash_frame_mismatch_payload():
+    """
+    Test that _hash_frame returns different hashes for mismatching source
+    """
+    hash1 = APRSInterface._hash_frame(
+            APRSMessageFrame(
+                destination='VK4BWI-2',
+                source='VK4MSL-10',
+                addressee='VK4BWI-2',
+                message=b'testing 1',
+                msgid=123,
+                repeaters=['WIDE2-1','WIDE1-1']
+            )
+    )
+
+    hash2 = APRSInterface._hash_frame(
+            APRSMessageFrame(
+                destination='VK4BWI-2',
+                source='VK4MSL-10',
+                addressee='VK4BWI-2',
+                message=b'testing 2',
+                msgid=123,
+                repeaters=['WIDE2-1','WIDE1-1']
+            )
+    )
+
+    # These should not be the same
+    assert hash1 != hash2
+
 def test_hash_frame():
     """
     Test that _hash_frame returns a consistent result regardless of digipeaters
