@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from nose.tools import eq_, assert_set_equal, assert_is
+from nose.tools import eq_, assert_set_equal, assert_is, assert_greater
 
 from aioax25.aprs import APRSInterface
 from aioax25.aprs.message import APRSMessageFrame, APRSMessageHandler
@@ -258,3 +258,150 @@ def test_send_response_rej():
     # Frame is a APRS message rejection frame
     assert isinstance(frame, APRSMessageFrame)
     eq_(frame.payload, b':VK4MSL-10:rej123')
+
+def test_hash_frame():
+    """
+    Test that _hash_frame returns a consistent result regardless of digipeaters
+    """
+    hash1 = APRSInterface._hash_frame(
+            APRSMessageFrame(
+                destination='VK4BWI-2',
+                source='VK4MSL-10',
+                addressee='VK4BWI-2',
+                message=b'testing',
+                msgid=123,
+                repeaters=['WIDE2-1','WIDE1-1']
+            )
+    )
+
+    hash2 = APRSInterface._hash_frame(
+            APRSMessageFrame(
+                destination='VK4BWI-2',
+                source='VK4MSL-10',
+                addressee='VK4BWI-2',
+                message=b'testing',
+                msgid=123,
+                repeaters=['VK4RZB*','WIDE1-1']
+            )
+    )
+
+    hash3 = APRSInterface._hash_frame(
+            APRSMessageFrame(
+                destination='VK4BWI-2',
+                source='VK4MSL-10',
+                addressee='VK4BWI-2',
+                message=b'testing',
+                msgid=123,
+                repeaters=['VK4RZB*','VK4RZA*']
+            )
+    )
+
+    # These should all be the same
+    eq_(hash1, hash2)
+    eq_(hash1, hash3)
+
+def test_test_or_add_frame_first():
+    """
+    Test that _test_or_add_frame returns False for new traffic
+    """
+    frame = APRSMessageFrame(
+                destination='VK4BWI-2',
+                source='VK4MSL-10',
+                addressee='VK4BWI-2',
+                message=b'testing',
+                msgid=123,
+                repeaters=['WIDE2-1','WIDE1-1']
+    )
+    framedigest = APRSInterface._hash_frame(frame)
+
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+
+    # Try it out
+    res = aprsint._test_or_add_frame(frame)
+
+    # We should get 'False' as the response
+    eq_(res, False)
+
+    # There should be an entry in our hash table.
+    eq_(len(aprsint._msg_expiry), 1)
+
+    # The expiry time should be at least 25 seconds.
+    assert_greater(aprsint._msg_expiry.get(framedigest, 0),
+            ax25int._loop.time() + 25)
+
+    # A clean-up should have been scheduled.
+    eq_(len(ax25int._loop.calls), 1)
+    (_, callfunc) = ax25int._loop.calls.pop(0)
+    eq_(callfunc, aprsint._schedule_dedup_cleanup)
+
+def test_test_or_add_frame_repeat():
+    """
+    Test that _test_or_add_frame returns True for un-expired repeats
+    """
+    frame = APRSMessageFrame(
+                destination='VK4BWI-2',
+                source='VK4MSL-10',
+                addressee='VK4BWI-2',
+                message=b'testing',
+                msgid=123,
+                repeaters=['WIDE2-1','WIDE1-1']
+    )
+    framedigest = APRSInterface._hash_frame(frame)
+
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+    # Inject the frame expiry
+    expiry_time = aprsint._loop.time() + 1
+    aprsint._msg_expiry[framedigest] = expiry_time
+
+    # Try it out
+    res = aprsint._test_or_add_frame(frame)
+
+    # We should get 'False' as the response
+    eq_(res, True)
+
+    # Expiry should not have changed
+    eq_(len(aprsint._msg_expiry), 1)
+    eq_(aprsint._msg_expiry[framedigest], expiry_time)
+
+    # Nothing further should be done.
+    eq_(len(ax25int._loop.calls), 0)
+
+def test_test_or_add_frame_expired():
+    """
+    Test that _test_or_add_frame returns False for expired repeats
+    """
+    frame = APRSMessageFrame(
+                destination='VK4BWI-2',
+                source='VK4MSL-10',
+                addressee='VK4BWI-2',
+                message=b'testing',
+                msgid=123,
+                repeaters=['WIDE2-1','WIDE1-1']
+    )
+    framedigest = APRSInterface._hash_frame(frame)
+
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+    # Inject the frame expiry
+    expiry_time = aprsint._loop.time() - 1
+    aprsint._msg_expiry[framedigest] = expiry_time
+
+    # Try it out
+    res = aprsint._test_or_add_frame(frame)
+
+    # We should get 'False' as the response
+    eq_(res, False)
+
+    # Expiry should not have changed
+
+    # The expiry time should be at least 25 seconds.
+    eq_(len(aprsint._msg_expiry), 1)
+    assert_greater(aprsint._msg_expiry.get(framedigest, 0),
+            ax25int._loop.time() + 25)
+
+    # A clean-up should have been scheduled.
+    eq_(len(ax25int._loop.calls), 1)
+    (_, callfunc) = ax25int._loop.calls.pop(0)
+    eq_(callfunc, aprsint._schedule_dedup_cleanup)
