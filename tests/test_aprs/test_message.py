@@ -281,3 +281,87 @@ def test_msghandler_first_send():
     # Should be at least 5 seconds from now, calling _on_timeout
     assert_greater(calltime, aprshandler._loop.time() + 5.0)
     eq_(callfunc, msghandler._on_timeout)
+
+def test_msghandler_subsequent_send():
+    """
+    Test the message handler re-transmits message on subsequent _send calls.
+    """
+    aprshandler = DummyAPRSHandler()
+    msghandler  = APRSMessageHandler(
+            aprshandler=aprshandler,
+            addressee='CQ',
+            path=['WIDE1-1','WIDE2-1'],
+            message='testing',
+            log=logging.getLogger('messagehandler'))
+
+    # Force handler into SEND state
+    msghandler._state = msghandler.HandlerState.SEND
+
+    # Now fire the _send method
+    msghandler._send()
+
+    # The message should now be in the 'RETRY' state
+    eq_(msghandler.state, msghandler.HandlerState.RETRY)
+
+    # There should be a pending time-out recorded
+    eq_(len(aprshandler._loop.calls), 1)
+    (calltime, callfunc) = aprshandler._loop.calls.pop(0)
+
+    # Should be at least 5 seconds from now, calling _on_timeout
+    assert_greater(calltime, aprshandler._loop.time() + 5.0)
+    eq_(callfunc, msghandler._on_timeout)
+
+    # Retransmit counter should have decremented
+    eq_(msghandler._retransmit_count, 1)
+
+def test_msghandler_timeout():
+    """
+    Test the message handler enters TIMEOUT state when retry count exhausted.
+    """
+    aprshandler = DummyAPRSHandler()
+    msghandler  = APRSMessageHandler(
+            aprshandler=aprshandler,
+            addressee='CQ',
+            path=['WIDE1-1','WIDE2-1'],
+            message='testing',
+            log=logging.getLogger('messagehandler'))
+
+    # Force handler into RETRY state
+    msghandler._state = msghandler.HandlerState.RETRY
+
+    # Force retransmit count to zero
+    msghandler._retransmit_count = 0
+
+    # Now fire the _send method
+    msghandler._send()
+
+    # The message should now be in the 'TIMEOUT' state
+    eq_(msghandler.state, msghandler.HandlerState.TIMEOUT)
+
+    # There should be no calls pending
+    eq_(len(aprshandler._loop.calls), 0)
+
+def test_msghandler_send_invalid_state():
+    """
+    Test the message handler refuses to send in the wrong state.
+    """
+    aprshandler = DummyAPRSHandler()
+    msghandler  = APRSMessageHandler(
+            aprshandler=aprshandler,
+            addressee='CQ',
+            path=['WIDE1-1','WIDE2-1'],
+            message='testing',
+            log=logging.getLogger('messagehandler'))
+
+    # Force handler into TIMEOUT state
+    msghandler._state = msghandler.HandlerState.TIMEOUT
+
+    try:
+        # Now fire the _send method
+        msghandler._send()
+        assert False, 'This should have raised a RuntimeError'
+    except RuntimeError as e:
+        eq_(str(e), 'Incorrect state HandlerState.TIMEOUT')
+
+    # There should be no calls pending
+    eq_(len(aprshandler._loop.calls), 0)
