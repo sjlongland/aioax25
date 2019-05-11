@@ -189,3 +189,72 @@ def test_send_message_confirmable():
 
     # Message handler is in 'SEND' state
     eq_(res.state, APRSMessageHandler.HandlerState.SEND)
+
+def test_send_response_oneshot():
+    """
+    Test that send_response ignores one-shot messages.
+    """
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+    aprsint.send_response(
+            APRSMessageFrame(
+                destination='VK4BWI-2',
+                source='VK4MSL-10',
+                addressee='VK4BWI-2',
+                message=b'testing',
+                msgid=None
+            )
+    )
+
+    # Nothing should be sent
+    eq_(len(ax25int.transmitted), 0)
+
+def test_send_response_ack():
+    """
+    Test that send_response with ack=True sends acknowledgement.
+    """
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+    aprsint.send_response(
+            APRSMessageFrame(
+                destination='VK4BWI-2',
+                source='VK4MSL-10',
+                addressee='VK4BWI-2',
+                message=b'testing',
+                msgid=123
+            ),
+            ack=True
+    )
+
+    # The APRS message handler will have tried sending the message
+    eq_(len(ax25int.transmitted), 1)
+    frame = ax25int.transmitted.pop(0)
+
+    # Frame is a APRS message acknowledgement frame
+    assert isinstance(frame, APRSMessageFrame)
+    eq_(frame.payload, b':VK4MSL-10:ack123')
+
+def test_send_response_rej():
+    """
+    Test that send_response with ack=False sends rejection.
+    """
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+    aprsint.send_response(
+            APRSMessageFrame(
+                destination='VK4BWI-2',
+                source='VK4MSL-10',
+                addressee='VK4BWI-2',
+                message=b'testing',
+                msgid=123
+            ),
+            ack=False
+    )
+
+    # The APRS message handler will have tried sending the message
+    eq_(len(ax25int.transmitted), 1)
+    frame = ax25int.transmitted.pop(0)
+
+    # Frame is a APRS message rejection frame
+    assert isinstance(frame, APRSMessageFrame)
+    eq_(frame.payload, b':VK4MSL-10:rej123')
