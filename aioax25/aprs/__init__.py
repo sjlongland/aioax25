@@ -4,5 +4,5 @@
 APRS library
 """
 
-from .aprs import APRSHandler
-assert APRSHandler
+from .aprs import APRSInterface
+assert APRSInterface
