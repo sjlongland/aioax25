@@ -158,6 +158,9 @@ def test_send_message_oneshot():
     # We don't get a return value
     assert_is(res, None)
 
+    # No message handler should be registered with the interface
+    eq_(len(aprsint._pending_msg), 0)
+
     # The frame is passed to the AX.25 interface
     eq_(len(ax25int.transmitted), 1)
     frame = ax25int.transmitted.pop(0)
@@ -180,6 +183,11 @@ def test_send_message_confirmable():
 
     # We got back a handler class
     assert isinstance(res, APRSMessageHandler)
+
+    # That message handler should be registered with the interface
+    eq_(len(aprsint._pending_msg), 1)
+    assert res.msgid in aprsint._pending_msg
+    assert_is(aprsint._pending_msg[res.msgid], res)
 
     # The APRS message handler will have tried sending the message
     eq_(len(ax25int.transmitted), 1)
