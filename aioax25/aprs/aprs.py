@@ -6,16 +6,19 @@ APRS messaging handler.
 
 import asyncio
 import logging
+from functools import partial
+
 from ..signal import Signal
 from hashlib import sha256
 
+from .router import APRSRouter
 from ..frame import AX25Address
 from .frame import APRSFrame
 from .message import APRSMessageHandler, \
         APRSMessageFrame, APRSMessageAckFrame, APRSMessageRejFrame
 
 
-class APRSHandler(object):
+class APRSInterface(APRSRouter):
     def __init__(self, ax25int, mycall,
             # Retransmission parameters
             retransmit_count=4, retransmit_timeout_base=30,
@@ -62,6 +65,8 @@ class APRSHandler(object):
             deduplication_expiry=28,
             # Logger instance
             log=None):
+
+        super(APRSRouter, self).__init__()
         if log is None:
             log = logging.getLogger(self.__class__.__module__)
 
@@ -86,7 +91,7 @@ class APRSHandler(object):
                 dict(callsign=self._mycall.callsign,
                     ssid=self._mycall.ssid, regex=False)
                 ] + listen_destinations + (listen_altnets or []):
-            self._ax25int.bind(self._on_receive_msg, **spec)
+            self._ax25int.bind(self._on_receive, **spec)
 
         # Message ID counter
         self._msgid = 0
@@ -105,9 +110,6 @@ class APRSHandler(object):
                 aprs_path or []
         ]
 
-        # Signal for emitting new messages
-        self.received_msg = Signal()
-
         # Pending messages, by addressee and message ID
         self._pending_msg = {}
 
@@ -117,6 +119,10 @@ class APRSHandler(object):
         self._deduplication_expiry = deduplication_expiry
         # Time-out handle for deduplication
         self._deduplication_timeout = None
+
+        # Received addressed message call-back.  This fires when a message's
+        # addressee field matches 'mycall'
+        self.received_addressed_msg = Signal()
 
     @property
     def mycall(self):
@@ -226,7 +232,7 @@ class APRSHandler(object):
 
         self._loop.call_soon(self._schedule_dedup_cleanup)
 
-    def _on_receive_msg(self, frame):
+    def _on_receive(self, frame):
         """
         Handle the incoming frame.
         """
@@ -239,25 +245,37 @@ class APRSHandler(object):
             self._log.debug('Processing incoming message %s (type %s)',
                     message, message.__class__.__name__)
 
-            if isinstance(message, (APRSMessageAckFrame, APRSMessageRejFrame)):
-                # This is a response to a message, one of ours?
-                if message.addressee == self.mycall:
-                    # Addressed to us
-                    msgid = message.msgid
+            # Pass to the super-class handler
+            self._loop.call_soon(partial(
+                super(APRSInterface, self)._on_receive,
+                frame
+            ))
 
-                    handler = self._pending_msg.get(msgid)
-                    self._log.debug('Response to %r (pending %r), handler %s',
-                            msgid, list(self._pending_msg.keys()), handler)
-                    if handler:
-                        handler._on_response(message)
-                        # This is dealt with
-                        return
+            if isinstance(message, APRSMessageFrame):
+                # This is a message, is it for us?
+                if message.addressee == self.mycall:
+                    # Is it a response for us?
+                    if isinstance(message, (APRSMessageAckFrame, \
+                        APRSMessageRejFrame)):
+                        msgid = message.msgid
+
+                        handler = self._pending_msg.get(msgid)
+                        self._log.debug(
+                                'Response to %r (pending %r), handler %s',
+                                msgid, list(self._pending_msg.keys()), handler)
+                        if handler:
+                            self._loop.call_soon(handler._on_response, message)
+                            # This is dealt with
+                            return
+                    else:
+                        # This is a message addressed to us.
+                        self._loop.call_soon(partial(
+                            self.received_addressed_msg.emit,
+                            interface=self, frame=frame
+                        ))
                 else:
                     self._log.debug('Addressee is %s, mycall %s, not for us',
                             message.addressee, self.mycall)
-
-            # Pass to the generic handler
-            self.received_msg.emit(message=message)
         except:
             self._log.exception('Exception occurred emitting signal')
 
