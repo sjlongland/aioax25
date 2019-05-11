@@ -60,15 +60,15 @@ class APRSHandler(object):
             msgid_modulo=1000,
             # Length of time in seconds before duplicates expire
             deduplication_expiry=28,
-            # Logger and IOLoop instance
-            log=None, loop=None):
+            # Logger instance
+            log=None):
         if log is None:
             log = logging.getLogger(self.__class__.__module__)
-        if loop is None:
-            loop = asyncio.get_event_loop()
 
         self._log = log
-        self._loop = loop
+
+        # Use the same loop as parent AX.25 interface
+        self._loop = ax25int._loop
 
         # Retransmission settings
         self._retransmit_timeout_base = retransmit_timeout_base
