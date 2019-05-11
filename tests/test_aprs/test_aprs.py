@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-from nose.tools import eq_, assert_set_equal, assert_is, assert_greater
+from nose.tools import eq_, assert_set_equal, assert_is, assert_greater, \
+        assert_less
 
 from aioax25.aprs import APRSInterface
 from aioax25.aprs.message import APRSMessageFrame, APRSMessageHandler
@@ -481,8 +482,6 @@ def test_test_or_add_frame_expired():
     # We should get 'False' as the response
     eq_(res, False)
 
-    # Expiry should not have changed
-
     # The expiry time should be at least 25 seconds.
     eq_(len(aprsint._msg_expiry), 1)
     assert_greater(aprsint._msg_expiry.get(framedigest, 0),
@@ -492,3 +491,86 @@ def test_test_or_add_frame_expired():
     eq_(len(ax25int._loop.calls), 1)
     (_, callfunc) = ax25int._loop.calls.pop(0)
     eq_(callfunc, aprsint._schedule_dedup_cleanup)
+
+def test_schedule_dedup_cleanup_no_msg():
+    """
+    Test _schedule_dedup_cleanup does nothing if no messages
+    """
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+
+    aprsint._schedule_dedup_cleanup()
+
+    # A clean-up should not have been scheduled.
+    eq_(len(ax25int._loop.calls), 0)
+
+def test_schedule_dedup_cleanup_pending():
+    """
+    Test _schedule_dedup_cleanup cancels existing pending clean-ups
+    """
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+
+    # Inject a pending clean-up
+    deduplication_timeout = aprsint._loop.call_later(1, None)
+    aprsint._deduplication_timeout = deduplication_timeout
+
+    # Schedule the next one
+    aprsint._schedule_dedup_cleanup()
+
+    # We should now no-longer have a pending clean-up
+    assert deduplication_timeout.cancelled()
+    assert_is(aprsint._deduplication_timeout, None)
+
+def test_schedule_dedup_cleanup_oldest_future():
+    """
+    Test _schedule_dedup_cleanup schedules for expiry of oldest message
+    """
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+
+    # Inject a few hashes
+    now = aprsint._loop.time()
+    aprsint._msg_expiry.update({
+        b'hash1': now + 1,
+        b'hash2': now + 2,
+        b'hash3': now + 3
+    })
+
+    # Schedule the clean-up
+    aprsint._schedule_dedup_cleanup()
+
+    # A clean-up should have been scheduled.
+    eq_(len(ax25int._loop.calls), 1)
+    (calltime, callfunc) = ax25int._loop.calls.pop(0)
+
+    # Should be scheduled for the earliest expiry
+    assert_less(calltime - now, 1.01)
+    assert_greater(calltime - now, 0.99)
+    eq_(callfunc, aprsint._dedup_cleanup)
+
+def test_schedule_dedup_cleanup_oldest_past():
+    """
+    Test _schedule_dedup_cleanup schedules immediately for expired messages.
+    """
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+
+    # Inject a few hashes
+    now = aprsint._loop.time()
+    aprsint._msg_expiry.update({
+        b'hash1': now - 1,
+        b'hash2': now + 2,
+        b'hash3': now + 3
+    })
+
+    # Schedule the clean-up
+    aprsint._schedule_dedup_cleanup()
+
+    # A clean-up should have been scheduled.
+    eq_(len(ax25int._loop.calls), 1)
+    (calltime, callfunc) = ax25int._loop.calls.pop(0)
+
+    # Should be scheduled pretty much now
+    assert_less(calltime - now, 0.01)
+    eq_(callfunc, aprsint._dedup_cleanup)
