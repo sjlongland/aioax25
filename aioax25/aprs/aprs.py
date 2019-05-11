@@ -206,12 +206,12 @@ class APRSInterface(APRSRouter):
         """
         Schedule a clean-up.
         """
-        if len(self._msg_expiry) == 0:
-            return
-
         if self._deduplication_timeout is not None:
             self._deduplication_timeout.cancel()
             self._deduplication_timeout = None
+
+        if len(self._msg_expiry) == 0:
+            return
 
         delay = min(self._msg_expiry.values()) - self._loop.time()
         if delay > 0:
