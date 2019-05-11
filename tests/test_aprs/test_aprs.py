@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
-from nose.tools import eq_, assert_set_equal
+from nose.tools import eq_, assert_set_equal, assert_is
 
 from aioax25.aprs import APRSInterface
+from aioax25.aprs.message import APRSMessageFrame, APRSMessageHandler
+
 from ..loop import DummyLoop
 
 
@@ -141,3 +143,49 @@ def test_constructor_bind_override():
                 ('APRS',    False,  None)
             ])
     )
+
+def test_send_message_oneshot():
+    """
+    Test that send_message in one-shot mode generates a message frame.
+    """
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+    res = aprsint.send_message(
+            'VK4MDL-7', 'Hi', oneshot=True
+    )
+
+    # We don't get a return value
+    assert_is(res, None)
+
+    # The frame is passed to the AX.25 interface
+    eq_(len(ax25int.transmitted), 1)
+    frame = ax25int.transmitted.pop(0)
+
+    # Frame is a APRS message frame
+    assert isinstance(frame, APRSMessageFrame)
+
+    # There is no pending messages
+    eq_(len(aprsint._pending_msg), 0)
+
+def test_send_message_confirmable():
+    """
+    Test that send_message in confirmable mode generates a message handler.
+    """
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+    res = aprsint.send_message(
+            'VK4MDL-7', 'Hi', oneshot=False
+    )
+
+    # We got back a handler class
+    assert isinstance(res, APRSMessageHandler)
+
+    # The APRS message handler will have tried sending the message
+    eq_(len(ax25int.transmitted), 1)
+    frame = ax25int.transmitted.pop(0)
+
+    # Frame is a APRS message frame
+    assert isinstance(frame, APRSMessageFrame)
+
+    # Message handler is in 'SEND' state
+    eq_(res.state, APRSMessageHandler.HandlerState.SEND)
