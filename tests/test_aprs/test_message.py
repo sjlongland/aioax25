@@ -3,7 +3,8 @@
 import logging
 import gc
 
-from nose.tools import eq_, assert_greater, assert_is, assert_set_equal
+from nose.tools import eq_, assert_greater, assert_is, \
+        assert_is_not, assert_set_equal
 
 from aioax25.aprs.message import APRSMessageHandler, \
         APRSMessageAckFrame, APRSMessageRejFrame, APRSMessageFrame
@@ -365,3 +366,148 @@ def test_msghandler_send_invalid_state():
 
     # There should be no calls pending
     eq_(len(aprshandler._loop.calls), 0)
+
+def test_msghandler_cancel():
+    """
+    Test calling cancel stops the timer and enters the CANCEL state.
+    """
+    aprshandler = DummyAPRSHandler()
+    msghandler  = APRSMessageHandler(
+            aprshandler=aprshandler,
+            addressee='CQ',
+            path=['WIDE1-1','WIDE2-1'],
+            message='testing',
+            log=logging.getLogger('messagehandler'))
+
+    # Inject a dummy time-out object
+    timeout = aprshandler._loop.call_later(1.0, None)
+    msghandler._retransmit_timeout = timeout
+
+    # Cancel the message
+    msghandler.cancel()
+
+    # Handler should now be in the CANCEL state
+    eq_(msghandler.state, msghandler.HandlerState.CANCEL)
+
+    # Our time-out should have been cancelled
+    eq_(timeout.cancelled(), True)
+
+    # We should no longer be referencing the time-out
+    eq_(msghandler._retransmit_timeout, None)
+
+def test_on_timeout():
+    """
+    Test calling _on_timeout triggers _send
+    """
+    aprshandler = DummyAPRSHandler()
+    msghandler  = APRSMessageHandler(
+            aprshandler=aprshandler,
+            addressee='CQ',
+            path=['WIDE1-1','WIDE2-1'],
+            message='testing',
+            log=logging.getLogger('messagehandler'))
+
+    msghandler._on_timeout()
+
+    # There should be a pending _send recorded
+    eq_(len(aprshandler._loop.calls), 1)
+    (calltime, callfunc) = aprshandler._loop.calls.pop(0)
+
+    # Should be pretty much now, calling _send
+    assert_greater(calltime, aprshandler._loop.time() - 0.01)
+    eq_(callfunc, msghandler._send)
+
+def test_on_response_timedout():
+    """
+    Test calling _on_response when in TIMEOUT ignores message
+    """
+    aprshandler = DummyAPRSHandler()
+    msghandler  = APRSMessageHandler(
+            aprshandler=aprshandler,
+            addressee='CQ',
+            path=['WIDE1-1','WIDE2-1'],
+            message='testing',
+            log=logging.getLogger('messagehandler'))
+
+    # Force state, suppose we already received a reply, and a well-meaning
+    # digi has repeated it.
+    msghandler._state = msghandler.HandlerState.SUCCESS
+    frame1 = APRSMessageAckFrame(
+            destination='APZAIO',
+            source='VK4MSL-9',
+            addressee='N0CALL',
+            msgid='123'
+    )
+    msghandler._response = frame1
+
+    frame2 = APRSMessageAckFrame(
+                destination='APZAIO',
+                source='VK4MSL-9',
+                addressee='N0CALL',
+                msgid='123'
+            )
+    msghandler._on_response(frame2)
+
+    # Our official response should be the first one
+    assert_is(msghandler.response, frame1)
+    assert_is_not(msghandler.response, frame2)
+
+def test_on_response_ack():
+    """
+    Test calling _on_response with ACK when in SEND triggers SUCCESS
+    """
+    aprshandler = DummyAPRSHandler()
+    msghandler  = APRSMessageHandler(
+            aprshandler=aprshandler,
+            addressee='CQ',
+            path=['WIDE1-1','WIDE2-1'],
+            message='testing',
+            log=logging.getLogger('messagehandler'))
+
+    # Force state, suppose we just sent our request.
+    msghandler._state = msghandler.HandlerState.SEND
+
+    # Pass in our frame
+    frame = APRSMessageAckFrame(
+            destination='APZAIO',
+            source='VK4MSL-9',
+            addressee='N0CALL',
+            msgid='123'
+    )
+    msghandler._on_response(frame)
+
+    # Our official response should be the frame we just received
+    assert_is(msghandler.response, frame)
+
+    # And we should be done
+    eq_(msghandler.state, msghandler.HandlerState.SUCCESS)
+
+def test_on_response_rej():
+    """
+    Test calling _on_response with REJ when in SEND triggers REJECT
+    """
+    aprshandler = DummyAPRSHandler()
+    msghandler  = APRSMessageHandler(
+            aprshandler=aprshandler,
+            addressee='CQ',
+            path=['WIDE1-1','WIDE2-1'],
+            message='testing',
+            log=logging.getLogger('messagehandler'))
+
+    # Force state, suppose we just sent our request.
+    msghandler._state = msghandler.HandlerState.SEND
+
+    # Pass in our frame
+    frame = APRSMessageRejFrame(
+            destination='APZAIO',
+            source='VK4MSL-9',
+            addressee='N0CALL',
+            msgid='123'
+    )
+    msghandler._on_response(frame)
+
+    # Our official response should be the frame we just received
+    assert_is(msghandler.response, frame)
+
+    # And we should be done
+    eq_(msghandler.state, msghandler.HandlerState.REJECT)
