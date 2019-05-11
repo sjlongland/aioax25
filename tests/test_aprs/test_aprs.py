@@ -3,7 +3,10 @@
 from nose.tools import eq_, assert_set_equal, assert_is, assert_greater, \
         assert_less
 
+from functools import partial
+
 from aioax25.aprs import APRSInterface
+from aioax25.frame import AX25UnnumberedInformationFrame
 from aioax25.aprs.message import APRSMessageFrame, APRSMessageHandler
 
 from ..loop import DummyLoop
@@ -20,6 +23,11 @@ class DummyAX25Interface(object):
 
     def transmit(self, frame):
         self.transmitted.append(frame)
+
+
+class DummyMessageHandler(object):
+    def _on_response(self):
+        pass
 
 
 def test_constructor_bind():
@@ -615,3 +623,169 @@ def test_dedup_cleanup_expired():
     # Should be scheduled pretty much now
     assert_less(calltime - now, 0.01)
     eq_(callfunc, aprsint._schedule_dedup_cleanup)
+
+def test_on_receive_dup():
+    """
+    Test _on_receive ignores duplicate frames.
+    """
+    # Create a frame and hash it
+    frame = AX25UnnumberedInformationFrame(
+                destination='VK4BWI-2',
+                source='VK4MSL-10',
+                pid=0xf0,
+                payload=b':VK4BWI-2 :testing{123',
+                repeaters=['WIDE2-1','WIDE1-1']
+    )
+    framedigest = APRSInterface._hash_frame(frame)
+
+    # Create our interface
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+
+    # Inject the hash
+    now = aprsint._loop.time()
+    aprsint._msg_expiry.update({
+        framedigest: now + 3
+    })
+
+    # Now pass the frame in as if it were just received
+    aprsint._on_receive(frame)
+
+    # There should be no calls made
+    eq_(len(ax25int._loop.calls), 0)
+
+def test_on_receive_pass_to_router():
+    """
+    Test _on_receive passes the message to the base APRSRouter class.
+    """
+    # Create a frame
+    frame = AX25UnnumberedInformationFrame(
+                destination='VK4BWI-2',
+                source='VK4MSL-10',
+                pid=0xf0,
+                payload=b':VK4BWI-2 :testing{123',
+                repeaters=['WIDE2-1','WIDE1-1']
+    )
+
+    # Create our interface
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+
+    # Now pass the frame in as if it were just received
+    aprsint._on_receive(frame)
+
+    # There should be two calls made, one to our deduplication clean-up, the
+    # other to our superclass
+    eq_(len(ax25int._loop.calls), 2)
+
+    (_, callfunc) = ax25int._loop.calls.pop(0)
+    eq_(callfunc, aprsint._schedule_dedup_cleanup)
+
+    (_, callfunc) = ax25int._loop.calls.pop(0)
+    assert isinstance(callfunc, partial)
+    eq_(callfunc.func, super(APRSInterface, aprsint)._on_receive)
+
+def test_on_receive_addressed():
+    """
+    Test _on_receive of message addressed to station.
+    """
+    # Create a frame
+    frame = AX25UnnumberedInformationFrame(
+                destination='APZAIO',
+                source='VK4BWI-2',
+                pid=0xf0,
+                payload=b':VK4MSL-10:testing{123',
+                repeaters=['WIDE2-1','WIDE1-1']
+    )
+
+    # Create our interface
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+
+    # Now pass the frame in as if it were just received
+    aprsint._on_receive(frame)
+
+    # There should be three calls made, one to our deduplication clean-up, the
+    # other to our superclass, the third to our received_address_msg signal.
+    eq_(len(ax25int._loop.calls), 3)
+
+    (_, callfunc) = ax25int._loop.calls.pop(0)
+    eq_(callfunc, aprsint._schedule_dedup_cleanup)
+
+    (_, callfunc) = ax25int._loop.calls.pop(0)
+    assert isinstance(callfunc, partial)
+    eq_(callfunc.func, super(APRSInterface, aprsint)._on_receive)
+
+    (_, callfunc) = ax25int._loop.calls.pop(0)
+    assert isinstance(callfunc, partial)
+    eq_(callfunc.func, aprsint.received_addressed_msg.emit)
+
+def test_on_receive_unsol_ackrej():
+    """
+    Test _on_receive of unsolicited ACK/REJ addressed to station.
+    """
+    # Create a frame
+    frame = AX25UnnumberedInformationFrame(
+                destination='APZAIO',
+                source='VK4BWI-2',
+                pid=0xf0,
+                payload=b':VK4MSL-10:ack123',
+                repeaters=['WIDE2-1','WIDE1-1']
+    )
+
+    # Create our interface
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+
+    # Now pass the frame in as if it were just received
+    aprsint._on_receive(frame)
+
+    # There should be two calls made, one to our deduplication clean-up, the
+    # other to our superclass.  We don't pass the message out otherwise.
+    eq_(len(ax25int._loop.calls), 2)
+
+    (_, callfunc) = ax25int._loop.calls.pop(0)
+    eq_(callfunc, aprsint._schedule_dedup_cleanup)
+
+    (_, callfunc) = ax25int._loop.calls.pop(0)
+    assert isinstance(callfunc, partial)
+    eq_(callfunc.func, super(APRSInterface, aprsint)._on_receive)
+
+def test_on_receive_sol_ackrej():
+    """
+    Test _on_receive of solicited ACK/REJ addressed to station.
+    """
+    # Create a frame
+    frame = AX25UnnumberedInformationFrame(
+                destination='APZAIO',
+                source='VK4BWI-2',
+                pid=0xf0,
+                payload=b':VK4MSL-10:ack123',
+                repeaters=['WIDE2-1','WIDE1-1']
+    )
+
+    # Create our interface
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+
+    # Inject a message handler for the message ID
+    handler = DummyMessageHandler()
+    aprsint._pending_msg['123'] = handler
+
+    # Now pass the frame in as if it were just received
+    aprsint._on_receive(frame)
+
+    # There should be two calls made, one to our deduplication clean-up, the
+    # other to our superclass.  The message will be passed to the handler.
+    eq_(len(ax25int._loop.calls), 3)
+
+    (_, callfunc) = ax25int._loop.calls.pop(0)
+    eq_(callfunc, aprsint._schedule_dedup_cleanup)
+
+    (_, callfunc) = ax25int._loop.calls.pop(0)
+    assert isinstance(callfunc, partial)
+    eq_(callfunc.func, super(APRSInterface, aprsint)._on_receive)
+
+    (_, callfunc, msg) = ax25int._loop.calls.pop(0)
+    eq_(callfunc, handler._on_response)
+    eq_(bytes(frame), bytes(msg))
