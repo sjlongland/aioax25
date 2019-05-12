@@ -241,30 +241,30 @@ class APRSInterface(APRSRouter):
             return
 
         try:
-            message = APRSFrame.decode(frame, self._log.getChild('decode'))
+            frame = APRSFrame.decode(frame, self._log.getChild('decode'))
             self._log.debug('Processing incoming message %s (type %s)',
-                    message, message.__class__.__name__)
+                    frame, frame.__class__.__name__)
 
             # Pass to the super-class handler
             self._loop.call_soon(partial(
                 super(APRSInterface, self)._on_receive,
-                message
+                frame
             ))
 
-            if isinstance(message, APRSMessageFrame):
+            if isinstance(frame, APRSMessageFrame):
                 # This is a message, is it for us?
-                if message.addressee == self.mycall:
+                if frame.addressee == self.mycall:
                     # Is it a response for us?
-                    if isinstance(message, (APRSMessageAckFrame, \
+                    if isinstance(frame, (APRSMessageAckFrame, \
                         APRSMessageRejFrame)):
-                        msgid = message.msgid
+                        msgid = frame.msgid
 
                         handler = self._pending_msg.get(msgid)
                         self._log.debug(
                                 'Response to %r (pending %r), handler %s',
                                 msgid, list(self._pending_msg.keys()), handler)
                         if handler:
-                            self._loop.call_soon(handler._on_response, message)
+                            self._loop.call_soon(handler._on_response, frame)
                             # This is dealt with
                             return
                     else:
@@ -275,7 +275,7 @@ class APRSInterface(APRSRouter):
                         ))
                 else:
                     self._log.debug('Addressee is %s, mycall %s, not for us',
-                            message.addressee, self.mycall)
+                            frame.addressee, self.mycall)
         except:
             self._log.exception('Exception occurred emitting signal')
 
