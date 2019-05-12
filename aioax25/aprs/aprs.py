@@ -248,7 +248,7 @@ class APRSInterface(APRSRouter):
             # Pass to the super-class handler
             self._loop.call_soon(partial(
                 super(APRSInterface, self)._on_receive,
-                frame
+                message
             ))
 
             if isinstance(message, APRSMessageFrame):
