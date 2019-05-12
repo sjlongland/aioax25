@@ -563,8 +563,8 @@ def test_transmit_waits_if_cts_reset():
 
     assert bytes(sent_frame) == bytes(my_frame)
     assert (time.monotonic() - send_time) < 0.01
-    assert (send_time - time_before) > 0.5
-    assert (send_time - time_before) < 1.0
+    assert_greater(send_time - time_before, 0.25)
+    assert_less(send_time - time_before, 1.01)
 
 
 @asynctest
