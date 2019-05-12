@@ -93,7 +93,8 @@ class Router(object):
         Handle an incoming message.
         """
         # Decode from raw bytes
-        frame = AX25Frame.decode(frame)
+        if not isinstance(frame, AX25Frame)
+            frame = AX25Frame.decode(frame)
         self._log.debug('Handling incoming frame %s', frame)
 
         # Pass the message to those who elected to receive all traffic
