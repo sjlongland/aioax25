@@ -34,6 +34,7 @@ class DummySerial(object):
         self.tx_buffer = bytearray()
         self.flushes = 0
         self.closed = False
+        self.read_exception = None
 
     def fileno(self):
         return self.FILENO
@@ -45,6 +46,9 @@ class DummySerial(object):
         self.tx_buffer += data
 
     def read(self, length):
+        if self.read_exception is not None:
+            raise self.read_exception
+
         data = self.rx_buffer[0:length]
         self.rx_buffer = self.rx_buffer[length:]
         return data
@@ -146,6 +150,24 @@ def test_on_recv_ready():
 
     # We should now see these bytes in the buffer
     eq_(bytes(kissdev._rx_buffer), b'a test frame')
+
+def test_on_recv_ready_exception():
+    """
+    Test _on_recv_ready handles exceptions.
+    """
+    loop = DummyLoop()
+    kissdev = kiss.SerialKISSDevice(
+            device='/dev/ttyS0', baudrate=9600,
+            loop=loop
+    )
+    assert kissdev._serial is None
+
+    kissdev.open()
+    kissdev._serial.read_exception = IOError('Whoopsie')
+    kissdev._serial.rx_buffer += b'a test frame'
+
+    # Kick the handler -- there should be no error raised
+    kissdev._on_recv_ready()
 
 def test_send_raw_data():
     """
