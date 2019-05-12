@@ -232,7 +232,7 @@ class APRSInterface(APRSRouter):
 
         self._loop.call_soon(self._schedule_dedup_cleanup)
 
-    def _on_receive(self, frame):
+    def _on_receive(self, frame, **kwargs):
         """
         Handle the incoming frame.
         """
