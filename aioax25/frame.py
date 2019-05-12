@@ -76,9 +76,6 @@ class AX25Frame(object):
         elif (control & cls.CONTROL_US_MASK) == cls.CONTROL_U_VAL:
             # This is a U frame
             return AX25UnnumberedFrame.decode(header, control, data)
-        else:
-            raise ValueError('Unrecognised frame control field: 0x%02x' \
-                    % control)
 
     def __init__(self, destination, source, repeaters=None, cr=False):
         self._header = AX25FrameHeader(destination, source, repeaters, cr)
