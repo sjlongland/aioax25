@@ -518,6 +518,56 @@ def test_transmit_sends_immediate_if_cts():
 
 
 @asynctest
+def test_transmit_waits_if_cts_reset():
+    """
+    Test the interface waits if CTS timer is reset.
+    """
+    my_port = DummyKISS()
+    my_frame = AX25UnnumberedInformationFrame(
+            destination='VK4BWI-4',
+            source='VK4MSL',
+            pid=0xf0,
+            payload=b'testing')
+    transmit_future = Future()
+
+    my_interface = AX25Interface(my_port)
+
+    def _on_transmit(interface, frame, **kwargs):
+        try:
+            assert len(kwargs) == 0, 'Too many arguments'
+            assert interface is my_interface, 'Wrong interface'
+            assert bytes(frame) == bytes(my_frame), 'Wrong frame'
+            transmit_future.set_result(None)
+        except Exception as e:
+            transmit_future.set_exception(e)
+
+    def _on_timeout():
+        transmit_future.set_exception(AssertionError('Timed out'))
+
+    # The time before transmission
+    time_before = time.monotonic()
+
+    # Set a timeout
+    get_event_loop().call_later(1.0, _on_timeout)
+
+    # Send the message
+    my_interface.transmit(my_frame, _on_transmit)
+
+    # Whilst that is pending, call reset_cts, this should delay transmission
+    my_interface._reset_cts()
+
+    yield from transmit_future
+
+    assert len(my_port.sent) == 1
+    (send_time, sent_frame) = my_port.sent.pop(0)
+
+    assert bytes(sent_frame) == bytes(my_frame)
+    assert (time.monotonic() - send_time) < 0.01
+    assert (send_time - time_before) > 0.5
+    assert (send_time - time_before) < 1.0
+
+
+@asynctest
 def test_transmit_handles_failure():
     """
     Test transmit failures don't kill the interface handling.
