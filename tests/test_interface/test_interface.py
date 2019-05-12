@@ -7,7 +7,7 @@ from aioax25.frame import AX25UnnumberedInformationFrame
 from ..async import asynctest
 from asyncio import Future, get_event_loop, sleep
 
-from nose.tools import assert_greater, assert_less
+from nose.tools import assert_greater, assert_less, eq_
 
 import time
 import re
@@ -68,6 +68,23 @@ def test_received_msg_signal():
 
     yield from receive_future
 
+
+def test_receive_bind():
+    """
+    Test bind rejects non-strings as call-signs.
+    """
+    my_interface = AX25Interface(DummyKISS())
+    try:
+        my_interface.bind(
+                callback=lambda *a, **kwa : None,
+                callsign=123456,
+                ssid=0,
+                regex=False
+        )
+        assert False, 'This should not have worked'
+    except TypeError as e:
+        eq_(str(e), 'callsign must be a string (use '\
+                    'regex=True for regex)')
 
 @asynctest
 def test_receive_str_filter():
@@ -258,6 +275,59 @@ def test_receive_re_filter_ssid():
     yield from receive_future
     assert len(unmatched_filter_received) == 0
 
+
+def test_unbind_notexist_call():
+    """
+    Test unbinding a receiver for a call that does not exist returns silently.
+    """
+    my_interface = AX25Interface(DummyKISS())
+    my_receiver = lambda **k : None
+
+    # This should generate no error
+    my_interface.unbind(my_receiver, 'MYCALL', ssid=12)
+
+def test_unbind_notexist_ssid():
+    """
+    Test unbinding a receiver for a SSID that does not exist returns silently.
+    """
+    my_port = DummyKISS()
+    my_interface = AX25Interface(my_port)
+
+    my_receiver = lambda **k : None
+
+    # Inject a receiver
+    my_interface._receiver_str = {
+            'MYCALL': {
+                12: [
+                    my_receiver
+                ]
+            }
+    }
+
+    # This should generate no error
+    my_interface.unbind(my_receiver, 'MYCALL', ssid=14)
+
+def test_unbind_notexist_receiver():
+    """
+    Test unbinding a receiver that is not bound should not raise error.
+    """
+    my_port = DummyKISS()
+    my_interface = AX25Interface(my_port)
+
+    my_receiver1 = lambda **k : None
+    my_receiver2 = lambda **k : None
+
+    # Inject a receiver
+    my_interface._receiver_str = {
+            'MYCALL': {
+                12: [
+                    my_receiver1
+                ]
+            }
+    }
+
+    # This should generate no error
+    my_interface.unbind(my_receiver2, 'MYCALL', ssid=12)
 
 def test_unbind_str():
     """
