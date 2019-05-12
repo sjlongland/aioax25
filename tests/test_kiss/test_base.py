@@ -6,6 +6,7 @@ Base KISS interface unit tests.
 
 from aioax25.kiss import BaseKISSDevice, KISSDeviceState, KISSCommand, KISSPort
 from ..loop import DummyLoop
+from asyncio import BaseEventLoop
 
 from nose.tools import eq_, assert_is, assert_greater, assert_less
 
@@ -26,6 +27,14 @@ class DummyKISSDevice(BaseKISSDevice):
 
     def _send_raw_data(self, data):
         self.transmitted += data
+
+
+def test_constructor_own_loop():
+    """
+    Test constructor uses its own IOLoop if not given one
+    """
+    kissdev = DummyKISSDevice(loop=None)
+    assert isinstance(kissdev._loop, BaseEventLoop)
 
 
 def test_open():
