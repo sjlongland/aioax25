@@ -214,3 +214,28 @@ def test_rx_nexthop():
     eq_(len(interface.transmitted), 1)
     frame = interface.transmitted.pop()
     eq_(str(frame.header.repeaters), 'VK4MSL-10*,WIDE3-2')
+
+
+def test_rx_hybridpath():
+    """
+    Test the digipeater module handles typical APRS paths.
+    """
+    interface = DummyAPRSInterface()
+    digipeater = APRSDigipeater(interface)
+    interface.received_msg.emit(
+        interface=interface,
+        frame=AX25UnnumberedInformationFrame(
+            destination='VK4MSL-1',
+            source='VK4MSL-2',
+            repeaters=[
+                'WIDE1-1',
+                'WIDE2-2'
+            ],
+            pid=0xff, payload=b'testing'
+        )
+    )
+
+    # This should have been digipeated
+    eq_(len(interface.transmitted), 1)
+    frame = interface.transmitted.pop()
+    eq_(str(frame.header.repeaters), 'VK4MSL-10*,WIDE2-2')

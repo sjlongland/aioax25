@@ -31,12 +31,12 @@ class APRSDigipeater(object):
         """
         # First, have we already digipeated this?
         mycall = interface.mycall
-        path = []
+        idx = None
         alias = None
         rem_hops = None
 
         prev = None
-        for digi in frame.header.repeaters:
+        for (digi_idx, digi) in enumerate(frame.header.repeaters):
             if digi.normalised in self._mydigi:
                 if ((prev is None) or prev.ch) and (not digi.ch):
                     # This is meant to be directly digipeated by us!
@@ -58,11 +58,11 @@ class APRSDigipeater(object):
                 match = DIGI_RE.match(digi.callsign)
                 if match:
                     # It is
+                    idx = digi_idx
                     alias = digi
                     rem_hops = min(digi.ssid, int(match.group(1)))
                     break
                 else:
-                    path.append(digi)
                     prev = digi
 
         if alias is None:
@@ -74,13 +74,15 @@ class APRSDigipeater(object):
             return
 
         # This is to be digipeated.
-        digi_path = path + [mycall.copy(ch=True)]
+        digi_path = list(frame.header.repeaters[:idx]) \
+                + [mycall.copy(ch=True)]
         if rem_hops > 1:
             # There are more hops left, tack the next hop on
             digi_path.append(alias.copy(
                     ssid=rem_hops - 1,
                     ch=False
             ))
+        digi_path.extend(frame.header.repeaters[idx+1:])
 
         interface.transmit(
             frame.copy(
