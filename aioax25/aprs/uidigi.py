@@ -18,21 +18,55 @@ class APRSDigipeater(object):
     digipeater path of all unique APRS messages seen.
     """
 
-    def __init__(self, mydigi=None):
+    def __init__(self):
+        """
+        Create a new digipeater module instance.
+        """
+        self._mydigi = set()
+
+    @property
+    def mydigi(self):
+        """
+        Return the set of digipeater calls and aliases this digi responds to.
+        """
+        return self._mydigi.copy()
+
+    @mydigi.setter
+    def mydigi(self, aliases):
+        """
+        Replace the list of digipeater calls and aliases this digi responds to.
+        """
         self._mydigi = set([
-            AX25Address.decode(call)
-            for call in (mydigi or [])
+            AX25Address.decode(call).normalised
+            for call in aliases
         ])
+
+    def addaliases(self, *aliases):
+        """
+        Add one or more aliases to the digipeater handler.
+        """
+        for call in aliases:
+            self._mydigi.add(AX25Address.decode(call).normalised)
+
+    def rmaliases(self, *aliases):
+        """
+        Remove one or more aliases from the digipeater handler.
+        """
+        for call in aliases:
+            self._mydigi.discard(AX25Address.decode(call).normalised)
 
     def connect(self, aprsint, addcall=True):
         """
         Connect to an APRS interface.  This hooks the received_msg signal
         to receive (de-duplicated) incoming traffic and adds the APRS
         interface's call-sign/SSID to the "mydigi" list.
+
+        Note that a message is digipeated on the interface it was received
+        *ONLY*.  Cross-interface digipeating is not implemented at this time.
         """
         aprsint.received_msg.connect(self._on_receive)
         if addcall:
-            self._mydigi.add(aprsint.mycall)
+            self.addaliases(aprsint.mycall)
 
     def disconnect(self, aprsint, rmcall=True):
         """
@@ -41,7 +75,7 @@ class APRSDigipeater(object):
         from the "mydigi" list.
         """
         if rmcall:
-            self._mydigi.discard(aprsint.mycall)
+            self.rmaliases(aprsint.mycall)
         aprsint.received_msg.disconnect(self._on_receive)
 
     def _on_receive(self, interface, frame, **kwargs):
