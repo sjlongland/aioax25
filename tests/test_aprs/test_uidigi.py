@@ -18,6 +18,56 @@ class DummyAPRSInterface(object):
         self.transmitted.append(frame)
 
 
+def test_mydigi_read():
+    """
+    Test we can obtain a copy of the digipeater call list.
+    """
+    digipeater = APRSDigipeater()
+    digipeater._mydigi.add(AX25Address.decode('VK4MSL'))
+    mydigi = digipeater.mydigi
+
+    assert mydigi is not digipeater._mydigi
+    eq_(mydigi, digipeater._mydigi)
+
+
+def test_mydigi_replace():
+    """
+    Test we can replace the digipeater call list.
+    """
+    digipeater = APRSDigipeater()
+    digipeater._mydigi.add(AX25Address.decode('VK4MSL'))
+    digipeater.mydigi = ['VK4BWI']
+
+    eq_(digipeater.mydigi, set([
+        AX25Address.decode('VK4BWI')
+    ]))
+
+
+def test_connect_noadd():
+    """
+    Test we can connect an interface without adding its call to our
+    "mydigi" list.
+    """
+    interface = DummyAPRSInterface()
+    digipeater = APRSDigipeater()
+    digipeater.connect(interface, addcall=False)
+    eq_(digipeater._mydigi, set())
+
+
+def test_disconnect_norm():
+    """
+    Test we can disconnect an interface without removing its call from our
+    "mydigi" list.
+    """
+    interface = DummyAPRSInterface()
+    digipeater = APRSDigipeater()
+    digipeater.connect(interface)
+    digipeater.disconnect(interface, rmcall=False)
+    eq_(digipeater._mydigi, set([
+        AX25Address.decode('VK4MSL-10')
+    ]))
+
+
 def test_rx_irrelevant():
     """
     Test the digipeater module ignores irrelevant frames.
@@ -171,7 +221,8 @@ def test_rx_selftodigi_alias():
     Test the digipeater module digipeats when alias is first.
     """
     interface = DummyAPRSInterface()
-    digipeater = APRSDigipeater(('GATE',))
+    digipeater = APRSDigipeater()
+    digipeater.addaliases('GATE')
     digipeater.connect(interface)
     interface.received_msg.emit(
         interface=interface,
