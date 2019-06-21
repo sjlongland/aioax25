@@ -120,6 +120,80 @@ def test_rx_selftodigi_first():
     eq_(str(frame.header.repeaters), 'VK4MSL-10*,VK4RZB')
 
 
+def test_disconnect():
+    """
+    Test the digipeater module stops digipeating when disconnected.
+    """
+    interface = DummyAPRSInterface()
+    digipeater = APRSDigipeater()
+    digipeater.connect(interface)
+    interface.received_msg.emit(
+        interface=interface,
+        frame=AX25UnnumberedInformationFrame(
+            destination='VK4MSL-1',
+            source='VK4MSL-2',
+            repeaters=[
+                'VK4MSL-10',
+                'VK4RZB'
+            ],
+            pid=0xff, payload=b'testing'
+        )
+    )
+
+    # This should have been digipeated
+    eq_(len(interface.transmitted), 1)
+    frame = interface.transmitted.pop()
+
+    # It should be passed through VK4MSL-10.
+    eq_(str(frame.header.repeaters), 'VK4MSL-10*,VK4RZB')
+
+    # Disconnect, then send another message
+    digipeater.disconnect(interface)
+    interface.received_msg.emit(
+        interface=interface,
+        frame=AX25UnnumberedInformationFrame(
+            destination='VK4MSL-1',
+            source='VK4MSL-2',
+            repeaters=[
+                'VK4MSL-10',
+                'VK4RZB'
+            ],
+            pid=0xff, payload=b'testing 2'
+        )
+    )
+
+    # This should not have been digipeated
+    eq_(len(interface.transmitted), 0)
+
+
+def test_rx_selftodigi_alias():
+    """
+    Test the digipeater module digipeats when alias is first.
+    """
+    interface = DummyAPRSInterface()
+    digipeater = APRSDigipeater(('GATE',))
+    digipeater.connect(interface)
+    interface.received_msg.emit(
+        interface=interface,
+        frame=AX25UnnumberedInformationFrame(
+            destination='VK4MSL-1',
+            source='VK4MSL-2',
+            repeaters=[
+                'GATE',
+                'VK4RZB'
+            ],
+            pid=0xff, payload=b'testing'
+        )
+    )
+
+    # This should have been digipeated
+    eq_(len(interface.transmitted), 1)
+    frame = interface.transmitted.pop()
+
+    # It should be passed through VK4MSL-10.
+    eq_(str(frame.header.repeaters), 'VK4MSL-10*,VK4RZB')
+
+
 def test_rx_selftodigi_downlink():
     """
     Test the digipeater module digipeats when own call is first.
