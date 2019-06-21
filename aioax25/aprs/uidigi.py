@@ -8,8 +8,8 @@ import weakref
 import re
 from ..frame import AX25FrameHeader, AX25Address
 
-# APRS WIDEn regular expression pattern
-DIGI_RE = re.compile(r'^WIDE(\d)$')
+# APRS WIDEn/TRACEn regular expression pattern
+DIGI_RE = re.compile(r'^(WIDE|TRACE)(\d)$')
 
 class APRSDigipeater(object):
     """
@@ -73,13 +73,13 @@ class APRSDigipeater(object):
                     )
                 return
             else:
-                # Is this a WIDEn call?
+                # Is this a WIDEn/TRACEn call?
                 match = DIGI_RE.match(digi.callsign)
                 if match:
                     # It is
                     idx = digi_idx
                     alias = digi
-                    rem_hops = min(digi.ssid, int(match.group(1)))
+                    rem_hops = min(digi.ssid, int(match.group(2)))
                     break
                 else:
                     prev = digi
