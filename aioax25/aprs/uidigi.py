@@ -18,12 +18,31 @@ class APRSDigipeater(object):
     digipeater path of all unique APRS messages seen.
     """
 
-    def __init__(self, aprsint, mydigi=None):
-        aprsint.received_msg.connect(self._on_receive)
+    def __init__(self, mydigi=None):
         self._mydigi = set([
             AX25Address.decode(call)
-            for call in ((mydigi or []) + [aprsint.mycall])
+            for call in (mydigi or [])
         ])
+
+    def connect(self, aprsint, addcall=True):
+        """
+        Connect to an APRS interface.  This hooks the received_msg signal
+        to receive (de-duplicated) incoming traffic and adds the APRS
+        interface's call-sign/SSID to the "mydigi" list.
+        """
+        aprsint.received_msg.connect(self._on_receive)
+        if addcall:
+            self._mydigi.add(aprsint.mycall)
+
+    def disconnect(self, aprsint, rmcall=True):
+        """
+        Disconnect from an APRS interface.  This removes the hook to the
+        received_msg signal and removes that APRS interface's call-sign/SSID
+        from the "mydigi" list.
+        """
+        self._mydigi.discard(aprsint.mycall)
+        if rmcall:
+            aprsint.received_msg.disconnect(self._on_receive)
 
     def _on_receive(self, interface, frame, **kwargs):
         """

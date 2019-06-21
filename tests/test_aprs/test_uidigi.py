@@ -23,7 +23,8 @@ def test_rx_irrelevant():
     Test the digipeater module ignores irrelevant frames.
     """
     interface = DummyAPRSInterface()
-    digipeater = APRSDigipeater(interface)
+    digipeater = APRSDigipeater()
+    digipeater.connect(interface)
     interface.received_msg.emit(
         interface=interface,
         frame=AX25UnnumberedInformationFrame(
@@ -46,7 +47,8 @@ def test_rx_selfdigied():
     Test the digipeater module ignores frames already digied by us.
     """
     interface = DummyAPRSInterface()
-    digipeater = APRSDigipeater(interface)
+    digipeater = APRSDigipeater()
+    digipeater.connect(interface)
     interface.received_msg.emit(
         interface=interface,
         frame=AX25UnnumberedInformationFrame(
@@ -70,7 +72,8 @@ def test_rx_selftodigi_uplink():
     Test the digipeater module ignores uplink frames with explicit paths.
     """
     interface = DummyAPRSInterface()
-    digipeater = APRSDigipeater(interface)
+    digipeater = APRSDigipeater()
+    digipeater.connect(interface)
     interface.received_msg.emit(
         interface=interface,
         frame=AX25UnnumberedInformationFrame(
@@ -94,7 +97,8 @@ def test_rx_selftodigi_first():
     Test the digipeater module digipeats when own call is first.
     """
     interface = DummyAPRSInterface()
-    digipeater = APRSDigipeater(interface)
+    digipeater = APRSDigipeater()
+    digipeater.connect(interface)
     interface.received_msg.emit(
         interface=interface,
         frame=AX25UnnumberedInformationFrame(
@@ -121,7 +125,8 @@ def test_rx_selftodigi_downlink():
     Test the digipeater module digipeats when own call is first.
     """
     interface = DummyAPRSInterface()
-    digipeater = APRSDigipeater(interface)
+    digipeater = APRSDigipeater()
+    digipeater.connect(interface)
     interface.received_msg.emit(
         interface=interface,
         frame=AX25UnnumberedInformationFrame(
@@ -151,7 +156,8 @@ def test_rx_exhausted():
     Test the digipeater module ignores WIDEn-0 frames.
     """
     interface = DummyAPRSInterface()
-    digipeater = APRSDigipeater(interface)
+    digipeater = APRSDigipeater()
+    digipeater.connect(interface)
     interface.received_msg.emit(
         interface=interface,
         frame=AX25UnnumberedInformationFrame(
@@ -173,7 +179,8 @@ def test_rx_lasthop():
     Test the digipeater module digipeats when we get to the last hop.
     """
     interface = DummyAPRSInterface()
-    digipeater = APRSDigipeater(interface)
+    digipeater = APRSDigipeater()
+    digipeater.connect(interface)
     interface.received_msg.emit(
         interface=interface,
         frame=AX25UnnumberedInformationFrame(
@@ -197,7 +204,8 @@ def test_rx_nexthop():
     Test the digipeater module appends the correct WIDEn-N next hop.
     """
     interface = DummyAPRSInterface()
-    digipeater = APRSDigipeater(interface)
+    digipeater = APRSDigipeater()
+    digipeater.connect(interface)
     interface.received_msg.emit(
         interface=interface,
         frame=AX25UnnumberedInformationFrame(
@@ -221,7 +229,8 @@ def test_rx_hybridpath():
     Test the digipeater module handles typical APRS paths.
     """
     interface = DummyAPRSInterface()
-    digipeater = APRSDigipeater(interface)
+    digipeater = APRSDigipeater()
+    digipeater.connect(interface)
     interface.received_msg.emit(
         interface=interface,
         frame=AX25UnnumberedInformationFrame(
