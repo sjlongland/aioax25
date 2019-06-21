@@ -3,6 +3,7 @@
 from nose.tools import eq_, assert_set_equal, assert_is, assert_greater, \
         assert_less
 
+import logging
 from functools import partial
 
 from aioax25.aprs import APRSInterface
@@ -29,6 +30,15 @@ class DummyMessageHandler(object):
     def _on_response(self):
         pass
 
+
+def test_constructor_log():
+    """
+    Test the constructor can accept a logger instance.
+    """
+    ax25int = DummyAX25Interface()
+    log = logging.getLogger('aprslog')
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10', log=log)
+    assert log is aprsint._log
 
 def test_constructor_bind():
     """
@@ -152,6 +162,33 @@ def test_constructor_bind_override():
                 ('APRS',    False,  None)
             ])
     )
+
+def test_send_exception():
+    """
+    Test that _send swallows exceptions.
+    """
+    ax25int = DummyAX25Interface()
+
+    # Stub the transmit so it fails
+    calls = []
+    def stub(*args):
+        calls.append(args)
+        raise RuntimeError('Oopsie')
+    ax25int.transmit = stub
+
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+    aprsint._send(
+            APRSMessageFrame(
+                destination='VK4BWI-2',
+                source='VK4MSL-10',
+                addressee='VK4BWI-2',
+                message=b'testing',
+                msgid=123
+            )
+    )
+
+    # Transmit should have been called
+    eq_(len(calls), 1)
 
 def test_send_message_oneshot():
     """
@@ -624,6 +661,77 @@ def test_dedup_cleanup_expired():
     assert_less(calltime - now, 0.01)
     eq_(callfunc, aprsint._schedule_dedup_cleanup)
 
+def test_on_receive_exception():
+    """
+    Test _on_receive swallows exceptions.
+    """
+    # Create a frame
+    frame = AX25UnnumberedInformationFrame(
+                destination='VK4BWI-2',
+                source='VK4MSL-10',
+                pid=0xf0,
+                payload=b':VK4BWI-2 :testing{123',
+                repeaters=['WIDE2-1','WIDE1-1']
+    )
+
+    # Create our interface
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+
+    # Stub the _test_or_add_frame so it returns false
+    aprsint._test_or_add_frame = lambda *a : False
+
+    # Stub the IOLoop's call_soon so it fails
+    calls = []
+    def stub(*args):
+        calls.append(args)
+        raise RuntimeError('Oopsie')
+    aprsint._loop.call_soon = stub
+
+    # Now pass the frame in as if it were just received
+    aprsint._on_receive(frame)
+
+    # We should have called call_soon, but the exception should have been
+    # caught and logged.
+    eq_(len(calls), 1)
+
+def test_on_receive_notframe():
+    """
+    Test _on_receive ignores non-APRS-frames.
+    """
+    # Create a frame
+    class DummyFrame(AX25UnnumberedInformationFrame):
+        def __init__(self, *args, **kwargs):
+            self.addressee_calls = 0
+            super(DummyFrame, self).__init__(*args, **kwargs)
+
+        @property
+        def addressee(self):
+            self.addressee_calls += 1
+            return AX25Address.decode('N0CALL')
+
+
+    frame = DummyFrame(
+                destination='VK4BWI-2',
+                source='VK4MSL-10',
+                pid=0xf0,
+                payload=b'this is not an APRS message',
+                repeaters=['WIDE2-1','WIDE1-1']
+    )
+
+    # Create our interface
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+
+    # Stub the _test_or_add_frame so it returns false
+    aprsint._test_or_add_frame = lambda *a : False
+
+    # Now pass the frame in as if it were just received
+    aprsint._on_receive(frame)
+
+    # The addressee property should not be touched
+    eq_(frame.addressee_calls, 0)
+
 def test_on_receive_dup():
     """
     Test _on_receive ignores duplicate frames.
@@ -789,3 +897,20 @@ def test_on_receive_sol_ackrej():
     (_, callfunc, msg) = ax25int._loop.calls.pop(0)
     eq_(callfunc, handler._on_response)
     eq_(bytes(frame), bytes(msg))
+
+def test_on_msg_handler_finish():
+    """
+    Test that _on_msg_handler_finish removes a message from the pending list
+    """
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+
+    # Inject a message handler for the message ID
+    handler = DummyMessageHandler()
+    aprsint._pending_msg['123'] = handler
+
+    # Call the clean-up function
+    aprsint._on_msg_handler_finish('123')
+
+    # This should now be empty
+    eq_(aprsint._pending_msg, {})
