@@ -40,9 +40,9 @@ class APRSDigipeater(object):
         received_msg signal and removes that APRS interface's call-sign/SSID
         from the "mydigi" list.
         """
-        self._mydigi.discard(aprsint.mycall)
         if rmcall:
-            aprsint.received_msg.disconnect(self._on_receive)
+            self._mydigi.discard(aprsint.mycall)
+        aprsint.received_msg.disconnect(self._on_receive)
 
     def _on_receive(self, interface, frame, **kwargs):
         """
