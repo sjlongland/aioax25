@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from setuptools import setup
+from os.path import dirname, join
 from aioax25 import __version__
 
 requirements = [
@@ -22,11 +23,8 @@ setup(
         requires=requirements,
         install_requires=requirements,
         description='Asynchronous AX.25 interface in pure Python using asyncio',
-        long_description='aioax25 is a library for interfacing Python '\
-                'applications to AX.25 networks via serial KISS TNCs.  '\
-                'Right now it supports sending and receiving APRS messages '\
-                'and can handle multi-port KISS TNCs connected via serial '\
-                'ports or pseudo TTYs.',
+        long_description=open(join(dirname(__file__), 'README.md'),'r').read(),
+        long_description_content_type='text/markdown',
         classifiers=[
             'Development Status :: 2 - Pre-Alpha',
             'Environment :: No Input/Output (Daemon)',
