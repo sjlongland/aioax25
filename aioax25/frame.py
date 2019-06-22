@@ -76,6 +76,10 @@ class AX25Frame(object):
         elif (control & cls.CONTROL_US_MASK) == cls.CONTROL_U_VAL:
             # This is a U frame
             return AX25UnnumberedFrame.decode(header, control, data)
+        else: # pragma: no cover
+            # This should not happen because all possible bit combinations
+            # are covered above.
+            assert False, 'How did we get here?'
 
     def __init__(self, destination, source, repeaters=None, cr=False):
         self._header = AX25FrameHeader(destination, source, repeaters, cr)
