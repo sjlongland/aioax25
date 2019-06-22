@@ -93,17 +93,20 @@ class APRSDigipeater(object):
             if digi.normalised in self._mydigi:
                 if ((prev is None) or prev.ch) and (not digi.ch):
                     # This is meant to be directly digipeated by us!
-                    interface.transmit(
-                        frame.copy(
-                            header=AX25FrameHeader(
-                                destination=frame.header.destination,
-                                source=frame.header.source,
-                                repeaters=frame.header.repeaters.replace(
-                                    alias=digi, address=mycall.copy(ch=True)
-                                ),
-                                cr=frame.header.cr
+                    self._on_transmit(
+                            interface=interface,
+                            alias=alias,
+                            frame=frame.copy(
+                                header=AX25FrameHeader(
+                                    destination=frame.header.destination,
+                                    source=frame.header.source,
+                                    repeaters=frame.header.repeaters.replace(
+                                        alias=digi,
+                                        address=mycall.copy(ch=True)
+                                    ),
+                                    cr=frame.header.cr
+                                )
                             )
-                        )
                     )
                 return
             else:
@@ -137,8 +140,10 @@ class APRSDigipeater(object):
             ))
         digi_path.extend(frame.header.repeaters[idx+1:])
 
-        interface.transmit(
-            frame.copy(
+        self._on_transmit(
+                interface=interface,
+                alias=alias,
+                frame=frame.copy(
                 header=AX25FrameHeader(
                     destination=frame.header.destination,
                     source=frame.header.source,
@@ -147,3 +152,11 @@ class APRSDigipeater(object):
                 )
             )
         )
+
+    def _on_transmit(self, interface, alias, frame):
+        """
+        Transmit a message to be digipeated.  This function is a wrapper
+        around the interface.transmit method so we can support subclasses
+        that do more advanced routing such as cross-interface digipeating.
+        """
+        interface.transmit(frame)
