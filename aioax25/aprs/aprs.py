@@ -286,6 +286,7 @@ class APRSInterface(APRSRouter):
         self._log.info('Sending %s', message)
         try:
             self._ax25int.transmit(message)
+            self._test_or_add_frame(message)
         except:
             self._log.exception('Failed to send %s', message)
 
