@@ -119,7 +119,7 @@ class APRSMessageHandler(object):
         self._timeout_duration *= self._retransmit_timeout_scale
 
         # Send the frame
-        handler._send(self.frame)
+        handler.transmit(self.frame)
         self._enter_state(next_state)
 
     def _stop_timer(self):

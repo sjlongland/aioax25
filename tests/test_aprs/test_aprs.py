@@ -163,9 +163,9 @@ def test_constructor_bind_override():
             ])
     )
 
-def test_send_exception():
+def test_transmit_exception():
     """
-    Test that _send swallows exceptions.
+    Test that transmit swallows exceptions.
     """
     ax25int = DummyAX25Interface()
 
@@ -177,7 +177,7 @@ def test_send_exception():
     ax25int.transmit = stub
 
     aprsint = APRSInterface(ax25int, 'VK4MSL-10')
-    aprsint._send(
+    aprsint.transmit(
             APRSMessageFrame(
                 destination='VK4BWI-2',
                 source='VK4MSL-10',

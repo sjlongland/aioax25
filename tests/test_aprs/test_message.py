@@ -26,7 +26,7 @@ class DummyAPRSHandler(object):
         self.sent = []
         self.finished = []
     
-    def _send(self, frame):
+    def transmit(self, frame):
         self.sent.append(frame)
 
     def _on_msg_handler_finish(self, msgid):

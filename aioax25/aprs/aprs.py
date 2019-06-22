@@ -142,7 +142,7 @@ class APRSInterface(APRSRouter):
             self._log.info('Send one-shot to %s: %s',
                     addressee, message)
 
-            self._send(APRSMessageFrame(
+            self.transmit(APRSMessageFrame(
                     destination=addressee,
                     source=self.mycall,
                     addressee=addressee,
@@ -279,16 +279,16 @@ class APRSInterface(APRSRouter):
         except:
             self._log.exception('Exception occurred emitting signal')
 
-    def _send(self, message):
+    def transmit(self, frame):
         """
-        Send an AX.25 frame message.
+        Send an AX.25 frame.
         """
-        self._log.info('Sending %s', message)
+        self._log.info('Sending %s', frame)
         try:
-            self._ax25int.transmit(message)
-            self._test_or_add_frame(message)
+            self._ax25int.transmit(frame)
+            self._test_or_add_frame(frame)
         except:
-            self._log.exception('Failed to send %s', message)
+            self._log.exception('Failed to send %s', frame)
 
     @property
     def _next_msgid(self):
