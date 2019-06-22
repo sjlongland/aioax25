@@ -33,6 +33,21 @@ class DummyAPRSHandler(object):
         self.finished.append(msgid)
 
 
+def test_msghandler_addressee():
+    """
+    Test the handler passes through the addressee given.
+    """
+    calls = []
+    aprshandler = DummyAPRSHandler()
+    msghandler  = APRSMessageHandler(
+            aprshandler=aprshandler,
+            addressee='CQ',
+            path=['WIDE1-1','WIDE2-1'],
+            message='testing',
+            log=logging.getLogger('messagehandler'))
+
+    eq_(msghandler.addressee, AX25Address.decode('CQ'))
+
 def test_msghandler_enter_state_success():
     """
     Test the message considers 'SUCCESS' an exit state.
@@ -78,7 +93,7 @@ def test_msghandler_enter_state_reject():
     # Message handler is still in the INIT state
     eq_(msghandler.state, msghandler.HandlerState.INIT)
 
-    # Tell it to go to the success state.
+    # Tell it to go to the reject state.
     msghandler._enter_state(msghandler.HandlerState.REJECT)
 
     # 'done' signal should have been called.
@@ -106,7 +121,7 @@ def test_msghandler_enter_state_timeout():
     # Message handler is still in the INIT state
     eq_(msghandler.state, msghandler.HandlerState.INIT)
 
-    # Tell it to go to the success state.
+    # Tell it to go to the timeout state.
     msghandler._enter_state(msghandler.HandlerState.TIMEOUT)
 
     # 'done' signal should have been called.
@@ -134,7 +149,38 @@ def test_msghandler_enter_state_cancel():
     # Message handler is still in the INIT state
     eq_(msghandler.state, msghandler.HandlerState.INIT)
 
-    # Tell it to go to the success state.
+    # Tell it to go to the cancel state.
+    msghandler._enter_state(msghandler.HandlerState.CANCEL)
+
+    # 'done' signal should have been called.
+    eq_(len(calls),1)
+    call = calls.pop(0)
+
+    assert_set_equal(set(call.keys()), set(['handler', 'state']))
+    assert_is(call['handler'], msghandler)
+    eq_(call['state'], msghandler.HandlerState.CANCEL)
+
+def test_msghandler_enter_state_no_handler():
+    """
+    Test the message handler can handle the APRS handler disappearing.
+    """
+    calls = []
+    aprshandler = DummyAPRSHandler()
+    msghandler  = APRSMessageHandler(
+            aprshandler=aprshandler,
+            addressee='CQ',
+            path=['WIDE1-1','WIDE2-1'],
+            message='testing',
+            log=logging.getLogger('messagehandler'))
+    msghandler.done.connect(lambda **k : calls.append(k))
+
+    # Message handler is still in the INIT state
+    eq_(msghandler.state, msghandler.HandlerState.INIT)
+
+    del aprshandler
+    gc.collect()
+
+    # Tell it to go to the cancel state.
     msghandler._enter_state(msghandler.HandlerState.CANCEL)
 
     # 'done' signal should have been called.
@@ -511,3 +557,49 @@ def test_on_response_rej():
 
     # And we should be done
     eq_(msghandler.state, msghandler.HandlerState.REJECT)
+
+def test_message_frame_malformed_start():
+    """
+    Test the message frame decoder will reject malformed start of message.
+    """
+    try:
+        APRSMessageFrame.decode(None, b'x123456789:This is not valid', None)
+    except ValueError as e:
+        eq_(str(e), "Not a message frame: b'x123456789:This is not valid'")
+
+def test_message_frame_malformed_delim():
+    """
+    Test the message frame decoder will reject malformed message delimiter
+    """
+    try:
+        APRSMessageFrame.decode(None, b':123456789xThis is not valid', None)
+    except ValueError as e:
+        eq_(str(e), "Not a message frame: b':123456789xThis is not valid'")
+
+def test_message_frame_bad_msgid():
+    """
+    Test the message frame constructor rejects too-big message IDs
+    """
+    try:
+        APRSMessageFrame(
+                destination='APRS',
+                source='VK4MSL',
+                addressee='BREAK',
+                message='Break this!',
+                msgid=123456
+        )
+    except ValueError as e:
+        eq_(str(e), "message ID '123456' too long")
+
+def test_message_frame_get_msg():
+    """
+    Test the message frame will return the message enclosed
+    """
+    msg = APRSMessageFrame(
+                destination='APRS',
+                source='VK4MSL',
+                addressee='TEST',
+                message='Station under test',
+                msgid=12345
+        )
+    eq_(msg.message, 'Station under test')
