@@ -5,4 +5,7 @@ APRS library
 """
 
 from .aprs import APRSInterface
+from .uidigi import APRSDigipeater
+
 assert APRSInterface
+assert APRSDigipeater
