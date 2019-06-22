@@ -232,3 +232,263 @@ def test_encode_ui():
             'f0'                                            # PID
             '54 68 69 73 20 69 73 20 61 20 74 65 73 74'     # Payload
     )
+
+def test_encode_pf():
+    """
+    Test we can set the PF bit on a frame.
+    """
+    frame = AX25UnnumberedInformationFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+            cr=True, pf=True,
+            pid=0xf0,
+            payload=b'This is a test'
+    )
+    hex_cmp(bytes(frame),
+            'ac 96 68 84 ae 92 e0'                          # Destination
+            'ac 96 68 9a a6 98 61'                          # Source
+            '13'                                            # Control
+            'f0'                                            # PID
+            '54 68 69 73 20 69 73 20 61 20 74 65 73 74'     # Payload
+    )
+
+def test_encode_frmr_w():
+    """
+    Test we can set the W bit on a FRMR frame.
+    """
+    frame = AX25FrameRejectFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+            w=True, x=False, y=False, z=False,
+            vr=0, vs=0, frmr_control=0, frmr_cr=False
+    )
+    hex_cmp(bytes(frame),
+            'ac 96 68 84 ae 92 60'                          # Destination
+            'ac 96 68 9a a6 98 e1'                          # Source
+            '87'                                            # Control
+            '01 00 00'                                      # FRMR data
+    )
+
+def test_encode_frmr_x():
+    """
+    Test we can set the X bit on a FRMR frame.
+    """
+    frame = AX25FrameRejectFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+            w=False, x=True, y=False, z=False,
+            vr=0, vs=0, frmr_control=0, frmr_cr=False
+    )
+    hex_cmp(bytes(frame),
+            'ac 96 68 84 ae 92 60'                          # Destination
+            'ac 96 68 9a a6 98 e1'                          # Source
+            '87'                                            # Control
+            '02 00 00'                                      # FRMR data
+    )
+
+def test_encode_frmr_y():
+    """
+    Test we can set the Y bit on a FRMR frame.
+    """
+    frame = AX25FrameRejectFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+            w=False, x=False, y=True, z=False,
+            vr=0, vs=0, frmr_control=0, frmr_cr=False
+    )
+    hex_cmp(bytes(frame),
+            'ac 96 68 84 ae 92 60'                          # Destination
+            'ac 96 68 9a a6 98 e1'                          # Source
+            '87'                                            # Control
+            '04 00 00'                                      # FRMR data
+    )
+
+def test_encode_frmr_z():
+    """
+    Test we can set the Z bit on a FRMR frame.
+    """
+    frame = AX25FrameRejectFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+            w=False, x=False, y=False, z=True,
+            vr=0, vs=0, frmr_control=0, frmr_cr=False
+    )
+    hex_cmp(bytes(frame),
+            'ac 96 68 84 ae 92 60'                          # Destination
+            'ac 96 68 9a a6 98 e1'                          # Source
+            '87'                                            # Control
+            '08 00 00'                                      # FRMR data
+    )
+
+def test_encode_frmr_cr():
+    """
+    Test we can set the CR bit on a FRMR frame.
+    """
+    frame = AX25FrameRejectFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+            w=False, x=False, y=False, z=False,
+            vr=0, vs=0, frmr_control=0, frmr_cr=True
+    )
+    hex_cmp(bytes(frame),
+            'ac 96 68 84 ae 92 60'                          # Destination
+            'ac 96 68 9a a6 98 e1'                          # Source
+            '87'                                            # Control
+            '00 10 00'                                      # FRMR data
+    )
+
+def test_encode_frmr_vr():
+    """
+    Test we can set the V(R) field on a FRMR frame.
+    """
+    frame = AX25FrameRejectFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+            w=False, x=False, y=False, z=False,
+            vr=5, vs=0, frmr_control=0, frmr_cr=False
+    )
+    hex_cmp(bytes(frame),
+            'ac 96 68 84 ae 92 60'                          # Destination
+            'ac 96 68 9a a6 98 e1'                          # Source
+            '87'                                            # Control
+            '00 a0 00'                                      # FRMR data
+    )
+
+def test_encode_frmr_vs():
+    """
+    Test we can set the V(S) field on a FRMR frame.
+    """
+    frame = AX25FrameRejectFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+            w=False, x=False, y=False, z=False,
+            vr=0, vs=5, frmr_control=0, frmr_cr=False
+    )
+    hex_cmp(bytes(frame),
+            'ac 96 68 84 ae 92 60'                          # Destination
+            'ac 96 68 9a a6 98 e1'                          # Source
+            '87'                                            # Control
+            '00 0a 00'                                      # FRMR data
+    )
+
+def test_encode_frmr_frmr_ctrl():
+    """
+    Test we can set the FRMR Control field on a FRMR frame.
+    """
+    frame = AX25FrameRejectFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+            w=False, x=False, y=False, z=False,
+            vr=0, vs=0, frmr_control=0x55, frmr_cr=False
+    )
+    hex_cmp(bytes(frame),
+            'ac 96 68 84 ae 92 60'                          # Destination
+            'ac 96 68 9a a6 98 e1'                          # Source
+            '87'                                            # Control
+            '00 00 55'                                      # FRMR data
+    )
+
+def test_raw_copy():
+    """
+    Test we can make a copy of a raw frame.
+    """
+    frame = AX25RawFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+            control=0xab,
+            payload=b'This is a test'
+    )
+    framecopy = frame.copy()
+    assert framecopy is not frame
+
+    hex_cmp(bytes(framecopy),
+            'ac 96 68 84 ae 92 60'                          # Destination
+            'ac 96 68 9a a6 98 e1'                          # Source
+            'ab'                                            # Control
+            '54 68 69 73 20 69 73 20 61 20 74 65 73 74'     # Payload
+    )
+
+def test_u_copy():
+    """
+    Test we can make a copy of a unnumbered frame.
+    """
+    frame = AX25UnnumberedFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+            modifier=0x43    # Disconnect
+    )
+    framecopy = frame.copy()
+    assert framecopy is not frame
+
+    hex_cmp(bytes(framecopy),
+            'ac 96 68 84 ae 92 60'                          # Destination
+            'ac 96 68 9a a6 98 e1'                          # Source
+            '43'                                            # Control
+    )
+
+def test_ui_copy():
+    """
+    Test we can make a copy of a unnumbered information frame.
+    """
+    frame = AX25UnnumberedInformationFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+            cr=True,
+            pid=0xf0,
+            payload=b'This is a test'
+    )
+    framecopy = frame.copy()
+    assert framecopy is not frame
+
+    hex_cmp(bytes(framecopy),
+            'ac 96 68 84 ae 92 e0'                          # Destination
+            'ac 96 68 9a a6 98 61'                          # Source
+            '03'                                            # Control
+            'f0'                                            # PID
+            '54 68 69 73 20 69 73 20 61 20 74 65 73 74'     # Payload
+    )
+
+def test_frmr_copy():
+    """
+    Test we can copy a FRMR frame.
+    """
+    frame = AX25FrameRejectFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+            w=False, x=False, y=False, z=False,
+            vr=0, vs=0, frmr_control=0x55, frmr_cr=False
+    )
+    framecopy = frame.copy()
+
+    assert framecopy is not frame
+    hex_cmp(bytes(framecopy),
+            'ac 96 68 84 ae 92 60'                          # Destination
+            'ac 96 68 9a a6 98 e1'                          # Source
+            '87'                                            # Control
+            '00 00 55'                                      # FRMR data
+    )
+
+def test_raw_str():
+    """
+    Test we can get a string representation of a raw frame.
+    """
+    frame = AX25RawFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+            control=0xab,
+            payload=b'This is a test'
+    )
+    eq_(str(frame), "VK4MSL>VK4BWI")
+
+def test_ui_str():
+    """
+    Test we can get a string representation of a UI frame.
+    """
+    frame = AX25UnnumberedInformationFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+            cr=True,
+            pid=0xf0,
+            payload=b'This is a test'
+    )
+    eq_(str(frame), "VK4MSL>VK4BWI: PID=0xf0 Payload=b'This is a test'")
