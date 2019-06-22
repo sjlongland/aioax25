@@ -155,7 +155,7 @@ class AX25RawFrame(AX25Frame):
                 control=self.control,
                 repeaters=self.header.repeaters,
                 cr=self.header.cr,
-                payload=self.payload
+                payload=self.frame_payload
         )
 
 
@@ -227,7 +227,7 @@ class AX25UnnumberedFrame(AX25Frame):
                 destination=self.header.destination,
                 source=self.header.source,
                 repeaters=self.header.repeaters,
-                modifier=self.header.modifier,
+                modifier=self.modifier,
                 cr=self.header.cr,
                 pf=self.pf
         )
