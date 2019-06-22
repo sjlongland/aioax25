@@ -209,3 +209,38 @@ following events:
 The signal will call call-back functions with the following keyword arguments:
  * `handler`: The `APRSMessageHandler` object emitting the signal
  * `state`: The state of the `APRSMessageHandler` object.
+
+### APRS Digipeating
+
+`aioax25` includes a module that implements basic digipeating for APRS
+including handling of the `WIDEn-N` SSIDs.  The implementation treats `WIDE`
+like `TRACE`: inserting the station's own call-sign in the path (which I
+believe is more compliant with the [Amateur License Conditions
+Determination](https://www.legislation.gov.au/Details/F2016C00286) in that it
+ensures each digipeater "identifies" itself).
+
+The `aioax25.aprs.uidigi` module can be configured to digipeat for other
+aliases such as the legacy `WIDE` and `RELAY`, or any alias of your choosing.
+
+It is capable of handling multiple interfaces, but will repeat incoming
+messages on the interface they were received from *ONLY*.  (i.e. if you connect
+a 2m interface and a HF interface, it will *NOT* digipeat from HF to 2m).
+
+Set-up is pretty simple:
+
+```
+from aioax25.aprs.uidigi import APRSDigipeater
+
+# Given an APRSInterface class (aprsint)
+# Create a digipeater instance
+digipeater = APRSDigipeater()
+
+# Connect your interface
+digipeater.connect(aprsint)
+
+# Optionally add any aliases you want handled
+digipeater.addaliases('WIDE', 'GATE')
+```
+
+You're now digipeating.  The digipeater will automatically handle `WIDEn-N` and
+`TRACEn-N`, and in the above example, will also digipeat for `WIDE`, `GATE`.
