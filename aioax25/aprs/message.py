@@ -251,6 +251,19 @@ class APRSMessageFrame(APRSFrame):
     @property
     def message(self):
         return self._message
+
+    def _copy(self):
+        return self.__class__(
+                destination=self.header.destination,
+                source=self.header.source,
+                repeaters=self.header.repeaters,
+                cr=self.header.cr,
+                pf=self.pf,
+                addressee=self.addressee,
+                msgid=self.msgid,
+                message=self.message
+        )
+
 APRSFrame.DATA_TYPE_HANDLERS[APRSDataType.MESSAGE] = APRSMessageFrame
 
 
