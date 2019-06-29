@@ -11,6 +11,7 @@ from aioax25.aprs.message import APRSMessageHandler, \
 from aioax25.frame import AX25Address
 
 from ..loop import DummyLoop
+from ..hex import to_hex
 
 
 class DummyAPRSHandler(object):
@@ -603,3 +604,58 @@ def test_message_frame_get_msg():
                 msgid=12345
         )
     eq_(msg.message, 'Station under test')
+
+def test_message_frame_copy():
+    """
+    Test we can copy a message frame
+    """
+    msg = APRSMessageFrame(
+                destination='APRS',
+                source='VK4MSL',
+                addressee='TEST',
+                message='Station under test',
+                msgid=12345
+        )
+    msgcopy = msg.copy()
+    assert msg is not msgcopy
+
+    eq_(
+            to_hex(bytes(msgcopy)),
+            to_hex(bytes(msg))
+    )
+
+def test_message_ack_copy():
+    """
+    Test we can copy a message ACK frame
+    """
+    msg = APRSMessageAckFrame(
+                destination='APRS',
+                source='VK4MSL',
+                addressee='TEST',
+                msgid=12345
+        )
+    msgcopy = msg.copy()
+    assert msg is not msgcopy
+
+    eq_(
+            to_hex(bytes(msgcopy)),
+            to_hex(bytes(msg))
+    )
+
+def test_message_rej_copy():
+    """
+    Test we can copy a message REJ frame
+    """
+    msg = APRSMessageRejFrame(
+                destination='APRS',
+                source='VK4MSL',
+                addressee='TEST',
+                msgid=12345
+        )
+    msgcopy = msg.copy()
+    assert msg is not msgcopy
+
+    eq_(
+            to_hex(bytes(msgcopy)),
+            to_hex(bytes(msg))
+    )
