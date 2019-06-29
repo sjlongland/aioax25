@@ -280,6 +280,17 @@ class APRSMessageAckFrame(APRSMessageFrame):
 
         self._msgid = msgid
 
+    def _copy(self):
+        return self.__class__(
+                destination=self.header.destination,
+                source=self.header.source,
+                repeaters=self.header.repeaters,
+                cr=self.header.cr,
+                pf=self.pf,
+                addressee=self.addressee,
+                msgid=self.msgid
+        )
+
 
 class APRSMessageRejFrame(APRSMessageFrame):
     def __init__(self, destination, source, addressee, msgid,
@@ -293,3 +304,14 @@ class APRSMessageRejFrame(APRSMessageFrame):
             repeaters=repeaters, pf=pf, cr=cr)
 
         self._msgid = msgid
+
+    def _copy(self):
+        return self.__class__(
+                destination=self.header.destination,
+                source=self.header.source,
+                repeaters=self.header.repeaters,
+                cr=self.header.cr,
+                pf=self.pf,
+                addressee=self.addressee,
+                msgid=self.msgid
+        )
