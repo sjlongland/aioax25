@@ -4,6 +4,7 @@
 APRS Digipeating module
 """
 
+import logging
 import weakref
 import re
 from ..frame import AX25FrameHeader, AX25Address
@@ -18,10 +19,13 @@ class APRSDigipeater(object):
     digipeater path of all unique APRS messages seen.
     """
 
-    def __init__(self):
+    def __init__(self, log=None):
         """
         Create a new digipeater module instance.
         """
+        if log is None:
+            log = logging.getLogger(self.__class__.__module__)
+        self._log = log
         self._mydigi = set()
 
     @property
@@ -64,6 +68,7 @@ class APRSDigipeater(object):
         Note that a message is digipeated on the interface it was received
         *ONLY*.  Cross-interface digipeating is not implemented at this time.
         """
+        self._log.debug('Connecting to %s (add call %s)', aprsint, addcall)
         aprsint.received_msg.connect(self._on_receive)
         if addcall:
             self.addaliases(aprsint.mycall)
@@ -83,6 +88,8 @@ class APRSDigipeater(object):
         Handle the incoming to-be-digipeated message.
         """
         # First, have we already digipeated this?
+        self._log.debug('On receive call-back: interface=%s, frame=%s',
+                interface, frame)
         mycall = interface.mycall
         idx = None
         alias = None
@@ -91,6 +98,8 @@ class APRSDigipeater(object):
         prev = None
         for (digi_idx, digi) in enumerate(frame.header.repeaters):
             if digi.normalised in self._mydigi:
+                self._log.debug('MYDIGI digipeat for %s, last was %s',
+                        digi, prev)
                 if ((prev is None) or prev.ch) and (not digi.ch):
                     # This is meant to be directly digipeated by us!
                     self._on_transmit(
@@ -112,6 +121,7 @@ class APRSDigipeater(object):
             else:
                 # Is this a WIDEn/TRACEn call?
                 match = DIGI_RE.match(digi.callsign)
+                self._log.debug('WIDEn-N?  digi=%s match=%s', digi, match)
                 if match:
                     # It is
                     idx = digi_idx
@@ -123,10 +133,12 @@ class APRSDigipeater(object):
 
         if alias is None:
             # The path did not mention a WIDEn digi call
+            self._log.debug('No alias, ignoring frame')
             return
 
         if rem_hops == 0:
             # Number of hops expired, do not digipeat this
+            self._log.debug('Hops exhausted, ignoring frame')
             return
 
         # This is to be digipeated.
