@@ -7,6 +7,7 @@ APRS Digipeating module
 import logging
 import weakref
 import re
+import time
 from ..frame import AX25FrameHeader, AX25Address
 
 # APRS WIDEn/TRACEn regular expression pattern
@@ -19,12 +20,13 @@ class APRSDigipeater(object):
     digipeater path of all unique APRS messages seen.
     """
 
-    def __init__(self, log=None):
+    def __init__(self, digipeat_timeout=5.0, log=None):
         """
         Create a new digipeater module instance.
         """
         if log is None:
             log = logging.getLogger(self.__class__.__module__)
+        self._digipeat_timeout = digipeat_timeout
         self._log = log
         self._mydigi = set()
 
@@ -102,20 +104,22 @@ class APRSDigipeater(object):
                         digi, prev)
                 if ((prev is None) or prev.ch) and (not digi.ch):
                     # This is meant to be directly digipeated by us!
+                    outgoing = frame.copy(
+                        header=AX25FrameHeader(
+                            destination=frame.header.destination,
+                            source=frame.header.source,
+                            repeaters=frame.header.repeaters.replace(
+                                alias=digi,
+                                address=mycall.copy(ch=True)
+                            ),
+                            cr=frame.header.cr
+                        )
+                    )
+                    outgoing.deadline = time.time() + self._digipeat_timeout
                     self._on_transmit(
                             interface=interface,
                             alias=alias,
-                            frame=frame.copy(
-                                header=AX25FrameHeader(
-                                    destination=frame.header.destination,
-                                    source=frame.header.source,
-                                    repeaters=frame.header.repeaters.replace(
-                                        alias=digi,
-                                        address=mycall.copy(ch=True)
-                                    ),
-                                    cr=frame.header.cr
-                                )
-                            )
+                            frame=outgoing
                     )
                 return
             else:
@@ -152,17 +156,21 @@ class APRSDigipeater(object):
             ))
         digi_path.extend(frame.header.repeaters[idx+1:])
 
+        outgoing = frame.copy(
+            header=AX25FrameHeader(
+                destination=frame.header.destination,
+                source=frame.header.source,
+                repeaters=digi_path,
+                cr=frame.header.cr
+            )
+        )
+
+        outgoing.deadline = time.time() + self._digipeat_timeout
+
         self._on_transmit(
                 interface=interface,
                 alias=alias,
-                frame=frame.copy(
-                header=AX25FrameHeader(
-                    destination=frame.header.destination,
-                    source=frame.header.source,
-                    repeaters=digi_path,
-                    cr=frame.header.cr
-                )
-            )
+                frame=outgoing
         )
 
     def _on_transmit(self, interface, alias, frame):
