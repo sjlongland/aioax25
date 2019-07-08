@@ -518,6 +518,94 @@ def test_transmit_sends_immediate_if_cts():
 
 
 @asynctest
+def test_transmit_sends_if_not_expired():
+    """
+    Test the interface sends frame if not expired.
+    """
+    my_port = DummyKISS()
+    my_frame = AX25UnnumberedInformationFrame(
+            destination='VK4BWI-4',
+            source='VK4MSL',
+            pid=0xf0,
+            payload=b'testing')
+    my_frame.deadline = time.time() + 3600.0
+    transmit_future = Future()
+
+    my_interface = AX25Interface(my_port)
+
+    # Override clear to send expiry
+    my_interface._cts_expiry = 0
+
+    def _on_transmit(interface, frame, **kwargs):
+        try:
+            assert len(kwargs) == 0, 'Too many arguments'
+            assert interface is my_interface, 'Wrong interface'
+            assert bytes(frame) == bytes(my_frame), 'Wrong frame'
+            transmit_future.set_result(None)
+        except Exception as e:
+            transmit_future.set_exception(e)
+
+    def _on_timeout():
+        transmit_future.set_exception(AssertionError('Timed out'))
+
+    # The time before transmission
+    time_before = time.monotonic()
+
+    # Set a timeout
+    get_event_loop().call_later(1.0, _on_timeout)
+
+    # Send the message
+    my_interface.transmit(my_frame, _on_transmit)
+
+    yield from transmit_future
+
+    assert len(my_port.sent) == 1
+    (send_time, sent_frame) = my_port.sent.pop(0)
+
+    assert bytes(sent_frame) == bytes(my_frame)
+    assert (time.monotonic() - send_time) < 0.01
+    assert (send_time - time_before) < 0.01
+
+
+@asynctest
+def test_transmit_drops_expired():
+    """
+    Test the interface drops expired messages.
+    """
+    my_port = DummyKISS()
+    my_frame = AX25UnnumberedInformationFrame(
+            destination='VK4BWI-4',
+            source='VK4MSL',
+            pid=0xf0,
+            payload=b'testing')
+    # This timestamp was a _long_ time ago!  1AM 1st January 1970
+    my_frame.deadline = 3600
+    transmit_future = Future()
+
+    my_interface = AX25Interface(my_port)
+
+    # Override clear to send expiry
+    my_interface._cts_expiry = 0
+
+    def _on_timeout():
+        transmit_future.set_result(None)
+
+    # The time before transmission
+    time_before = time.monotonic()
+
+    # Set a timeout
+    get_event_loop().call_later(1.0, _on_timeout)
+
+    # Send the message
+    my_interface.transmit(my_frame)
+
+    yield from transmit_future
+
+    # Nothing should be sent!
+    assert len(my_port.sent) == 0
+
+
+@asynctest
 def test_transmit_waits_if_cts_reset():
     """
     Test the interface waits if CTS timer is reset.

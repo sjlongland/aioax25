@@ -130,7 +130,7 @@ class AX25Interface(Router):
 
         try:
             if (frame.deadline is not None) and \
-                    (frame.deadline < time.time):
+                    (frame.deadline < time.time()):
                 self._log.info('Dropping expired frame: %s', frame)
                 self._schedule_tx()
                 return
