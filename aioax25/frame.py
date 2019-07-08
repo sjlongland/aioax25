@@ -5,6 +5,7 @@ AX.25 framing
 """
 
 import re
+import time
 from collections.abc import Sequence
 
 # Frame type classes
@@ -81,8 +82,11 @@ class AX25Frame(object):
             # are covered above.
             assert False, 'How did we get here?'
 
-    def __init__(self, destination, source, repeaters=None, cr=False):
+    def __init__(self, destination, source, repeaters=None,
+            cr=False, timestamp=None, deadline=None):
         self._header = AX25FrameHeader(destination, source, repeaters, cr)
+        self._timestamp = timestamp or time.time()
+        self._deadline = deadline
 
     def _encode(self):
         """
@@ -107,6 +111,26 @@ class AX25Frame(object):
 
     def __str__(self):
         return str(self._header)
+
+    @property
+    def timestamp(self):
+        """
+        Timestamp for message (creation time)
+        """
+        return self._timestamp
+
+    @property
+    def deadline(self):
+        """
+        Message expiry
+        """
+        return self._deadline
+
+    @deadline.setter
+    def deadline(self, deadline):
+        if self._deadline is not None:
+            raise ValueError('Deadline may not be changed after being set')
+        self._deadline = deadline
 
     @property
     def header(self):
