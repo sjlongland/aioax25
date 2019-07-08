@@ -134,7 +134,10 @@ class AX25Interface(Router):
                 self._log.info('Dropping expired frame: %s', frame)
                 self._schedule_tx()
                 return
-        except AttributeError:
+        except AttributeError: # pragma: no cover
+            # Technically, all objects that pass through here should be
+            # AX25Frame sub-classes, so this branch should not get executed.
+            # If it does, we just pretend there is no deadline.
             pass
 
         try:
