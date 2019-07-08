@@ -9,6 +9,7 @@ import asyncio
 import random
 from functools import partial
 from .signal import Signal
+import time
 import re
 
 from .frame import AX25Frame
@@ -126,6 +127,15 @@ class AX25Interface(Router):
         except IndexError:
             self._log.debug('No traffic to transmit')
             return
+
+        try:
+            if (frame.deadline is not None) and \
+                    (frame.deadline < time.time):
+                self._log.info('Dropping expired frame: %s', frame)
+                self._schedule_tx()
+                return
+        except AttributeError:
+            pass
 
         try:
             self._log.debug('Transmitting %s', frame)
