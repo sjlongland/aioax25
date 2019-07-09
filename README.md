@@ -244,3 +244,18 @@ digipeater.addaliases('WIDE', 'GATE')
 
 You're now digipeating.  The digipeater will automatically handle `WIDEn-N` and
 `TRACEn-N`, and in the above example, will also digipeat for `WIDE`, `GATE`.
+
+#### Preventing message loops on busy networks
+
+If you have a *lot* of digipeaters in close proximity (say about 6) and there's
+a lot of traffic, you can get the situation where a message queued up to be
+digipeated sits in the transmit queue longer than the 28 seconds needed for
+other digipeaters to "forget" the message.
+
+This leads to a network with the memory of an elephant, it almost never forgets
+a message because the digipeats come more than 30 seconds *after* the original.
+
+The `APRSDigipeater` class constructor can take a single parameter,
+`digipeater_timeout`, which sets an expiry (default of 5 seconds) on queued
+digipeat messages.  If a message is not sent by the time this timeout expires,
+the message is quietly dropped, preventing the memory effect.
