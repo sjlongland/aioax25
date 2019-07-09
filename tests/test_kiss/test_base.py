@@ -363,7 +363,7 @@ def test_send_data_block_size():
 
 def test_init_kiss():
     """
-    Test _init_kiss blindly sends the 'INT KISS' command.
+    Test _init_kiss sets up the commands to be sent to initialise KISS
     """
     loop = DummyLoop()
     kissdev = DummyKISSDevice(loop=loop)
@@ -374,11 +374,11 @@ def test_init_kiss():
     # Initialise the KISS device
     kissdev._init_kiss()
 
-    # We should see the initialisation commands
-    eq_(bytes(kissdev.transmitted), b'\rINT KISS\rRESET\r')
+    # We should see a copy of the KISS commands, minus the first
+    eq_(kissdev._kiss_rem_commands, kissdev._kiss_commands[1:])
 
-    # We should now be in the open state
-    eq_(kissdev.state, KISSDeviceState.OPEN)
+    # We should see the first initialisation commands
+    eq_(bytes(kissdev.transmitted), b'INT KISS\r')
 
 def test_getitem():
     """

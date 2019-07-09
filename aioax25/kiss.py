@@ -10,6 +10,7 @@ from asyncio import get_event_loop
 from serial import Serial, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
 from .signal import Signal
 from binascii import b2a_hex
+import time
 import logging
 
 
@@ -179,7 +180,8 @@ class BaseKISSDevice(object):
     """
     def __init__(self, reset_on_close=True,
             send_block_size=128, send_block_delay=0.1,
-            log=None, loop=None):
+            kiss_commands=['INT KISS', 'RESET'],
+            prompt='cmd:', log=None, loop=None):
         if log is None:
             log = logging.getLogger(self.__class__.__module__)
         if loop is None:
@@ -191,7 +193,11 @@ class BaseKISSDevice(object):
         self._loop = loop
         self._port = {}
         self._state = KISSDeviceState.CLOSED
+        self._open_time = 0
         self._reset_on_close = reset_on_close
+        self._kiss_commands = kiss_commands
+        self._kiss_rem_commands = None
+        self._frame_seen = False
         self._send_block_size = send_block_size
         self._send_block_delay = send_block_delay
 
@@ -202,8 +208,12 @@ class BaseKISSDevice(object):
         """
         if self._log.isEnabledFor(logging.DEBUG):
             self._log.debug('RECV RAW %r', b2a_hex(data).decode())
+
         self._rx_buffer += data
-        self._loop.call_soon(self._receive_frame)
+        if self._state == KISSDeviceState.OPENING:
+            self._loop.call_soon(self._check_open)
+        else:
+            self._loop.call_soon(self._receive_frame)
 
     def _send(self, frame):
         """
@@ -321,9 +331,33 @@ class BaseKISSDevice(object):
     def _init_kiss(self):
         assert self.state == KISSDeviceState.OPENING, \
                 'Device is not opening'
-        # For now, just blindly send a INT KISS command followed by a RESET.
-        self._send_raw_data(b'\rINT KISS\rRESET\r')
-        self._state = KISSDeviceState.OPEN
+
+        self._kiss_rem_commands = self._kiss_commands.copy()
+        self._send_kiss_cmd()
+
+    def _send_kiss_cmd(self):
+        try:
+            command = self._kiss_rem_commands.pop(0)
+        except IndexError:
+            # Should be open now.
+            self._open_time = time.time()
+            self._state = KISSDeviceState.OPEN
+            self._rx_buffer = bytearray()
+
+        self._log.debug('Sending %r', command)
+        command = command.encode('US-ASCII')
+        self._rx_buffer = bytearray()
+        for bv in command:
+            self._send_raw_data(bytes([bv]))
+            time.sleep(0.1)
+        self._send_raw_data(b'\r')
+        self._loop.call_later(0.5, self._check_open)
+
+    def _check_open(self):
+        """
+        Handle opening of the port
+        """
+        self._loop.call_soon(self._send_kiss_cmd)
 
     def __getitem__(self, port):
         """
