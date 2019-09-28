@@ -163,7 +163,7 @@ class APRSMessageHandler(object):
 
 class APRSMessageFrame(APRSFrame):
 
-    MSGID_RE = re.compile(r'{([0-9A-Za-z]+)(\r?)$')
+    MSGID_RE = re.compile(r'{([0-9A-Za-z]+)(}[0-9A-Za-z]*)?(\r?)$')
     ACKREJ_RE = re.compile(r'^(ack|rej)([0-9A-Za-z]+)$')
 
     @classmethod
@@ -178,6 +178,7 @@ class APRSMessageFrame(APRSFrame):
         if match:
             ackrej = match.group(1)
             msgid = match.group(2)
+
             if ackrej == 'ack':
                 # This is an ACK
                 return APRSMessageAckFrame(
@@ -200,8 +201,16 @@ class APRSMessageFrame(APRSFrame):
                 )
 
         match = cls.MSGID_RE.search(message)
+        replyack = False
         if match:
             msgid = match.group(1)
+
+            # APRS 1.1 Reply-ACK detection
+            replyack = match.group(2)
+            if replyack:
+                replyack = replyack[1:] or True
+            else:
+                replyack = False
             message = message[:-(len(msgid)+1)]
         else:
             msgid = None
@@ -212,15 +221,17 @@ class APRSMessageFrame(APRSFrame):
                 addressee=addressee,
                 message=message,
                 msgid=msgid,
+                replyack=replyack,
                 repeaters=uiframe.header.repeaters,
                 pf=uiframe.pf, cr=uiframe.header.cr
         )
 
     def __init__(self, destination, source, addressee, message,
-            msgid=None, repeaters=None, pf=False, cr=False):
+            msgid=None, replyack=False, repeaters=None, pf=False, cr=False):
 
         self._addressee = AX25Address.decode(addressee).normalised
         self._msgid = msgid
+        self._replyack = replyack
         self._message = message
 
         payload = ':%-9s:%s' % (
@@ -233,6 +244,13 @@ class APRSMessageFrame(APRSFrame):
             if len(msgid) > 5:
                 raise ValueError('message ID %r too long' % msgid)
             payload += '{%s' % msgid
+
+            if replyack is True:
+                # We simply support reply-ack
+                payload += '}'
+            elif replyack is not False:
+                # We are ACKing with a reply
+                payload += '}%s' % replyack
 
         super(APRSMessageFrame, self).__init__(
                 destination=destination,
@@ -249,6 +267,10 @@ class APRSMessageFrame(APRSFrame):
         return self._msgid
 
     @property
+    def replyack(self):
+        return self._replyack
+
+    @property
     def message(self):
         return self._message
 
@@ -261,6 +283,7 @@ class APRSMessageFrame(APRSFrame):
                 pf=self.pf,
                 addressee=self.addressee,
                 msgid=self.msgid,
+                replyack=self.replyack,
                 message=self.message
         )
 
