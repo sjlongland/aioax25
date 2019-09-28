@@ -438,7 +438,7 @@ def test_transmit_waits_cts():
     (send_time, sent_frame) = my_port.sent.pop(0)
 
     eq_(bytes(sent_frame), bytes(my_frame))
-    assert_less((time.monotonic() - send_time), 0.01)
+    assert_less((time.monotonic() - send_time), 0.05)
     assert_greater_equal((send_time - time_before), 0.25)
 
 
@@ -514,7 +514,7 @@ def test_transmit_sends_immediate_if_cts():
     (send_time, sent_frame) = my_port.sent.pop(0)
 
     eq_(bytes(sent_frame), bytes(my_frame))
-    assert_less((time.monotonic() - send_time), 0.01)
+    assert_less((time.monotonic() - send_time), 0.05)
     assert_less((send_time - time_before), 0.01)
 
 
@@ -564,8 +564,8 @@ def test_transmit_sends_if_not_expired():
     (send_time, sent_frame) = my_port.sent.pop(0)
 
     eq_(bytes(sent_frame), bytes(my_frame))
-    assert_less((time.monotonic() - send_time), 0.01)
-    assert_less((send_time - time_before), 0.01)
+    assert_less((time.monotonic() - send_time), 0.05)
+    assert_less((send_time - time_before), 0.05)
 
 
 @asynctest
