@@ -168,7 +168,7 @@ class APRSMessageFrame(APRSFrame):
 
     @classmethod
     def decode(cls, uiframe, payload, log):
-        if (payload[0] != ':') and (payload[10] != ':'):
+        if (payload[0] != ':') or (payload[10] != ':'):
             raise ValueError('Not a message frame: %r' % payload)
 
         addressee = AX25Address.decode(payload[1:10].strip())

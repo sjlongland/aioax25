@@ -79,6 +79,40 @@ def test_decode_message_confirmable():
     assert isinstance(decoded, APRSMessageFrame)
     eq_(decoded.msgid, '14')
 
+def test_decode_message_replyack_capable():
+    """
+    Test the decode routine can recognise a message frame from a Reply-ACK
+    capable station.
+    """
+    frame = AX25UnnumberedInformationFrame(
+            destination='APZAIO',
+            source='VK4MSL-7',
+            pid=0xf0,
+            payload=b':VK4MDL-7 :Hi{01}'
+    )
+    decoded = APRSFrame.decode(frame, logging.getLogger('decoder'))
+    assert_is_not(decoded, frame)
+    assert isinstance(decoded, APRSMessageFrame)
+    eq_(decoded.replyack, True)
+    eq_(decoded.msgid, '01')
+
+def test_decode_message_replyack_reply():
+    """
+    Test the decode routine can recognise a message frame sent as a
+    reply-ack.
+    """
+    frame = AX25UnnumberedInformationFrame(
+            destination='APZAIO',
+            source='VK4MSL-7',
+            pid=0xf0,
+            payload=b':VK4MDL-7 :Hi{01}45'
+    )
+    decoded = APRSFrame.decode(frame, logging.getLogger('decoder'))
+    assert_is_not(decoded, frame)
+    assert isinstance(decoded, APRSMessageFrame)
+    eq_(decoded.replyack, '45')
+    eq_(decoded.msgid, '01')
+
 def test_decode_message_ack():
     """
     Test the decode routine can recognise a message acknowledgement frame.

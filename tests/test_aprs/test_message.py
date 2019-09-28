@@ -564,18 +564,18 @@ def test_message_frame_malformed_start():
     Test the message frame decoder will reject malformed start of message.
     """
     try:
-        APRSMessageFrame.decode(None, b'x123456789:This is not valid', None)
+        APRSMessageFrame.decode(None, 'x123456789:This is not valid', None)
     except ValueError as e:
-        eq_(str(e), "Not a message frame: b'x123456789:This is not valid'")
+        eq_(str(e), "Not a message frame: 'x123456789:This is not valid'")
 
 def test_message_frame_malformed_delim():
     """
     Test the message frame decoder will reject malformed message delimiter
     """
     try:
-        APRSMessageFrame.decode(None, b':123456789xThis is not valid', None)
+        APRSMessageFrame.decode(None, ':123456789xThis is not valid', None)
     except ValueError as e:
-        eq_(str(e), "Not a message frame: b':123456789xThis is not valid'")
+        eq_(str(e), "Not a message frame: ':123456789xThis is not valid'")
 
 def test_message_frame_bad_msgid():
     """
@@ -659,3 +659,47 @@ def test_message_rej_copy():
             to_hex(bytes(msgcopy)),
             to_hex(bytes(msg))
     )
+
+
+def test_message_encode_replyack_capable():
+    """
+    Test we can encode a reply-ack flag.
+    """
+    msg = APRSMessageFrame(
+            destination='APRS',
+            source='VK4MSL',
+            addressee='VK4BWI',
+            message='Test announcing "reply-ack" capability',
+            msgid='321',
+            replyack=True)
+    eq_(msg.payload,
+            b':VK4BWI   :Test announcing "reply-ack" capability{321}')
+
+
+def test_message_encode_replyack_reply():
+    """
+    Test we can encode a reply-ack reply.
+    """
+    msg = APRSMessageFrame(
+            destination='APRS',
+            source='VK4MSL',
+            addressee='VK4BWI',
+            message='Test reply using "reply-ack" capability',
+            msgid='321',
+            replyack='567')
+    eq_(msg.payload,
+            b':VK4BWI   :Test reply using "reply-ack" capability{321}567')
+
+
+def test_message_encode_noreplyack():
+    """
+    Test we can encode without reply-ack.
+    """
+    msg = APRSMessageFrame(
+            destination='APRS',
+            source='VK4MSL',
+            addressee='VK4BWI',
+            message='Test without "reply-ack" capability',
+            msgid='321')
+    eq_(msg.payload,
+            b':VK4BWI   :Test without "reply-ack" capability{321')
