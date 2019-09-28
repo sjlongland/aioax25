@@ -651,9 +651,9 @@ def test_transmit_waits_if_cts_reset():
     (send_time, sent_frame) = my_port.sent.pop(0)
 
     eq_(bytes(sent_frame), bytes(my_frame))
-    assert_less((time.monotonic() - send_time), 0.01)
+    assert_less((time.monotonic() - send_time), 0.05)
     assert_greater(send_time - time_before, 0.25)
-    assert_less(send_time - time_before, 1.01)
+    assert_less(send_time - time_before, 1.05)
 
 
 @asynctest
@@ -707,5 +707,5 @@ def test_transmit_handles_failure():
     (send_time, sent_frame) = my_port.sent.pop(0)
 
     eq_(bytes(sent_frame), bytes(my_frame_2))
-    assert_less((time.monotonic() - send_time), 0.01)
+    assert_less((time.monotonic() - send_time), 0.05)
     assert_greater_equal((send_time - time_before), 0.25)
