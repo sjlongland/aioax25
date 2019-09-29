@@ -22,12 +22,12 @@ class AX25Interface(Router):
     The interface handles basic queueing and routing of message traffic.
 
     Outgoing messages are queued and sent when there is a break of greater
-    than the cts_delay (250ms) + a randomisation factor (cts_rand).
+    than the cts_delay (10ms) + a randomisation factor (cts_rand).
     Messages may be cancelled prior to transmission.
     """
 
-    def __init__(self, kissport, cts_delay=0.25,
-            cts_rand=0.25, log=None, loop=None):
+    def __init__(self, kissport, cts_delay=0.01,
+            cts_rand=0.01, log=None, loop=None):
         # Initialise the superclass
         super(AX25Interface, self).__init__()
 
