@@ -183,13 +183,20 @@ Other optional parameters:
 
 To send APRS messages, there is `send_message` and `send_response`:
 
- * `send_message(addressee, path=None, oneshot=False)`: This sends an APRS
-   message to the addressed station.  If `path` is `None`, then the
-   `aprs_path` is used.  If `oneshot=True`, then the message is sent without
-   a message ID, no ACK/REJ is expected and no retransmissions will be made,
-   the method returns `None`.  Otherwise, a `APRSMessageHandler` (from
+ * `send_message(addressee, path=None, oneshot=False, replyack=False)`:
+   This sends an APRS message to the addressed station.  If `path` is `None`,
+   then the `aprs_path` is used.  If `oneshot=True`, then the message is sent
+   without a message ID, no ACK/REJ is expected and no retransmissions will be
+   made, the method returns `None`.  Otherwise, a `APRSMessageHandler` (from
    `aioax25.aprs.message`) is returned.
-
+   * If `replyack` is set to `True`, then the message will advertise
+     [reply-ack](http://www.aprs.org/aprs11/replyacks.txt) capability to
+     the recipient.  Not all APRS implementations support this.
+   * If `replyack` references an incoming message which itself has `replyack`
+     set (either to `True` or to a previous message ID), then the outgoing
+     message will have a reply-ack suffix appended to "ack" the given message.
+   * The default of `replyack=False` disables all reply-ack capability (an
+     incoming reply-ack message will still be treated as an ACK however).
  * `send_response(message, ack=True)`: This is used when you have received
    a message from another station -- passing that message to this function
    will send a `ACK` or `REJ` message to that station.
