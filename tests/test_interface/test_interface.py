@@ -409,7 +409,7 @@ def test_transmit_waits_cts():
             payload=b'testing')
     transmit_future = Future()
 
-    my_interface = AX25Interface(my_port)
+    my_interface = AX25Interface(my_port, cts_delay=0.250)
 
     def _on_transmit(interface, frame, **kwargs):
         try:
@@ -619,7 +619,7 @@ def test_transmit_waits_if_cts_reset():
             payload=b'testing')
     transmit_future = Future()
 
-    my_interface = AX25Interface(my_port)
+    my_interface = AX25Interface(my_port, cts_delay=0.250)
 
     def _on_transmit(interface, frame, **kwargs):
         try:
@@ -674,7 +674,7 @@ def test_transmit_handles_failure():
             payload=b'testing 2')
     transmit_future = Future()
 
-    my_interface = AX25Interface(my_port)
+    my_interface = AX25Interface(my_port, cts_delay=0.250)
 
     # Override clear to send expiry
     my_interface._cts_expiry = 0
