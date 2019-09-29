@@ -94,9 +94,11 @@ class APRSInterface(APRSRouter):
     def mycall(self):
         return self._mycall.copy()
 
-    def send_message(self, addressee, message, path=None, oneshot=False):
+    def send_message(self, addressee, message,
+            path=None, oneshot=False, replyack=None):
         """
-        Send a APRS message to the named addressee.
+        Send a APRS message to the named addressee.  If replyack is not None,
+        send a reply-ack.  If replyack is True, advertise reply-ack capability.
         """
         if path is None:
             self._log.debug('Setting default path for message to %s',
@@ -104,6 +106,11 @@ class APRSInterface(APRSRouter):
             path=self._aprs_path
 
         if oneshot:
+            # Forbid replyack when in one-shot mode as we can't encode a
+            # reply-ack otherwise.
+            if replyack:
+                raise ValueError('Cannot send reply-ack in one-shot mode')
+
             # One-shot mode, just fire and forget!
             self._log.info('Send one-shot to %s: %s',
                     addressee, message)
@@ -117,9 +124,18 @@ class APRSInterface(APRSRouter):
                     repeaters=path
             ))
             return
+        elif replyack:
+            # If replyack is a message, we are replying to *that* message.
+            self._log.debug('Reply-ACK is %s', replyack)
+            if isinstance(replyack, APRSMessageFrame):
+                if not replyack.replyack:
+                    # Likely station won't support it
+                    raise ValueError('replyack is not a reply-ack message')
+
+                replyack = replyack.msgid
 
         handler = APRSMessageHandler(self, addressee, path, message,
-                self._log.getChild('message'))
+                replyack, self._log.getChild('message'))
         self._pending_msg[handler.msgid] = handler
         handler._send()
         return handler
@@ -198,6 +214,17 @@ class APRSInterface(APRSRouter):
 
         self._loop.call_soon(self._schedule_dedup_cleanup)
 
+    def _on_receive_ack(self, msgid, frame):
+        handler = self._pending_msg.get(msgid)
+        self._log.debug(
+                'Response to %r (pending %r), handler %s',
+                msgid, list(self._pending_msg.keys()), handler)
+        if handler:
+            self._loop.call_soon(handler._on_response, frame)
+            return True
+        else:
+            return False
+
     def _on_receive(self, frame, **kwargs):
         """
         Handle the incoming frame.
@@ -222,18 +249,16 @@ class APRSInterface(APRSRouter):
                 if frame.addressee == self.mycall:
                     # Is it a response for us?
                     if isinstance(frame, (APRSMessageAckFrame, \
-                        APRSMessageRejFrame)):
-                        msgid = frame.msgid
-
-                        handler = self._pending_msg.get(msgid)
-                        self._log.debug(
-                                'Response to %r (pending %r), handler %s',
-                                msgid, list(self._pending_msg.keys()), handler)
-                        if handler:
-                            self._loop.call_soon(handler._on_response, frame)
-                            # This is dealt with
+                            APRSMessageRejFrame)):
+                        if self._on_receive_ack(frame.msgid, frame):
+                            # Dealt with
                             return
                     else:
+                        # Is it a reply-ack?
+                        if frame.replyack and (frame.replyack is not True):
+                            # Hand to the response handler
+                            self._on_receive_ack(frame.replyack, frame)
+
                         # This is a message addressed to us.
                         self._loop.call_soon(partial(
                             self.received_addressed_msg.emit,

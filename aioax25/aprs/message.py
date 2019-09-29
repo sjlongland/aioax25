@@ -30,7 +30,7 @@ class APRSMessageHandler(object):
         TIMEOUT = -3
         FAIL    = -4
 
-    def __init__(self, aprshandler, addressee, path, message, log):
+    def __init__(self, aprshandler, addressee, path, message, replyack, log):
         self._log = log
         # Initialise our timer and retry counter
         self._timeout_duration \
@@ -45,6 +45,7 @@ class APRSMessageHandler(object):
                 addressee=addressee,
                 message=message,
                 msgid=aprshandler._next_msgid,
+                replyack=replyack,
                 repeaters=[
                     AX25Address.decode(call).normalised for call in path
                 ]
@@ -141,10 +142,13 @@ class APRSMessageHandler(object):
             return
 
         self._response = response
-        if isinstance(response, APRSMessageAckFrame):
-            self._enter_state(self.HandlerState.SUCCESS)
-        else:
+
+        # Response will either be a APRSMessage(Ack|Rej)Frame, or a
+        # APRSMessageFrame with a reply-ack set.
+        if isinstance(response, APRSMessageRejFrame):
             self._enter_state(self.HandlerState.REJECT)
+        else:
+            self._enter_state(self.HandlerState.SUCCESS)
 
     def _enter_state(self, state):
         self._log.debug('%s entering state %s', self.msgid, state)

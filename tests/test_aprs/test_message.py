@@ -45,6 +45,7 @@ def test_msghandler_addressee():
             addressee='CQ',
             path=['WIDE1-1','WIDE2-1'],
             message='testing',
+            replyack=False,
             log=logging.getLogger('messagehandler'))
 
     eq_(msghandler.addressee, AX25Address.decode('CQ'))
@@ -60,6 +61,7 @@ def test_msghandler_enter_state_success():
             addressee='CQ',
             path=['WIDE1-1','WIDE2-1'],
             message='testing',
+            replyack=False,
             log=logging.getLogger('messagehandler'))
     msghandler.done.connect(lambda **k : calls.append(k))
 
@@ -88,6 +90,7 @@ def test_msghandler_enter_state_reject():
             addressee='CQ',
             path=['WIDE1-1','WIDE2-1'],
             message='testing',
+            replyack=False,
             log=logging.getLogger('messagehandler'))
     msghandler.done.connect(lambda **k : calls.append(k))
 
@@ -116,6 +119,7 @@ def test_msghandler_enter_state_timeout():
             addressee='CQ',
             path=['WIDE1-1','WIDE2-1'],
             message='testing',
+            replyack=False,
             log=logging.getLogger('messagehandler'))
     msghandler.done.connect(lambda **k : calls.append(k))
 
@@ -144,6 +148,7 @@ def test_msghandler_enter_state_cancel():
             addressee='CQ',
             path=['WIDE1-1','WIDE2-1'],
             message='testing',
+            replyack=False,
             log=logging.getLogger('messagehandler'))
     msghandler.done.connect(lambda **k : calls.append(k))
 
@@ -172,6 +177,7 @@ def test_msghandler_enter_state_no_handler():
             addressee='CQ',
             path=['WIDE1-1','WIDE2-1'],
             message='testing',
+            replyack=False,
             log=logging.getLogger('messagehandler'))
     msghandler.done.connect(lambda **k : calls.append(k))
 
@@ -203,6 +209,7 @@ def test_msghandler_enter_state_reject():
             addressee='CQ',
             path=['WIDE1-1','WIDE2-1'],
             message='testing',
+            replyack=False,
             log=logging.getLogger('messagehandler'))
     msghandler.done.connect(lambda **k : calls.append(k))
 
@@ -231,6 +238,7 @@ def test_msghandler_enter_state_send():
             addressee='CQ',
             path=['WIDE1-1','WIDE2-1'],
             message='testing',
+            replyack=False,
             log=logging.getLogger('messagehandler'))
     msghandler.done.connect(lambda **k : calls.append(k))
 
@@ -257,6 +265,7 @@ def test_msghandler_enter_state_retry():
             addressee='CQ',
             path=['WIDE1-1','WIDE2-1'],
             message='testing',
+            replyack=False,
             log=logging.getLogger('messagehandler'))
     msghandler.done.connect(lambda **k : calls.append(k))
 
@@ -283,6 +292,7 @@ def test_msghandler_abort_on_no_aprshandler():
             addressee='CQ',
             path=['WIDE1-1','WIDE2-1'],
             message='testing',
+            replyack=False,
             log=logging.getLogger('messagehandler'))
 
     # Blow away the APRS handler
@@ -311,6 +321,7 @@ def test_msghandler_first_send():
             addressee='CQ',
             path=['WIDE1-1','WIDE2-1'],
             message='testing',
+            replyack=False,
             log=logging.getLogger('messagehandler'))
 
     # Message handler is still in the INIT state
@@ -340,6 +351,7 @@ def test_msghandler_subsequent_send():
             addressee='CQ',
             path=['WIDE1-1','WIDE2-1'],
             message='testing',
+            replyack=False,
             log=logging.getLogger('messagehandler'))
 
     # Force handler into SEND state
@@ -372,6 +384,7 @@ def test_msghandler_timeout():
             addressee='CQ',
             path=['WIDE1-1','WIDE2-1'],
             message='testing',
+            replyack=False,
             log=logging.getLogger('messagehandler'))
 
     # Force handler into RETRY state
@@ -399,6 +412,7 @@ def test_msghandler_send_invalid_state():
             addressee='CQ',
             path=['WIDE1-1','WIDE2-1'],
             message='testing',
+            replyack=False,
             log=logging.getLogger('messagehandler'))
 
     # Force handler into TIMEOUT state
@@ -424,6 +438,7 @@ def test_msghandler_cancel():
             addressee='CQ',
             path=['WIDE1-1','WIDE2-1'],
             message='testing',
+            replyack=False,
             log=logging.getLogger('messagehandler'))
 
     # Inject a dummy time-out object
@@ -452,6 +467,7 @@ def test_on_timeout():
             addressee='CQ',
             path=['WIDE1-1','WIDE2-1'],
             message='testing',
+            replyack=False,
             log=logging.getLogger('messagehandler'))
 
     msghandler._on_timeout()
@@ -474,6 +490,7 @@ def test_on_response_timedout():
             addressee='CQ',
             path=['WIDE1-1','WIDE2-1'],
             message='testing',
+            replyack=False,
             log=logging.getLogger('messagehandler'))
 
     # Force state, suppose we already received a reply, and a well-meaning
@@ -509,6 +526,7 @@ def test_on_response_ack():
             addressee='CQ',
             path=['WIDE1-1','WIDE2-1'],
             message='testing',
+            replyack=False,
             log=logging.getLogger('messagehandler'))
 
     # Force state, suppose we just sent our request.
@@ -539,6 +557,7 @@ def test_on_response_rej():
             addressee='CQ',
             path=['WIDE1-1','WIDE2-1'],
             message='testing',
+            replyack=False,
             log=logging.getLogger('messagehandler'))
 
     # Force state, suppose we just sent our request.

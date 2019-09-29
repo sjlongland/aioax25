@@ -95,6 +95,112 @@ def test_send_message_oneshot():
     # There is no pending messages
     eq_(len(aprsint._pending_msg), 0)
 
+def test_send_message_oneshot_replyack():
+    """
+    Test that send_message in one-shot mode refuses to send reply-ack.
+    """
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+    try:
+        aprsint.send_message(
+                'VK4MDL-7', 'Hi', oneshot=True,
+                replyack='This should be a message, but the code only tests '
+                         'that this value is None, which it won\'t be here.'
+        )
+    except ValueError as e:
+        eq_(str(e), 'Cannot send reply-ack in one-shot mode')
+
+def test_send_message_replyack():
+    """
+    Test that send_message with a replyack message sets replyack.
+    """
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+    replymsg = APRSMessageFrame(
+            destination='APRS',
+            source='VK4MDL-7',
+            addressee='VK4MSL-7',
+            message='Hello',
+            msgid='123',
+            replyack=True
+    )
+    res = aprsint.send_message(
+            'VK4MDL-7', 'Hi', oneshot=False, replyack=replymsg
+    )
+
+    # We got back a handler class
+    assert isinstance(res, APRSMessageHandler)
+
+    # That message handler should be registered with the interface
+    eq_(len(aprsint._pending_msg), 1)
+    assert res.msgid in aprsint._pending_msg
+    assert_is(aprsint._pending_msg[res.msgid], res)
+
+    # The APRS message handler will have tried sending the message
+    eq_(len(ax25int.transmitted), 1)
+    frame = ax25int.transmitted.pop(0)
+
+    # Frame is a APRS message frame
+    assert isinstance(frame, APRSMessageFrame)
+
+    # Frame has reply-ACK set
+    eq_(frame.replyack, '123')
+
+    # Message handler is in 'SEND' state
+    eq_(res.state, APRSMessageHandler.HandlerState.SEND)
+
+def test_send_message_advreplyack():
+    """
+    Test that send_message with replyack=True message sets replyack.
+    """
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+    res = aprsint.send_message(
+            'VK4MDL-7', 'Hi', oneshot=False, replyack=True
+    )
+
+    # We got back a handler class
+    assert isinstance(res, APRSMessageHandler)
+
+    # That message handler should be registered with the interface
+    eq_(len(aprsint._pending_msg), 1)
+    assert res.msgid in aprsint._pending_msg
+    assert_is(aprsint._pending_msg[res.msgid], res)
+
+    # The APRS message handler will have tried sending the message
+    eq_(len(ax25int.transmitted), 1)
+    frame = ax25int.transmitted.pop(0)
+
+    # Frame is a APRS message frame
+    assert isinstance(frame, APRSMessageFrame)
+
+    # Frame has reply-ACK set
+    eq_(frame.replyack, True)
+
+    # Message handler is in 'SEND' state
+    eq_(res.state, APRSMessageHandler.HandlerState.SEND)
+
+def test_send_message_replyack_notreplyack():
+    """
+    Test that send_message in confirmable mode generates a message handler.
+    """
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+    replymsg = APRSMessageFrame(
+            destination='APRS',
+            source='VK4MDL-7',
+            addressee='VK4MSL-7',
+            message='Hello',
+            msgid='123',
+            replyack=False
+    )
+    try:
+        aprsint.send_message(
+                'VK4MDL-7', 'Hi', oneshot=False, replyack=replymsg
+        )
+    except ValueError as e:
+        eq_(str(e), 'replyack is not a reply-ack message')
+
 def test_send_message_confirmable():
     """
     Test that send_message in confirmable mode generates a message handler.
@@ -707,6 +813,41 @@ def test_on_receive_addressed():
     assert isinstance(callfunc, partial)
     eq_(callfunc.func, aprsint.received_addressed_msg.emit)
 
+def test_on_receive_addressed_replyack():
+    """
+    Test _on_receive of message addressed to station advertising reply-ack.
+    """
+    # Create a frame
+    frame = AX25UnnumberedInformationFrame(
+                destination='APZAIO',
+                source='VK4BWI-2',
+                pid=0xf0,
+                payload=b':VK4MSL-10:testing{123}',
+                repeaters=['WIDE2-1','WIDE1-1']
+    )
+
+    # Create our interface
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+
+    # Now pass the frame in as if it were just received
+    aprsint._on_receive(frame)
+
+    # There should be three calls made, one to our deduplication clean-up, the
+    # other to our superclass, the third to our received_address_msg signal.
+    eq_(len(ax25int._loop.calls), 3)
+
+    (_, callfunc) = ax25int._loop.calls.pop(0)
+    eq_(callfunc, aprsint._schedule_dedup_cleanup)
+
+    (_, callfunc) = ax25int._loop.calls.pop(0)
+    assert isinstance(callfunc, partial)
+    eq_(callfunc.func, super(APRSInterface, aprsint)._on_receive)
+
+    (_, callfunc) = ax25int._loop.calls.pop(0)
+    assert isinstance(callfunc, partial)
+    eq_(callfunc.func, aprsint.received_addressed_msg.emit)
+
 def test_on_receive_unsol_ackrej():
     """
     Test _on_receive of unsolicited ACK/REJ addressed to station.
@@ -762,8 +903,9 @@ def test_on_receive_sol_ackrej():
     # Now pass the frame in as if it were just received
     aprsint._on_receive(frame)
 
-    # There should be two calls made, one to our deduplication clean-up, the
-    # other to our superclass.  The message will be passed to the handler.
+    # There should be three calls made, one to our deduplication clean-up, the
+    # second to our superclass, and finally the third to the handler's
+    # _on_response method.
     eq_(len(ax25int._loop.calls), 3)
 
     (_, callfunc) = ax25int._loop.calls.pop(0)
@@ -776,6 +918,52 @@ def test_on_receive_sol_ackrej():
     (_, callfunc, msg) = ax25int._loop.calls.pop(0)
     eq_(callfunc, handler._on_response)
     eq_(bytes(frame), bytes(msg))
+
+def test_on_receive_sol_replyack():
+    """
+    Test _on_receive of solicited reply-ack addressed to station.
+    """
+    # Create a frame
+    frame = AX25UnnumberedInformationFrame(
+                destination='APZAIO',
+                source='VK4BWI-2',
+                pid=0xf0,
+                payload=b':VK4MSL-10:testing{356}123',
+                repeaters=['WIDE2-1','WIDE1-1']
+    )
+
+    # Create our interface
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+
+    # Inject a message handler for the message ID
+    handler = DummyMessageHandler()
+    aprsint._pending_msg['123'] = handler
+
+    # Now pass the frame in as if it were just received
+    aprsint._on_receive(frame)
+
+    # There should be four calls made, one to our deduplication clean-up, the
+    # second to our superclass, the third to the handler's _on_response method
+    # and finally the incoming message should be emitted like a normal message.
+    eq_(len(ax25int._loop.calls), 4)
+
+    (_, callfunc) = ax25int._loop.calls.pop(0)
+    eq_(callfunc, aprsint._schedule_dedup_cleanup)
+
+    (_, callfunc) = ax25int._loop.calls.pop(0)
+    assert isinstance(callfunc, partial)
+    eq_(callfunc.func, super(APRSInterface, aprsint)._on_receive)
+
+    (_, callfunc, msg) = ax25int._loop.calls.pop(0)
+    eq_(callfunc, handler._on_response)
+    eq_(bytes(frame), bytes(msg))
+
+    # The message should also have been treated as a new incoming message.
+    (_, callfunc) = ax25int._loop.calls.pop(0)
+    assert isinstance(callfunc, partial)
+    eq_(callfunc.func, aprsint.received_addressed_msg.emit)
+
 
 def test_on_msg_handler_finish():
     """
