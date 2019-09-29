@@ -211,7 +211,7 @@ class APRSMessageFrame(APRSFrame):
                 replyack = replyack[1:] or True
             else:
                 replyack = False
-            message = message[:-(len(msgid)+1)]
+            message = message[:match.start(1)-1]
         else:
             msgid = None
 
@@ -243,13 +243,19 @@ class APRSMessageFrame(APRSFrame):
             msgid = str(msgid)
             if len(msgid) > 5:
                 raise ValueError('message ID %r too long' % msgid)
+            assert '{' not in payload, \
+                    'Malformed payload: %r' % payload
             payload += '{%s' % msgid
 
             if replyack is True:
                 # We simply support reply-ack
+                assert '}' not in payload, \
+                        'Malformed payload: %r' % payload
                 payload += '}'
             elif replyack is not False:
                 # We are ACKing with a reply
+                assert '}' not in payload, \
+                        'Malformed payload: %r' % payload
                 payload += '}%s' % replyack
 
         super(APRSMessageFrame, self).__init__(
