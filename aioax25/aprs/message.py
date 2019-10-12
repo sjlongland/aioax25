@@ -256,7 +256,7 @@ class APRSMessageFrame(APRSFrame):
                 assert '}' not in payload, \
                         'Malformed payload: %r' % payload
                 payload += '}'
-            elif not replyack:
+            elif replyack:
                 # We are ACKing with a reply
                 assert '}' not in payload, \
                         'Malformed payload: %r' % payload
