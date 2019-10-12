@@ -45,7 +45,7 @@ class APRSMessageHandler(object):
                 addressee=addressee,
                 message=message,
                 msgid=aprshandler._next_msgid,
-                replyack=replyack,
+                replyack=replyack or False,
                 repeaters=[
                     AX25Address.decode(call).normalised for call in path
                 ]
