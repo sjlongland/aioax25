@@ -34,13 +34,11 @@ def test_decode_iframe():
         from_hex(
             "ac 96 68 84 ae 92 e0"  # Destination
             "ac 96 68 9a a6 98 61"  # Source
-            "00"  # Control byte
-            "11 22 33 44 55 66 77"  # Payload
+            "00 11 22 33 44 55 66 77"  # Payload
         )
     )
     assert isinstance(frame, AX25RawFrame), "Did not decode to raw frame"
-    assert frame.control == 0x00
-    hex_cmp(frame.frame_payload, "11 22 33 44 55 66 77")
+    hex_cmp(frame.frame_payload, "00 11 22 33 44 55 66 77")
 
 
 def test_decode_sframe():
@@ -51,13 +49,11 @@ def test_decode_sframe():
         from_hex(
             "ac 96 68 84 ae 92 e0"  # Destination
             "ac 96 68 9a a6 98 61"  # Source
-            "01"  # Control byte
-            "11 22 33 44 55 66 77"  # Payload
+            "01 11 22 33 44 55 66 77"  # Payload
         )
     )
     assert isinstance(frame, AX25RawFrame), "Did not decode to raw frame"
-    assert frame.control == 0x01
-    hex_cmp(frame.frame_payload, "11 22 33 44 55 66 77")
+    hex_cmp(frame.frame_payload, "01 11 22 33 44 55 66 77")
 
 
 def test_decode_uframe():
@@ -75,7 +71,9 @@ def test_decode_uframe():
         frame, AX25UnnumberedFrame
     ), "Did not decode to unnumbered frame"
     assert frame.modifier == 0xC3
-    hex_cmp(frame.frame_payload, "")
+
+    # We should see the control byte as our payload
+    hex_cmp(frame.frame_payload, "c3")
 
 
 def test_decode_uframe_payload():
@@ -185,8 +183,7 @@ def test_encode_raw():
         destination="VK4BWI",
         source="VK4MSL",
         cr=True,
-        control=0x03,
-        payload=b"\xf0This is a test",
+        payload=b"\x03\xf0This is a test",
     )
     hex_cmp(
         bytes(frame),
@@ -488,10 +485,7 @@ def test_raw_copy():
     Test we can make a copy of a raw frame.
     """
     frame = AX25RawFrame(
-        destination="VK4BWI",
-        source="VK4MSL",
-        control=0xAB,
-        payload=b"This is a test",
+        destination="VK4BWI", source="VK4MSL", payload=b"\xabThis is a test"
     )
     framecopy = frame.copy()
     assert framecopy is not frame
@@ -580,10 +574,7 @@ def test_raw_str():
     Test we can get a string representation of a raw frame.
     """
     frame = AX25RawFrame(
-        destination="VK4BWI",
-        source="VK4MSL",
-        control=0xAB,
-        payload=b"This is a test",
+        destination="VK4BWI", source="VK4MSL", payload=b"\xabThis is a test"
     )
     assert str(frame) == "VK4MSL>VK4BWI"
 
