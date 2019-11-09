@@ -30,13 +30,11 @@ def test_decode_iframe():
             from_hex(
                 'ac 96 68 84 ae 92 e0'      # Destination
                 'ac 96 68 9a a6 98 61'      # Source
-                '00'                        # Control byte
-                '11 22 33 44 55 66 77'      # Payload
+                '00 11 22 33 44 55 66 77'   # Payload
             )
     )
     assert isinstance(frame, AX25RawFrame), 'Did not decode to raw frame'
-    eq_(frame.control, 0x00)
-    hex_cmp(frame.frame_payload, '11 22 33 44 55 66 77')
+    hex_cmp(frame.frame_payload, '00 11 22 33 44 55 66 77')
 
 def test_decode_sframe():
     """
@@ -46,13 +44,11 @@ def test_decode_sframe():
             from_hex(
                 'ac 96 68 84 ae 92 e0'      # Destination
                 'ac 96 68 9a a6 98 61'      # Source
-                '01'                        # Control byte
-                '11 22 33 44 55 66 77'      # Payload
+                '01 11 22 33 44 55 66 77'   # Payload
             )
     )
     assert isinstance(frame, AX25RawFrame), 'Did not decode to raw frame'
-    eq_(frame.control, 0x01)
-    hex_cmp(frame.frame_payload, '11 22 33 44 55 66 77')
+    hex_cmp(frame.frame_payload, '01 11 22 33 44 55 66 77')
 
 def test_decode_uframe():
     """
@@ -68,7 +64,9 @@ def test_decode_uframe():
     assert isinstance(frame, AX25UnnumberedFrame), \
             'Did not decode to unnumbered frame'
     eq_(frame.modifier, 0xc3)
-    hex_cmp(frame.frame_payload, '')
+
+    # We should see the control byte as our payload
+    hex_cmp(frame.frame_payload, 'c3')
 
 def test_decode_uframe_payload():
     """
@@ -110,6 +108,7 @@ def test_decode_frmr():
     eq_(frame.frmr_cr, False)
     eq_(frame.vs, 1)
 
+
 def test_decode_frmr_len():
     """
     Test that a FRMR must have 3 byte payload.
@@ -126,6 +125,7 @@ def test_decode_frmr_len():
         assert False, 'Should not have worked'
     except ValueError as e:
         eq_(str(e), 'Payload of FRMR must be 3 bytes')
+
 
 def test_decode_ui():
     """
@@ -168,8 +168,7 @@ def test_encode_raw():
             destination='VK4BWI',
             source='VK4MSL',
             cr=True,
-            control=0x03,
-            payload=b'\xf0This is a test'
+            payload=b'\x03\xf0This is a test'
     )
     hex_cmp(bytes(frame),
             'ac 96 68 84 ae 92 e0'                          # Destination
@@ -395,8 +394,7 @@ def test_raw_copy():
     frame = AX25RawFrame(
             destination='VK4BWI',
             source='VK4MSL',
-            control=0xab,
-            payload=b'This is a test'
+            payload=b'\xabThis is a test'
     )
     framecopy = frame.copy()
     assert framecopy is not frame
@@ -475,8 +473,7 @@ def test_raw_str():
     frame = AX25RawFrame(
             destination='VK4BWI',
             source='VK4MSL',
-            control=0xab,
-            payload=b'This is a test'
+            payload=b'\xabThis is a test'
     )
     eq_(str(frame), "VK4MSL>VK4BWI")
 
