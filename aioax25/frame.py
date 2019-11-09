@@ -163,6 +163,18 @@ class AX258BitFrame(AX25Frame):
 
     POLL_FINAL = 0b00010000
 
+    # Control field bits
+    #
+    #  7   6   5   4   3   2   1   0
+    # --------------------------------
+    #     N(R)   | P |    N(S)   | 0   I Frame
+    #     N(R)   |P/F| S   S | 0   1   S Frame
+    #  M   M   M |P/F| M   M | 1   1   U Frame
+    CONTROL_NR_MASK = 0b11100000
+    CONTROL_NR_SHIFT = 5
+    CONTROL_NS_MASK = 0b00001110
+    CONTROL_NS_SHIFT = 1
+
     def __init__(
         self,
         destination,
@@ -202,6 +214,19 @@ class AX2516BitFrame(AX25Frame):
 
     POLL_FINAL = 0b0000000100000000
 
+    # Control field bits.  These are sent least-significant bit first.
+    # Unnumbered frames _always_ use the 8-bit control format, so here
+    # we will only see I frames or S frames.
+    #
+    # 15  14  13  12  11  10   9   8   7   6   5   4   3   2   1   0
+    # --------------------------------------------------------------
+    #            N(R)            | P |            N(S)           | 0   I Frame
+    #            N(R)            |P/F| 0   0   0   0 | S   S | 0   1   S Frame
+    CONTROL_NR_MASK = 0b1111111000000000
+    CONTROL_NR_SHIFT = 9
+    CONTROL_NS_MASK = 0b0000000011111110
+    CONTROL_NS_SHIFT = 1
+
     def __init__(
         self,
         destination,
@@ -231,7 +256,10 @@ class AX2516BitFrame(AX25Frame):
         """
         Return the bytes in the frame payload (including the control bytes)
         """
-        return bytes([(self.control >> 8) & 0x00FF, self.control & 0x00FF])
+        # The control field is sent in LITTLE ENDIAN format so as to avoid
+        # S frames possibly getting confused with U frames.
+        control = self.control
+        return bytes([control & 0x00FF, (control >> 8) & 0x00FF])
 
 
 class AX25RawFrame(AX25Frame):
@@ -282,6 +310,13 @@ class AX25UnnumberedFrame(AX258BitFrame):
         for subclass in (
             AX25UnnumberedInformationFrame,
             AX25FrameRejectFrame,
+            AX25SetAsyncBalancedModeFrame,
+            AX25SetAsyncBalancedModeExtendedFrame,
+            AX25DisconnectFrame,
+            AX25DisconnectModeFrame,
+            AX25ExchangeIdentificationFrame,
+            AX25UnnumberedAcknowledgeFrame,
+            AX25TestFrame,
         ):
             if modifier == subclass.MODIFIER:
                 return subclass.decode(header, control, data)
@@ -363,6 +398,371 @@ class AX25UnnumberedFrame(AX258BitFrame):
         )
 
 
+class AX25InformationFrameMixin(object):
+    """
+    Common code for AX.25 all information frames
+    """
+
+    @classmethod
+    def decode(cls, header, control, data):
+        return cls(
+            destination=header.destination,
+            source=header.source,
+            repeaters=header.repeaters,
+            cr=header.cr,
+            nr=int((control & cls.CONTROL_NR_MASK) >> cls.CONTROL_NR_SHIFT),
+            ns=int((control & cls.CONTROL_NS_MASK) >> cls.CONTROL_NS_SHIFT),
+            pf=bool(control & cls.POLL_FINAL),
+            payload=data,
+        )
+
+    def __init__(
+        self,
+        destination,
+        source,
+        pid,
+        nr,
+        ns,
+        payload,
+        repeaters=None,
+        pf=False,
+        cr=False,
+        timestamp=None,
+        deadline=None,
+    ):
+        super(AX25InformationFrameMixin, self).__init__(
+            destination=destination,
+            source=source,
+            repeaters=repeaters,
+            cr=cr,
+            timestamp=timestamp,
+            deadline=deadline,
+        )
+        self._nr = int(nr)
+        self._ns = int(ns)
+        self._pid = int(pid) & 0xFF
+        self._payload = bytes(payload)
+
+    @property
+    def pid(self):
+        return self._pid
+
+    @property
+    def nr(self):
+        """
+        Return the receive sequence number
+        """
+        return self._nr
+
+    @property
+    def pf(self):
+        """
+        Return the state of the poll/final bit
+        """
+        return self._pf
+
+    @property
+    def ns(self):
+        """
+        Return the send sequence number
+        """
+        return self._ns
+
+    @property
+    def payload(self):
+        return self._payload
+
+    @property
+    def frame_payload(self):
+        return (
+            super(AX25InformationFrameMixin, self).frame_payload
+            + bytearray([self.pid])
+            + self.payload
+        )
+
+    @property
+    def _control(self):
+        """
+        Return the value of the control byte.
+        """
+        return (
+            ((self.nr << self.CONTROL_NR_SHIFT) & self.CONTROL_NR_MASK)
+            | (self.POLL_FINAL if self.pf else 0)
+            | ((self.ns << self.CONTROL_NS_SHIFT) & self.CONTROL_NS_MASK)
+            | self.CONTROL_I_VAL
+        )
+
+    def __str__(self):
+        return "%s: N(R)=%d P/F=%s N(S)=%d PID=0x%02x Payload=%r" % (
+            self.header,
+            self.nr,
+            self.pf,
+            self.ns,
+            self.pid,
+            self.payload,
+        )
+
+    def _copy(self):
+        return self.__class__(
+            destination=self.header.destination,
+            source=self.header.source,
+            repeaters=self.header.repeaters,
+            modifier=self.modifier,
+            cr=self.header.cr,
+            pf=self.pf,
+            pid=self.pid,
+            nr=self.nr,
+            ns=self.ns,
+            payload=self.payload,
+        )
+
+
+class AX258BitInformationFrame(AX25InformationFrameMixin, AX258BitFrame):
+    """
+    A representation of an information frame using modulo-8 acknowledgements.
+    """
+
+    pass
+
+
+class AX2516BitInformationFrame(AX25InformationFrameMixin, AX2516BitFrame):
+    """
+    A representation of an information frame using modulo-128 acknowledgements.
+    """
+
+    pass
+
+
+class AX25SupervisoryFrameMixin(object):
+    """
+    Common code for AX.25 all supervisory frames
+    """
+
+    # Supervisory field bits
+    SUPER_MASK = 0b00001100
+
+    @classmethod
+    def decode(cls, header, control):
+        code = int(control & cls.SUPER_MASK)
+        return cls.SUBCLASSES[code](
+            destination=header.destination,
+            source=header.source,
+            repeaters=header.repeaters,
+            cr=header.cr,
+            nr=int((control & cls.CONTROL_NR_MASK) >> cls.CONTROL_NR_SHIFT),
+            pf=bool(control & cls.POLL_FINAL),
+        )
+
+    def __init__(
+        self,
+        destination,
+        source,
+        nr,
+        code,
+        repeaters=None,
+        pf=False,
+        cr=False,
+        timestamp=None,
+        deadline=None,
+    ):
+        super(AX25SupervisoryFrameMixin, self).__init__(
+            destination=destination,
+            source=source,
+            repeaters=repeaters,
+            cr=cr,
+            timestamp=timestamp,
+            deadline=deadline,
+        )
+        self._nr = int(nr)
+        self._code = int(code)
+
+    @property
+    def pid(self):
+        return self._pid
+
+    @property
+    def nr(self):
+        """
+        Return the receive sequence number
+        """
+        return self._nr
+
+    @property
+    def pf(self):
+        """
+        Return the state of the poll/final bit
+        """
+        return self._pf
+
+    @property
+    def code(self):
+        """
+        Return the supervisory control code
+        """
+        return self._code
+
+    @property
+    def _control(self):
+        """
+        Return the value of the control byte.
+        """
+        return (
+            ((self.nr << self.CONTROL_NR_SHIFT) & self.CONTROL_NR_MASK)
+            | (self.POLL_FINAL if self.pf else 0)
+            | (self.code & self.SUPER_MASK)
+            | self.CONTROL_S_VAL
+        )
+
+    def __str__(self):
+        return "%s: N(R)=%d P/F=%s %s" % (
+            self.header,
+            self.nr,
+            self.pf,
+            self.__name__,
+        )
+
+    def _copy(self):
+        return self.__class__(
+            destination=self.header.destination,
+            source=self.header.source,
+            repeaters=self.header.repeaters,
+            cr=self.header.cr,
+            pf=self.pf,
+            nr=self.nr,
+        )
+
+
+# The 4 types of supervisory frame
+
+
+class AX25ReceiveReadyFrameMixin(AX25SupervisoryFrameMixin):
+    """
+    Receive Ready supervisory frame.
+
+    This frame is sent to indicate readyness to receive more frames.
+    If pf=True, this is a query being sent asking "are you ready?", otherwise
+    this is a response saying "I am ready".
+    """
+
+    SUPERVISOR_CODE = 0b00000000
+
+
+class AX25ReceiveNotReadyFrameMixin(AX25SupervisoryFrameMixin):
+    """
+    Receive Not Ready supervisory frame.
+
+    This is the opposite to a RR frame, and indicates we are not yet ready
+    to receive more traffic and that we may need to re-transmit frames when
+    we're ready to receive them.
+    """
+
+    SUPERVISOR_CODE = 0b00000100
+
+
+class AX25RejectFrameMixin(AX25SupervisoryFrameMixin):
+    """
+    Reject frame.
+
+    This indicates the indicated frame were not received and need to be re-sent.
+    All frames prior to the indicated frame are received, everything that
+    follows must be re-sent.
+    """
+
+    SUPERVISOR_CODE = 0b00001000
+
+
+class AX25SelectiveRejectFrameMixin(AX25SupervisoryFrameMixin):
+    """
+    Selective Reject frame.
+
+    This indicates a specific frame was not received and needs to be re-sent.
+    There is no requirement to send subsequent frames.
+    """
+
+    SUPERVISOR_CODE = 0b00001100
+
+
+# 8 and 16-bit variants of the above 4 types
+
+
+class AX258BitReceiveReadyFrame(AX25ReceiveReadyFrameMixin, AX258BitFrame):
+    pass
+
+
+class AX2516BitReceiveReadyFrame(AX25ReceiveReadyFrameMixin, AX2516BitFrame):
+    pass
+
+
+class AX258BitReceiveNotReadyFrame(
+    AX25ReceiveNotReadyFrameMixin, AX258BitFrame
+):
+    pass
+
+
+class AX2516BitReceiveNotReadyFrame(
+    AX25ReceiveNotReadyFrameMixin, AX2516BitFrame
+):
+    pass
+
+
+class AX258BitRejectFrame(AX25RejectFrameMixin, AX258BitFrame):
+    pass
+
+
+class AX2516BitRejectFrame(AX25RejectFrameMixin, AX2516BitFrame):
+    pass
+
+
+class AX258BitSelectiveRejectFrame(
+    AX25SelectiveRejectFrameMixin, AX258BitFrame
+):
+    pass
+
+
+class AX2516BitSelectiveRejectFrame(
+    AX25SelectiveRejectFrameMixin, AX2516BitFrame
+):
+    pass
+
+
+# 8 and 16-bit variants of the base class
+
+
+class AX258BitSupervisoryFrame(AX25SupervisoryFrameMixin, AX258BitFrame):
+    SUBCLASSES = dict(
+        [
+            (c.SUPERVISOR_CODE, c)
+            for c in (
+                AX258BitReceiveReadyFrame,
+                AX258BitReceiveNotReadyFrame,
+                AX258BitRejectFrame,
+                AX258BitSelectiveRejectFrame,
+            )
+        ]
+    )
+
+
+class AX2516BitSupervisoryFrame(AX25SupervisoryFrameMixin, AX2516BitFrame):
+    SUBCLASSES = dict(
+        [
+            (c.SUPERVISOR_CODE, c)
+            for c in (
+                AX2516BitReceiveReadyFrame,
+                AX2516BitReceiveNotReadyFrame,
+                AX2516BitRejectFrame,
+                AX2516BitSelectiveRejectFrame,
+            )
+        ]
+    )
+
+
+class AX2516BitSupervisoryFrame(AX25SupervisoryFrameMixin, AX2516BitFrame):
+    pass
+
+
+# Un-numbered frame types
+
+
 class AX25UnnumberedInformationFrame(AX25UnnumberedFrame):
     """
     A representation of an un-numbered information frame.
@@ -395,6 +795,8 @@ class AX25UnnumberedInformationFrame(AX25UnnumberedFrame):
         pf=False,
         cr=False,
         src_cr=None,
+        timestamp=None,
+        deadline=None,
     ):
         super(AX25UnnumberedInformationFrame, self).__init__(
             destination=destination,
@@ -404,6 +806,8 @@ class AX25UnnumberedInformationFrame(AX25UnnumberedFrame):
             src_cr=src_cr,
             pf=pf,
             modifier=self.MODIFIER,
+            timestamp=timestamp,
+            deadline=deadline,
         )
         self._pid = int(pid) & 0xFF
         self._payload = bytes(payload)
@@ -624,6 +1028,204 @@ class AX25FrameRejectFrame(AX25UnnumberedFrame):
             frmr_control=self.frmr_control,
             cr=self.header.cr,
             src_cr=self.header.src_cr,
+            pf=self.pf,
+        )
+
+
+class AX25BaseUnnumberedFrame(AX25UnnumberedFrame):
+    """
+    Base unnumbered frame sub-class.  This is used to provide a common
+    decode and _copy implementation for basic forms of UI frames without
+    information fields.
+    """
+
+    @classmethod
+    def decode(cls, header, control, data):
+        if len(data):
+            raise ValueError("Frame does not support payload")
+
+        return cls(
+            destination=header.destination,
+            source=header.source,
+            repeaters=header.repeaters,
+            pf=bool(control & cls.POLL_FINAL),
+            cr=header.cr,
+        )
+
+    def _copy(self):
+        return self.__class__(
+            destination=self.header.destination,
+            source=self.header.source,
+            repeaters=self.header.repeaters,
+            cr=self.header.cr,
+            pf=self.pf,
+        )
+
+
+class AX25SetAsyncBalancedModeFrame(AX25BaseUnnumberedFrame):
+    """
+    Set Async Balanced Mode (modulo 8).
+
+    This frame is used to initiate a connection request with the destination
+    AX.25 node.
+    """
+
+    MODIFIER = 0b01101111
+
+
+class AX25SetAsyncBalancedModeExtendedFrame(AX25BaseUnnumberedFrame):
+    """
+    Set Async Balanced Mode Extended (modulo 128).
+
+    This frame is used to initiate a connection request with the destination
+    AX.25 node, using modulo 128 acknowledgements.
+    """
+
+    MODIFIER = 0b00101111
+
+
+class AX25DisconnectFrame(AX25BaseUnnumberedFrame):
+    """
+    Disconnect frame.
+
+    This frame is used to initiate a disconnection from the other station.
+    """
+
+    MODIFIER = 0b01000011
+
+
+class AX25DisconnectModeFrame(AX25BaseUnnumberedFrame):
+    """
+    Disconnect mode frame.
+
+    This frame is used to indicate to the other station that it is disconnected.
+    """
+
+    MODIFIER = 0b00001111
+
+
+class AX25ExchangeIdentificationFrame(AX25UnnumberedFrame):
+    """
+    Exchange Identification frame.
+
+    This frame is used to negotiate TNC features.
+    """
+
+    MODIFIER = 0b10101111
+
+    @classmethod
+    def decode(cls, header, control, data):
+        return cls(
+            destination=header.destination,
+            source=header.source,
+            repeaters=header.repeaters,
+            payload=data,
+            pf=bool(control & cls.POLL_FINAL),
+            cr=header.cr,
+        )
+
+    def __init__(
+        self,
+        destination,
+        source,
+        payload,
+        repeaters=None,
+        pf=False,
+        cr=False,
+        timestamp=None,
+        deadline=None,
+    ):
+        super(AX25ExchangeIdentificationFrame, self).__init__(
+            destination=destination,
+            source=source,
+            repeaters=repeaters,
+            cr=cr,
+            pf=pf,
+            modifier=self.MODIFIER,
+            timestamp=timestamp,
+            deadline=deadline,
+        )
+        self._payload = bytes(payload)
+
+    @property
+    def payload(self):
+        return self._payload
+
+    def _copy(self):
+        return self.__class__(
+            destination=self.header.destination,
+            source=self.header.source,
+            payload=self.payload,
+            repeaters=self.header.repeaters,
+            cr=self.header.cr,
+            pf=self.pf,
+        )
+
+
+class AX25UnnumberedAcknowledgeFrame(AX25BaseUnnumberedFrame):
+    """
+    Unnumbered Acknowledge frame.
+
+    This frame is used to acknowledge a SABM/SABME frame.
+    """
+
+    MODIFIER = 0b10101111
+
+
+class AX25TestFrame(AX25UnnumberedFrame):
+    """
+    Test frame.
+
+    This frame is used to initiate an echo request.
+    """
+
+    MODIFIER = 0b11100011
+
+    @classmethod
+    def decode(cls, header, control, data):
+        return cls(
+            destination=header.destination,
+            source=header.source,
+            repeaters=header.repeaters,
+            payload=data,
+            pf=bool(control & cls.POLL_FINAL),
+            cr=header.cr,
+        )
+
+    def __init__(
+        self,
+        destination,
+        source,
+        payload,
+        repeaters=None,
+        pf=False,
+        cr=False,
+        timestamp=None,
+        deadline=None,
+    ):
+        super(AX25TestFrame, self).__init__(
+            destination=destination,
+            source=source,
+            repeaters=repeaters,
+            cr=cr,
+            pf=pf,
+            modifier=self.MODIFIER,
+            timestamp=timestamp,
+            deadline=deadline,
+        )
+        self._payload = bytes(payload)
+
+    @property
+    def payload(self):
+        return self._payload
+
+    def _copy(self):
+        return self.__class__(
+            destination=self.header.destination,
+            source=self.header.source,
+            payload=self.payload,
+            repeaters=self.header.repeaters,
+            cr=self.header.cr,
             pf=self.pf,
         )
 
