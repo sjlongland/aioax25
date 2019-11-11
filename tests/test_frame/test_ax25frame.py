@@ -8,7 +8,8 @@ from aioax25.frame import AX25Frame, AX25RawFrame, \
         AX2516BitSupervisoryFrame, AX2516BitRejectFrame, \
         AX258BitReceiveReadyFrame, \
         AX258BitInformationFrame, AX2516BitInformationFrame, \
-        AX25DisconnectModeFrame, AX25SetAsyncBalancedModeFrame
+        AX25DisconnectModeFrame, AX25SetAsyncBalancedModeFrame, \
+        AX25TestFrame
 from ..nosecompat import eq_
 from ..hex import from_hex, hex_cmp
 
@@ -266,6 +267,23 @@ def test_encode_ui():
             'ac 96 68 9a a6 98 61'                          # Source
             '03'                                            # Control
             'f0'                                            # PID
+            '54 68 69 73 20 69 73 20 61 20 74 65 73 74'     # Payload
+    )
+
+def test_encode_test():
+    """
+    Test that we can encode a TEST frame.
+    """
+    frame = AX25TestFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+            cr=True,
+            payload=b'This is a test'
+    )
+    hex_cmp(bytes(frame),
+            'ac 96 68 84 ae 92 e0'                          # Destination
+            'ac 96 68 9a a6 98 61'                          # Source
+            'e3'                                            # Control
             '54 68 69 73 20 69 73 20 61 20 74 65 73 74'     # Payload
     )
 
