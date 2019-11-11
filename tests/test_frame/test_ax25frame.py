@@ -5,7 +5,8 @@ from aioax25.frame import AX25Frame, AX25RawFrame, \
         AX25UnnumberedFrame, AX258BitReceiveReadyFrame, \
         AX2516BitReceiveReadyFrame, AX258BitSupervisoryFrame, \
         AX25FrameHeader, AX258BitRejectFrame, \
-        AX2516BitSupervisoryFrame, AX2516BitRejectFrame
+        AX2516BitSupervisoryFrame, AX2516BitRejectFrame, \
+        AX258BitReceiveReadyFrame
 from ..nosecompat import eq_
 from ..hex import from_hex, hex_cmp
 
@@ -575,3 +576,15 @@ def test_16bs_rej_decode_frame():
             'ac 96 68 9a a6 98 e1'      # Source
             '09 00'                     # Control bytes
     )
+
+def test_rr_frame_str():
+    """
+    Test we can get the string representation of a RR frame.
+    """
+    frame = AX258BitReceiveReadyFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+            nr=6
+    )
+
+    eq_(str(frame), 'VK4MSL>VK4BWI: N(R)=6 P/F=False AX258BitReceiveReadyFrame')
