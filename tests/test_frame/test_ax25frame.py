@@ -7,7 +7,8 @@ from aioax25.frame import AX25Frame, AX25RawFrame, \
         AX25FrameHeader, AX258BitRejectFrame, \
         AX2516BitSupervisoryFrame, AX2516BitRejectFrame, \
         AX258BitReceiveReadyFrame, \
-        AX258BitInformationFrame, AX2516BitInformationFrame
+        AX258BitInformationFrame, AX2516BitInformationFrame, \
+        AX25DisconnectModeFrame
 from ..nosecompat import eq_
 from ..hex import from_hex, hex_cmp
 
@@ -392,6 +393,20 @@ def test_encode_frmr_frmr_ctrl():
             '00 00 55'                                      # FRMR data
     )
 
+def test_encode_dm_frame():
+    """
+    Test we can encode a Disconnect Mode frame.
+    """
+    frame = AX25DisconnectModeFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+    )
+    hex_cmp(bytes(frame),
+            'ac 96 68 84 ae 92 60'                          # Destination
+            'ac 96 68 9a a6 98 e1'                          # Source
+            '0f'                                            # Control
+    )
+
 def test_raw_copy():
     """
     Test we can make a copy of a raw frame.
@@ -427,6 +442,23 @@ def test_u_copy():
             'ac 96 68 84 ae 92 60'                          # Destination
             'ac 96 68 9a a6 98 e1'                          # Source
             '43'                                            # Control
+    )
+
+def test_dm_copy():
+    """
+    Test we can make a copy of a Disconnect Mode frame.
+    """
+    frame = AX25DisconnectModeFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+    )
+    framecopy = frame.copy()
+    assert framecopy is not frame
+
+    hex_cmp(bytes(framecopy),
+            'ac 96 68 84 ae 92 60'                          # Destination
+            'ac 96 68 9a a6 98 e1'                          # Source
+            '0f'                                            # Control
     )
 
 def test_ui_copy():
@@ -705,4 +737,3 @@ def test_iframe_copy():
             '54 65 73 74 69 6e 67 20'
             '31 20 32 20 33'            # Payload
     )
-
