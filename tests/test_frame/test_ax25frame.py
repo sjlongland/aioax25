@@ -22,6 +22,8 @@ from aioax25.frame import (
 )
 from ..hex import from_hex, hex_cmp
 
+# Basic frame operations
+
 
 def test_decode_incomplete():
     """
@@ -67,6 +69,60 @@ def test_decode_sframe():
     )
     assert isinstance(frame, AX25RawFrame), "Did not decode to raw frame"
     hex_cmp(frame.frame_payload, "01 11 22 33 44 55 66 77")
+
+
+def test_frame_timestamp():
+    """
+    Test that the timestamp property is set from constructor.
+    """
+    frame = AX25RawFrame(
+        destination="VK4BWI", source="VK4MSL", timestamp=11223344
+    )
+    eq_(frame.timestamp, 11223344)
+
+
+def test_frame_deadline():
+    """
+    Test that the deadline property is set from constructor.
+    """
+    frame = AX25RawFrame(
+        destination="VK4BWI", source="VK4MSL", deadline=11223344
+    )
+    eq_(frame.deadline, 11223344)
+
+
+def test_frame_deadline_ro_if_set_constructor():
+    """
+    Test that the deadline property is read-only once set by contructor
+    """
+    frame = AX25RawFrame(
+        destination="VK4BWI", source="VK4MSL", deadline=11223344
+    )
+    try:
+        frame.deadline = 99887766
+    except ValueError as e:
+        eq_(str(e), "Deadline may not be changed after being set")
+
+    eq_(frame.deadline, 11223344)
+
+
+def test_frame_deadline_ro_if_set():
+    """
+    Test that the deadline property is read-only once set after constructor
+    """
+    frame = AX25RawFrame(
+        destination="VK4BWI",
+        source="VK4MSL",
+    )
+
+    frame.deadline = 44556677
+
+    try:
+        frame.deadline = 99887766
+    except ValueError as e:
+        eq_(str(e), "Deadline may not be changed after being set")
+
+    eq_(frame.deadline, 44556677)
 
 
 # Unnumbered frame tests
@@ -320,6 +376,43 @@ def test_encode_test():
     )
     hex_cmp(
         bytes(frame),
+        "ac 96 68 84 ae 92 e0"  # Destination
+        "ac 96 68 9a a6 98 61"  # Source
+        "e3"  # Control
+        "54 68 69 73 20 69 73 20 61 20 74 65 73 74",  # Payload
+    )
+
+
+def test_decode_test():
+    """
+    Test that we can decode a TEST frame.
+    """
+    frame = AX25Frame.decode(
+        from_hex(
+            "ac 96 68 84 ae 92 e0"  # Destination
+            "ac 96 68 9a a6 98 61"  # Source
+            "e3"  # Control
+            "31 32 33 34 35 36 37 38 39 2e 2e 2e"  # Payload
+        )
+    )
+    assert isinstance(frame, AX25TestFrame)
+    eq_(frame.payload, b"123456789...")
+
+
+def test_copy_test():
+    """
+    Test that we can copy a TEST frame.
+    """
+    frame = AX25TestFrame(
+        destination="VK4BWI",
+        source="VK4MSL",
+        cr=True,
+        payload=b"This is a test",
+    )
+    framecopy = frame.copy()
+    assert framecopy is not frame
+    hex_cmp(
+        bytes(framecopy),
         "ac 96 68 84 ae 92 e0"  # Destination
         "ac 96 68 9a a6 98 61"  # Source
         "e3"  # Control
