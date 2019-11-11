@@ -133,11 +133,11 @@ class AX25Frame(object):
         return self._header
 
     @property
-    def frame_payload(self):
+    def frame_payload(self):  # pragma: no cover
         """
         Return the bytes in the frame payload (including the control bytes)
         """
-        return b""
+        raise NotImplementedError("To be implemented in sub-class")
 
     @property
     def tnc2(self):
