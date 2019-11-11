@@ -14,6 +14,8 @@ from aioax25.frame import (
     AX2516BitSupervisoryFrame,
     AX2516BitRejectFrame,
     AX258BitReceiveReadyFrame,
+    AX258BitInformationFrame,
+    AX2516BitInformationFrame,
 )
 from ..hex import from_hex, hex_cmp
 
@@ -62,6 +64,9 @@ def test_decode_sframe():
     )
     assert isinstance(frame, AX25RawFrame), "Did not decode to raw frame"
     hex_cmp(frame.frame_payload, "01 11 22 33 44 55 66 77")
+
+
+# Unnumbered frame tests
 
 
 def test_decode_uframe():
@@ -615,6 +620,9 @@ def test_ui_tnc2():
     assert frame.tnc2 == "VK4MSL>VK4BWI:This is a test"
 
 
+# Supervisory frame tests
+
+
 def test_8bs_rr_frame():
     """
     Test we can generate a 8-bit RR supervisory frame
@@ -666,6 +674,8 @@ def test_8bs_rej_decode_frame():
         "ac 96 68 9a a6 98 e1"  # Source
         "09",  # Control byte
     )
+    eq_(frame.nr, 0)
+    eq_(frame.pf, False)
 
 
 def test_16bs_rej_decode_frame():
@@ -689,6 +699,8 @@ def test_16bs_rej_decode_frame():
         "ac 96 68 9a a6 98 e1"  # Source
         "09 00",  # Control bytes
     )
+    eq_(frame.nr, 0)
+    eq_(frame.pf, False)
 
 
 def test_rr_frame_str():
@@ -720,4 +732,107 @@ def test_rr_frame_copy():
         "ac 96 68 84 ae 92 60"  # Destination
         "ac 96 68 9a a6 98 e1"  # Source
         "c1",  # Control byte
+    )
+
+
+# Information frames
+
+
+def test_8bit_iframe_decode():
+    """
+    Test we can decode an 8-bit information frame.
+    """
+    frame = AX258BitInformationFrame.decode(
+        header=AX25FrameHeader(
+            destination="VK4BWI",
+            source="VK4MSL",
+        ),
+        control=0xD4,
+        data=b"\xffThis is a test",
+    )
+    hex_cmp(
+        bytes(frame),
+        "ac 96 68 84 ae 92 60"  # Destination
+        "ac 96 68 9a a6 98 e1"  # Source
+        "d4"  # Control
+        "ff"  # PID
+        "54 68 69 73 20 69 73 20 61 20 74 65 73 74",  # Payload
+    )
+    eq_(frame.nr, 6)
+    eq_(frame.ns, 2)
+    eq_(frame.pid, 0xFF)
+    eq_(frame.payload, b"This is a test")
+
+
+def test_16bit_iframe_decode():
+    """
+    Test we can decode an 16-bit information frame.
+    """
+    frame = AX2516BitInformationFrame.decode(
+        header=AX25FrameHeader(
+            destination="VK4BWI",
+            source="VK4MSL",
+        ),
+        control=0x0D04,
+        data=b"\xffThis is a test",
+    )
+    hex_cmp(
+        bytes(frame),
+        "ac 96 68 84 ae 92 60"  # Destination
+        "ac 96 68 9a a6 98 e1"  # Source
+        "04 0d"  # Control
+        "ff"  # PID
+        "54 68 69 73 20 69 73 20 61 20 74 65 73 74",  # Payload
+    )
+    eq_(frame.nr, 6)
+    eq_(frame.ns, 2)
+    eq_(frame.pid, 0xFF)
+    eq_(frame.payload, b"This is a test")
+
+
+def test_iframe_str():
+    """
+    Test we can get the string representation of an information frame.
+    """
+    frame = AX258BitInformationFrame(
+        destination="VK4BWI",
+        source="VK4MSL",
+        nr=6,
+        ns=2,
+        pid=0xFF,
+        pf=True,
+        payload=b"Testing 1 2 3",
+    )
+
+    eq_(
+        str(frame),
+        "VK4MSL>VK4BWI: N(R)=6 P/F=True N(S)=2 PID=0xff "
+        "Payload=b'Testing 1 2 3'",
+    )
+
+
+def test_iframe_copy():
+    """
+    Test we can get the string representation of an information frame.
+    """
+    frame = AX258BitInformationFrame(
+        destination="VK4BWI",
+        source="VK4MSL",
+        nr=6,
+        ns=2,
+        pid=0xFF,
+        pf=True,
+        payload=b"Testing 1 2 3",
+    )
+    framecopy = frame.copy()
+
+    assert framecopy is not frame
+    hex_cmp(
+        bytes(framecopy),
+        "ac 96 68 84 ae 92 60"  # Destination
+        "ac 96 68 9a a6 98 e1"  # Source
+        "d4"  # Control byte
+        "ff"  # PID
+        "54 65 73 74 69 6e 67 20"
+        "31 20 32 20 33",  # Payload
     )
