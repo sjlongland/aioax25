@@ -9,8 +9,8 @@ from aioax25.frame import AX25Frame, AX25RawFrame, \
         AX258BitReceiveReadyFrame, \
         AX258BitInformationFrame, AX2516BitInformationFrame, \
         AX25DisconnectModeFrame, AX25SetAsyncBalancedModeFrame, \
-        AX25TestFrame
-from ..nosecompat import eq_
+        AX25TestFrame, AX25ExchangeIdentificationFrame
+from nose.tools import eq_
 from ..hex import from_hex, hex_cmp
 
 # Basic frame operations
@@ -376,6 +376,187 @@ def test_copy_test():
             'ac 96 68 9a a6 98 61'                          # Source
             'e3'                                            # Control
             '54 68 69 73 20 69 73 20 61 20 74 65 73 74'     # Payload
+    )
+
+def test_encode_xid():
+    """
+    Test that we can encode a XID frame.
+    """
+    frame = AX25ExchangeIdentificationFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+            cr=True,
+            fi=0x82, gi=0x80,
+            parameters=[
+                AX25ExchangeIdentificationFrame.AX25XIDParameter(
+                    pi=0x12, pv=bytes([0x34, 0x56])
+                ),
+                AX25ExchangeIdentificationFrame.AX25XIDParameter(
+                    pi=0x34, pv=None
+                )
+            ]
+    )
+    hex_cmp(bytes(frame),
+            'ac 96 68 84 ae 92 e0'                          # Destination
+            'ac 96 68 9a a6 98 61'                          # Source
+            'af'                                            # Control
+            '82'                                            # Format indicator
+            '80'                                            # Group Ident
+            '00 06'                                         # Group length
+            # First parameter
+            '12'                                            # Parameter ID
+            '02'                                            # Length
+            '34 56'                                         # Value
+            # Second parameter
+            '34'                                            # Parameter ID
+            '00'                                            # Length (no value)
+    )
+
+def test_decode_xid():
+    """
+    Test that we can decode a XID frame.
+    """
+    frame = AX25Frame.decode(
+            from_hex(
+                'ac 96 68 84 ae 92 e0'                      # Destination
+                'ac 96 68 9a a6 98 61'                      # Source
+                'af'                                        # Control
+                '82'                                        # FI
+                '80'                                        # GI
+                '00 0c'                                     # GL
+                # Some parameters
+                '01 01 aa'
+                '02 01 bb'
+                '03 02 11 22'
+                '04 00'
+            )
+    )
+    assert isinstance(frame, AX25ExchangeIdentificationFrame)
+    eq_(frame.fi, 0x82)
+    eq_(frame.gi, 0x80)
+    eq_(len(frame.parameters), 4)
+    eq_(frame.parameters[0].pi, 0x01)
+    eq_(frame.parameters[0].pv, b'\xaa')
+    eq_(frame.parameters[1].pi, 0x02)
+    eq_(frame.parameters[1].pv, b'\xbb')
+    eq_(frame.parameters[2].pi, 0x03)
+    eq_(frame.parameters[2].pv, b'\x11\x22')
+    eq_(frame.parameters[3].pi, 0x04)
+    assert frame.parameters[3].pv is None
+
+def test_decode_xid_truncated_header():
+    """
+    Test that decoding a XID with truncated header fails.
+    """
+    try:
+        frame = AX25Frame.decode(
+                from_hex(
+                    'ac 96 68 84 ae 92 e0'                  # Destination
+                    'ac 96 68 9a a6 98 61'                  # Source
+                    'af'                                    # Control
+                    '82'                                    # FI
+                    '80'                                    # GI
+                    '00'                                    # Incomplete GL
+                )
+        )
+        assert False, 'This should not have worked'
+    except ValueError as e:
+        eq_(str(e), 'Truncated XID header')
+
+def test_decode_xid_truncated_payload():
+    """
+    Test that decoding a XID with truncated payload fails.
+    """
+    try:
+        frame = AX25Frame.decode(
+                from_hex(
+                    'ac 96 68 84 ae 92 e0'                  # Destination
+                    'ac 96 68 9a a6 98 61'                  # Source
+                    'af'                                    # Control
+                    '82'                                    # FI
+                    '80'                                    # GI
+                    '00 05'                                 # GL
+                    '11'                                    # Incomplete payload
+                )
+        )
+        assert False, 'This should not have worked'
+    except ValueError as e:
+        eq_(str(e), 'Truncated XID data')
+
+def test_decode_xid_truncated_param_header():
+    """
+    Test that decoding a XID with truncated parameter header fails.
+    """
+    try:
+        frame = AX25Frame.decode(
+                from_hex(
+                    'ac 96 68 84 ae 92 e0'                  # Destination
+                    'ac 96 68 9a a6 98 61'                  # Source
+                    'af'                                    # Control
+                    '82'                                    # FI
+                    '80'                                    # GI
+                    '00 01'                                 # GL
+                    '11'                                    # Incomplete payload
+                )
+        )
+        assert False, 'This should not have worked'
+    except ValueError as e:
+        eq_(str(e), 'Insufficient data for parameter')
+
+def test_decode_xid_truncated_param_value():
+    """
+    Test that decoding a XID with truncated parameter value fails.
+    """
+    try:
+        frame = AX25Frame.decode(
+                from_hex(
+                    'ac 96 68 84 ae 92 e0'                  # Destination
+                    'ac 96 68 9a a6 98 61'                  # Source
+                    'af'                                    # Control
+                    '82'                                    # FI
+                    '80'                                    # GI
+                    '00 04'                                 # GL
+                    '11 06 22 33'                           # Incomplete payload
+                )
+        )
+        assert False, 'This should not have worked'
+    except ValueError as e:
+        eq_(str(e), 'Parameter is truncated')
+
+def test_copy_xid():
+    """
+    Test that we can copy a XID frame.
+    """
+    frame = AX25ExchangeIdentificationFrame(
+            destination='VK4BWI',
+            source='VK4MSL',
+            cr=True,
+            fi=0x82, gi=0x80,
+            parameters=[
+                AX25ExchangeIdentificationFrame.AX25XIDParameter(
+                    pi=0x12, pv=bytes([0x34, 0x56])
+                ),
+                AX25ExchangeIdentificationFrame.AX25XIDParameter(
+                    pi=0x34, pv=None
+                )
+            ]
+    )
+    framecopy = frame.copy()
+    assert framecopy is not frame
+    hex_cmp(bytes(framecopy),
+            'ac 96 68 84 ae 92 e0'                          # Destination
+            'ac 96 68 9a a6 98 61'                          # Source
+            'af'                                            # Control
+            '82'                                            # Format indicator
+            '80'                                            # Group Ident
+            '00 06'                                         # Group length
+            # First parameter
+            '12'                                            # Parameter ID
+            '02'                                            # Length
+            '34 56'                                         # Value
+            # Second parameter
+            '34'                                            # Parameter ID
+            '00'                                            # Length (no value)
     )
 
 def test_encode_pf():
