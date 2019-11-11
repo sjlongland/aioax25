@@ -753,10 +753,6 @@ class AX2516BitSupervisoryFrame(AX25SupervisoryFrameMixin, AX2516BitFrame):
     )
 
 
-class AX2516BitSupervisoryFrame(AX25SupervisoryFrameMixin, AX2516BitFrame):
-    pass
-
-
 # Un-numbered frame types
 
 
