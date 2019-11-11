@@ -19,6 +19,7 @@ from aioax25.frame import (
     AX25DisconnectModeFrame,
     AX25SetAsyncBalancedModeFrame,
     AX25TestFrame,
+    AX25ExchangeIdentificationFrame,
 )
 from ..hex import from_hex, hex_cmp
 
@@ -78,7 +79,7 @@ def test_frame_timestamp():
     frame = AX25RawFrame(
         destination="VK4BWI", source="VK4MSL", timestamp=11223344
     )
-    eq_(frame.timestamp, 11223344)
+    assert frame.timestamp == 11223344
 
 
 def test_frame_deadline():
@@ -88,7 +89,7 @@ def test_frame_deadline():
     frame = AX25RawFrame(
         destination="VK4BWI", source="VK4MSL", deadline=11223344
     )
-    eq_(frame.deadline, 11223344)
+    assert frame.deadline == 11223344
 
 
 def test_frame_deadline_ro_if_set_constructor():
@@ -101,9 +102,9 @@ def test_frame_deadline_ro_if_set_constructor():
     try:
         frame.deadline = 99887766
     except ValueError as e:
-        eq_(str(e), "Deadline may not be changed after being set")
+        assert str(e) == "Deadline may not be changed after being set"
 
-    eq_(frame.deadline, 11223344)
+    assert frame.deadline == 11223344
 
 
 def test_frame_deadline_ro_if_set():
@@ -120,9 +121,9 @@ def test_frame_deadline_ro_if_set():
     try:
         frame.deadline = 99887766
     except ValueError as e:
-        eq_(str(e), "Deadline may not be changed after being set")
+        assert str(e) == "Deadline may not be changed after being set"
 
-    eq_(frame.deadline, 44556677)
+    assert frame.deadline == 44556677
 
 
 # Unnumbered frame tests
@@ -179,7 +180,7 @@ def test_decode_sabm_payload():
         )
         assert False, "This should not have worked"
     except ValueError as e:
-        eq_(str(e), "Frame does not support payload")
+        assert str(e) == "Frame does not support payload"
 
 
 def test_decode_uframe_payload():
@@ -396,7 +397,7 @@ def test_decode_test():
         )
     )
     assert isinstance(frame, AX25TestFrame)
-    eq_(frame.payload, b"123456789...")
+    assert frame.payload == b"123456789..."
 
 
 def test_copy_test():
@@ -417,6 +418,198 @@ def test_copy_test():
         "ac 96 68 9a a6 98 61"  # Source
         "e3"  # Control
         "54 68 69 73 20 69 73 20 61 20 74 65 73 74",  # Payload
+    )
+
+
+def test_encode_xid():
+    """
+    Test that we can encode a XID frame.
+    """
+    frame = AX25ExchangeIdentificationFrame(
+        destination="VK4BWI",
+        source="VK4MSL",
+        cr=True,
+        fi=0x82,
+        gi=0x80,
+        parameters=[
+            AX25ExchangeIdentificationFrame.AX25XIDParameter(
+                pi=0x12, pv=bytes([0x34, 0x56])
+            ),
+            AX25ExchangeIdentificationFrame.AX25XIDParameter(
+                pi=0x34, pv=None
+            ),
+        ],
+    )
+    hex_cmp(
+        bytes(frame),
+        "ac 96 68 84 ae 92 e0"  # Destination
+        "ac 96 68 9a a6 98 61"  # Source
+        "af"  # Control
+        "82"  # Format indicator
+        "80"  # Group Ident
+        "00 06"  # Group length
+        # First parameter
+        "12"  # Parameter ID
+        "02"  # Length
+        "34 56"  # Value
+        # Second parameter
+        "34"  # Parameter ID
+        "00",  # Length (no value)
+    )
+
+
+def test_decode_xid():
+    """
+    Test that we can decode a XID frame.
+    """
+    frame = AX25Frame.decode(
+        from_hex(
+            "ac 96 68 84 ae 92 e0"  # Destination
+            "ac 96 68 9a a6 98 61"  # Source
+            "af"  # Control
+            "82"  # FI
+            "80"  # GI
+            "00 0c"  # GL
+            # Some parameters
+            "01 01 aa"
+            "02 01 bb"
+            "03 02 11 22"
+            "04 00"
+        )
+    )
+    assert isinstance(frame, AX25ExchangeIdentificationFrame)
+    assert frame.fi == 0x82
+    assert frame.gi == 0x80
+    assert len(frame.parameters) == 4
+    assert frame.parameters[0].pi == 0x01
+    assert frame.parameters[0].pv == b"\xaa"
+    assert frame.parameters[1].pi == 0x02
+    assert frame.parameters[1].pv == b"\xbb"
+    assert frame.parameters[2].pi == 0x03
+    assert frame.parameters[2].pv == b"\x11\x22"
+    assert frame.parameters[3].pi == 0x04
+    assert frame.parameters[3].pv is None
+
+
+def test_decode_xid_truncated_header():
+    """
+    Test that decoding a XID with truncated header fails.
+    """
+    try:
+        frame = AX25Frame.decode(
+            from_hex(
+                "ac 96 68 84 ae 92 e0"  # Destination
+                "ac 96 68 9a a6 98 61"  # Source
+                "af"  # Control
+                "82"  # FI
+                "80"  # GI
+                "00"  # Incomplete GL
+            )
+        )
+        assert False, "This should not have worked"
+    except ValueError as e:
+        assert str(e) == "Truncated XID header"
+
+
+def test_decode_xid_truncated_payload():
+    """
+    Test that decoding a XID with truncated payload fails.
+    """
+    try:
+        frame = AX25Frame.decode(
+            from_hex(
+                "ac 96 68 84 ae 92 e0"  # Destination
+                "ac 96 68 9a a6 98 61"  # Source
+                "af"  # Control
+                "82"  # FI
+                "80"  # GI
+                "00 05"  # GL
+                "11"  # Incomplete payload
+            )
+        )
+        assert False, "This should not have worked"
+    except ValueError as e:
+        assert str(e) == "Truncated XID data"
+
+
+def test_decode_xid_truncated_param_header():
+    """
+    Test that decoding a XID with truncated parameter header fails.
+    """
+    try:
+        frame = AX25Frame.decode(
+            from_hex(
+                "ac 96 68 84 ae 92 e0"  # Destination
+                "ac 96 68 9a a6 98 61"  # Source
+                "af"  # Control
+                "82"  # FI
+                "80"  # GI
+                "00 01"  # GL
+                "11"  # Incomplete payload
+            )
+        )
+        assert False, "This should not have worked"
+    except ValueError as e:
+        assert str(e) == "Insufficient data for parameter"
+
+
+def test_decode_xid_truncated_param_value():
+    """
+    Test that decoding a XID with truncated parameter value fails.
+    """
+    try:
+        frame = AX25Frame.decode(
+            from_hex(
+                "ac 96 68 84 ae 92 e0"  # Destination
+                "ac 96 68 9a a6 98 61"  # Source
+                "af"  # Control
+                "82"  # FI
+                "80"  # GI
+                "00 04"  # GL
+                "11 06 22 33"  # Incomplete payload
+            )
+        )
+        assert False, "This should not have worked"
+    except ValueError as e:
+        assert str(e) == "Parameter is truncated"
+
+
+def test_copy_xid():
+    """
+    Test that we can copy a XID frame.
+    """
+    frame = AX25ExchangeIdentificationFrame(
+        destination="VK4BWI",
+        source="VK4MSL",
+        cr=True,
+        fi=0x82,
+        gi=0x80,
+        parameters=[
+            AX25ExchangeIdentificationFrame.AX25XIDParameter(
+                pi=0x12, pv=bytes([0x34, 0x56])
+            ),
+            AX25ExchangeIdentificationFrame.AX25XIDParameter(
+                pi=0x34, pv=None
+            ),
+        ],
+    )
+    framecopy = frame.copy()
+    assert framecopy is not frame
+    hex_cmp(
+        bytes(framecopy),
+        "ac 96 68 84 ae 92 e0"  # Destination
+        "ac 96 68 9a a6 98 61"  # Source
+        "af"  # Control
+        "82"  # Format indicator
+        "80"  # Group Ident
+        "00 06"  # Group length
+        # First parameter
+        "12"  # Parameter ID
+        "02"  # Length
+        "34 56"  # Value
+        # Second parameter
+        "34"  # Parameter ID
+        "00",  # Length (no value)
     )
 
 
@@ -858,8 +1051,8 @@ def test_8bs_rej_decode_frame():
         "ac 96 68 9a a6 98 e1"  # Source
         "09",  # Control byte
     )
-    eq_(frame.nr, 0)
-    eq_(frame.pf, False)
+    assert frame.nr == 0
+    assert frame.pf == False
 
 
 def test_16bs_rej_decode_frame():
@@ -883,8 +1076,8 @@ def test_16bs_rej_decode_frame():
         "ac 96 68 9a a6 98 e1"  # Source
         "09 00",  # Control bytes
     )
-    eq_(frame.nr, 0)
-    eq_(frame.pf, False)
+    assert frame.nr == 0
+    assert frame.pf == False
 
 
 def test_rr_frame_str():
@@ -895,9 +1088,8 @@ def test_rr_frame_str():
         destination="VK4BWI", source="VK4MSL", nr=6
     )
 
-    eq_(
-        str(frame),
-        "VK4MSL>VK4BWI: N(R)=6 P/F=False AX258BitReceiveReadyFrame",
+    assert str(frame) == (
+        "VK4MSL>VK4BWI: N(R)=6 P/F=False AX258BitReceiveReadyFrame"
     )
 
 
@@ -942,10 +1134,10 @@ def test_8bit_iframe_decode():
         "ff"  # PID
         "54 68 69 73 20 69 73 20 61 20 74 65 73 74",  # Payload
     )
-    eq_(frame.nr, 6)
-    eq_(frame.ns, 2)
-    eq_(frame.pid, 0xFF)
-    eq_(frame.payload, b"This is a test")
+    assert frame.nr == 6
+    assert frame.ns == 2
+    assert frame.pid == 0xFF
+    assert frame.payload == b"This is a test"
 
 
 def test_16bit_iframe_decode():
@@ -968,10 +1160,10 @@ def test_16bit_iframe_decode():
         "ff"  # PID
         "54 68 69 73 20 69 73 20 61 20 74 65 73 74",  # Payload
     )
-    eq_(frame.nr, 6)
-    eq_(frame.ns, 2)
-    eq_(frame.pid, 0xFF)
-    eq_(frame.payload, b"This is a test")
+    assert frame.nr == 6
+    assert frame.ns == 2
+    assert frame.pid == 0xFF
+    assert frame.payload == b"This is a test"
 
 
 def test_iframe_str():
@@ -988,10 +1180,9 @@ def test_iframe_str():
         payload=b"Testing 1 2 3",
     )
 
-    eq_(
-        str(frame),
+    assert str(frame) == (
         "VK4MSL>VK4BWI: N(R)=6 P/F=True N(S)=2 PID=0xff "
-        "Payload=b'Testing 1 2 3'",
+        "Payload=b'Testing 1 2 3'"
     )
 
 

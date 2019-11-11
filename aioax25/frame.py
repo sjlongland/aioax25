@@ -1134,13 +1134,100 @@ class AX25ExchangeIdentificationFrame(AX25UnnumberedFrame):
 
     MODIFIER = 0b10101111
 
+    class AX25XIDParameter(object):
+        """
+        Representation of a single XID parameter.
+        """
+
+        @classmethod
+        def decode(cls, data):
+            """
+            Decode the parameter value given, return the parameter and the
+            remaining data.
+            """
+            if len(data) < 2:
+                raise ValueError("Insufficient data for parameter")
+
+            pi = data[0]
+            pl = data[1]
+            data = data[2:]
+
+            if pl > 0:
+                if len(data) < pl:
+                    raise ValueError("Parameter is truncated")
+                pv = data[0:pl]
+                data = data[pl:]
+            else:
+                pv = None
+
+            return (cls(pi=pi, pv=pv), data)
+
+        def __init__(self, pi, pv):
+            """
+            Create a new XID parameter
+            """
+            self._pi = pi
+            self._pv = pv
+
+        @property
+        def pi(self):
+            """
+            Return the Parameter Identifier
+            """
+            return self._pi
+
+        @property
+        def pv(self):
+            """
+            Return the Parameter Value
+            """
+            return self._pv
+
+        def __bytes__(self):
+            """
+            Return the encoded parameter value.
+            """
+            pv = self.pv
+            param = bytes([self.pi])
+            if pv is None:
+                param += bytes([0])
+            else:
+                param += bytes([len(pv)]) + pv
+
+            return param
+
+        def copy(self):
+            """
+            Return a copy of this parameter.
+            """
+            return self.__class__(pi=self.pi, pv=self.pv)
+
     @classmethod
     def decode(cls, header, control, data):
+        if len(data) < 4:
+            raise ValueError("Truncated XID header")
+
+        fi = data[0]
+        gi = data[1]
+        # Yep, GL is big-endian, just for a change!
+        gl = (data[2] << 8) | data[3]
+        data = data[4:]
+
+        if len(data) != gl:
+            raise ValueError("Truncated XID data")
+
+        parameters = []
+        while data:
+            (param, data) = cls.AX25XIDParameter.decode(data)
+            parameters.append(param)
+
         return cls(
             destination=header.destination,
             source=header.source,
             repeaters=header.repeaters,
-            payload=data,
+            fi=fi,
+            gi=gi,
+            parameters=parameters,
             pf=bool(control & cls.POLL_FINAL),
             cr=header.cr,
         )
@@ -1149,7 +1236,9 @@ class AX25ExchangeIdentificationFrame(AX25UnnumberedFrame):
         self,
         destination,
         source,
-        payload,
+        fi,
+        gi,
+        parameters,
         repeaters=None,
         pf=False,
         cr=False,
@@ -1166,17 +1255,39 @@ class AX25ExchangeIdentificationFrame(AX25UnnumberedFrame):
             timestamp=timestamp,
             deadline=deadline,
         )
-        self._payload = bytes(payload)
+        self._fi = int(fi)
+        self._gi = int(gi)
+        self._parameters = list(parameters)
 
     @property
-    def payload(self):
-        return self._payload
+    def fi(self):
+        return self._fi
+
+    @property
+    def gi(self):
+        return self._gi
+
+    @property
+    def parameters(self):
+        return self._parameters
+
+    @property
+    def frame_payload(self):
+        parameters = b"".join([bytes(param) for param in self.parameters])
+        gl = len(parameters)
+        return (
+            super(AX25ExchangeIdentificationFrame, self).frame_payload
+            + bytes([self.fi, self.gi, (gl >> 8) & 0xFF, gl & 0xFF])
+            + parameters
+        )
 
     def _copy(self):
         return self.__class__(
             destination=self.header.destination,
             source=self.header.source,
-            payload=self.payload,
+            fi=self.fi,
+            gi=self.gi,
+            parameters=[p.copy() for p in self.parameters],
             repeaters=self.header.repeaters,
             cr=self.header.cr,
             pf=self.pf,
