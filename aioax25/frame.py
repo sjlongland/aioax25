@@ -439,6 +439,7 @@ class AX25InformationFrameMixin(object):
             deadline=deadline,
         )
         self._nr = int(nr)
+        self._pf = bool(pf)
         self._ns = int(ns)
         self._pid = int(pid) & 0xFF
         self._payload = bytes(payload)
@@ -558,7 +559,6 @@ class AX25SupervisoryFrameMixin(object):
         destination,
         source,
         nr,
-        code,
         repeaters=None,
         pf=False,
         cr=False,
@@ -574,11 +574,8 @@ class AX25SupervisoryFrameMixin(object):
             deadline=deadline,
         )
         self._nr = int(nr)
-        self._code = int(code)
-
-    @property
-    def pid(self):
-        return self._pid
+        self._code = self.SUPERVISOR_CODE
+        self._pf = bool(pf)
 
     @property
     def nr(self):

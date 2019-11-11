@@ -6,6 +6,11 @@ from aioax25.frame import (
     AX25UnnumberedInformationFrame,
     AX25FrameRejectFrame,
     AX25UnnumberedFrame,
+    AX258BitReceiveReadyFrame,
+    AX2516BitReceiveReadyFrame,
+    AX258BitSupervisoryFrame,
+    AX25FrameHeader,
+    AX258BitRejectFrame,
 )
 from ..hex import from_hex, hex_cmp
 
@@ -605,3 +610,56 @@ def test_ui_tnc2():
         payload=b"This is a test",
     )
     assert frame.tnc2 == "VK4MSL>VK4BWI:This is a test"
+
+
+def test_8bs_rr_frame():
+    """
+    Test we can generate a 8-bit RR supervisory frame
+    """
+    frame = AX258BitReceiveReadyFrame(
+        destination="VK4BWI", source="VK4MSL", nr=2
+    )
+    hex_cmp(
+        bytes(frame),
+        "ac 96 68 84 ae 92 60"  # Destination
+        "ac 96 68 9a a6 98 e1"  # Source
+        "41",  # Control
+    )
+
+
+def test_16bs_rr_frame():
+    """
+    Test we can generate a 16-bit RR supervisory frame
+    """
+    frame = AX2516BitReceiveReadyFrame(
+        destination="VK4BWI", source="VK4MSL", nr=46
+    )
+    hex_cmp(
+        bytes(frame),
+        "ac 96 68 84 ae 92 60"  # Destination
+        "ac 96 68 9a a6 98 e1"  # Source
+        "01 5c",  # Control
+    )
+
+
+def test_8bs_rej_decode_frame():
+    """
+    Test we can decode a 8-bit REJ supervisory frame
+    """
+    frame = AX258BitSupervisoryFrame.decode(
+        header=AX25FrameHeader(
+            destination="VK4BWI",
+            source="VK4MSL",
+        ),
+        control=0x09,
+    )
+    assert isinstance(
+        frame, AX258BitRejectFrame
+    ), "Did not decode to REJ frame"
+
+    hex_cmp(
+        bytes(frame),
+        "ac 96 68 84 ae 92 60"  # Destination
+        "ac 96 68 9a a6 98 e1"  # Source
+        "09",  # Control byte
+    )
