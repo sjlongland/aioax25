@@ -369,6 +369,7 @@ class AX25InformationFrameMixin(object):
                 repeaters=repeaters, cr=cr,
                 timestamp=timestamp, deadline=deadline)
         self._nr = int(nr)
+        self._pf = bool(pf)
         self._ns = int(ns)
         self._pid = int(pid) & 0xff
         self._payload = bytes(payload)
@@ -476,18 +477,15 @@ class AX25SupervisoryFrameMixin(object):
                 pf=bool(control & cls.POLL_FINAL)
         )
 
-    def __init__(self, destination, source, nr, code,
+    def __init__(self, destination, source, nr,
             repeaters=None, pf=False, cr=False, timestamp=None, deadline=None):
         super(AX25SupervisoryFrameMixin, self).__init__(
                 destination=destination, source=source,
                 repeaters=repeaters, cr=cr,
                 timestamp=timestamp, deadline=deadline)
         self._nr = int(nr)
-        self._code = int(code)
-
-    @property
-    def pid(self):
-        return self._pid
+        self._code = self.SUPERVISOR_CODE
+        self._pf = bool(pf)
 
     @property
     def nr(self):
