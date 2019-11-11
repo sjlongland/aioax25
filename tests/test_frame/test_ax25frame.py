@@ -16,6 +16,7 @@ from aioax25.frame import (
     AX258BitReceiveReadyFrame,
     AX258BitInformationFrame,
     AX2516BitInformationFrame,
+    AX25DisconnectModeFrame,
 )
 from ..hex import from_hex, hex_cmp
 
@@ -493,6 +494,22 @@ def test_encode_frmr_frmr_ctrl():
     )
 
 
+def test_encode_dm_frame():
+    """
+    Test we can encode a Disconnect Mode frame.
+    """
+    frame = AX25DisconnectModeFrame(
+        destination="VK4BWI",
+        source="VK4MSL",
+    )
+    hex_cmp(
+        bytes(frame),
+        "ac 96 68 84 ae 92 60"  # Destination
+        "ac 96 68 9a a6 98 e1"  # Source
+        "0f",  # Control
+    )
+
+
 def test_raw_copy():
     """
     Test we can make a copy of a raw frame.
@@ -527,6 +544,25 @@ def test_u_copy():
         "ac 96 68 84 ae 92 60"  # Destination
         "ac 96 68 9a a6 98 e1"  # Source
         "43",  # Control
+    )
+
+
+def test_dm_copy():
+    """
+    Test we can make a copy of a Disconnect Mode frame.
+    """
+    frame = AX25DisconnectModeFrame(
+        destination="VK4BWI",
+        source="VK4MSL",
+    )
+    framecopy = frame.copy()
+    assert framecopy is not frame
+
+    hex_cmp(
+        bytes(framecopy),
+        "ac 96 68 84 ae 92 60"  # Destination
+        "ac 96 68 9a a6 98 e1"  # Source
+        "0f",  # Control
     )
 
 
