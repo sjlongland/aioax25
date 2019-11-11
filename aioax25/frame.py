@@ -359,7 +359,8 @@ class AX25InformationFrameMixin(object):
                 nr=int((control & cls.CONTROL_NR_MASK) >> cls.CONTROL_NR_SHIFT),
                 ns=int((control & cls.CONTROL_NS_MASK) >> cls.CONTROL_NS_SHIFT),
                 pf=bool(control & cls.POLL_FINAL),
-                payload=data
+                pid=data[0],
+                payload=data[1:]
         )
 
     def __init__(self, destination, source, pid, nr, ns, payload,
@@ -433,7 +434,6 @@ class AX25InformationFrameMixin(object):
                 destination=self.header.destination,
                 source=self.header.source,
                 repeaters=self.header.repeaters,
-                modifier=self.modifier,
                 cr=self.header.cr,
                 pf=self.pf,
                 pid=self.pid,
