@@ -703,3 +703,21 @@ def test_rr_frame_str():
         str(frame),
         "VK4MSL>VK4BWI: N(R)=6 P/F=False AX258BitReceiveReadyFrame",
     )
+
+
+def test_rr_frame_copy():
+    """
+    Test we can get the string representation of a RR frame.
+    """
+    frame = AX258BitReceiveReadyFrame(
+        destination="VK4BWI", source="VK4MSL", nr=6
+    )
+    framecopy = frame.copy()
+
+    assert framecopy is not frame
+    hex_cmp(
+        bytes(framecopy),
+        "ac 96 68 84 ae 92 60"  # Destination
+        "ac 96 68 9a a6 98 e1"  # Source
+        "c1",  # Control byte
+    )
