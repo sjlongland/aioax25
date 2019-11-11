@@ -17,6 +17,7 @@ from aioax25.frame import (
     AX258BitInformationFrame,
     AX2516BitInformationFrame,
     AX25DisconnectModeFrame,
+    AX25SetAsyncBalancedModeFrame,
 )
 from ..hex import from_hex, hex_cmp
 
@@ -88,6 +89,22 @@ def test_decode_uframe():
 
     # We should see the control byte as our payload
     hex_cmp(frame.frame_payload, "c3")
+
+
+def test_decode_sabm():
+    """
+    Test that a SABM frame is recognised and decoded.
+    """
+    frame = AX25Frame.decode(
+        from_hex(
+            "ac 96 68 84 ae 92 e0"  # Destination
+            "ac 96 68 9a a6 98 61"  # Source
+            "6f"  # Control byte
+        )
+    )
+    assert isinstance(
+        frame, AX25SetAsyncBalancedModeFrame
+    ), "Did not decode to SABM frame"
 
 
 def test_decode_uframe_payload():
