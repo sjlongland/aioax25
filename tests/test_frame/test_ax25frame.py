@@ -18,6 +18,7 @@ from aioax25.frame import (
     AX2516BitInformationFrame,
     AX25DisconnectModeFrame,
     AX25SetAsyncBalancedModeFrame,
+    AX25TestFrame,
 )
 from ..hex import from_hex, hex_cmp
 
@@ -113,16 +114,17 @@ def test_decode_sabm_payload():
     """
     try:
         frame = AX25Frame.decode(
-                from_hex(
-                    'ac 96 68 84 ae 92 e0'      # Destination
-                    'ac 96 68 9a a6 98 61'      # Source
-                    '6f'                        # Control byte
-                    '11 22 33 44 55'            # Payload
-                )
+            from_hex(
+                "ac 96 68 84 ae 92 e0"  # Destination
+                "ac 96 68 9a a6 98 61"  # Source
+                "6f"  # Control byte
+                "11 22 33 44 55"  # Payload
+            )
         )
-        assert False, 'This should not have worked'
+        assert False, "This should not have worked"
     except ValueError as e:
-        eq_(str(e), 'Frame does not support payload')
+        eq_(str(e), "Frame does not support payload")
+
 
 def test_decode_uframe_payload():
     """
@@ -302,6 +304,25 @@ def test_encode_ui():
         "ac 96 68 9a a6 98 61"  # Source
         "03"  # Control
         "f0"  # PID
+        "54 68 69 73 20 69 73 20 61 20 74 65 73 74",  # Payload
+    )
+
+
+def test_encode_test():
+    """
+    Test that we can encode a TEST frame.
+    """
+    frame = AX25TestFrame(
+        destination="VK4BWI",
+        source="VK4MSL",
+        cr=True,
+        payload=b"This is a test",
+    )
+    hex_cmp(
+        bytes(frame),
+        "ac 96 68 84 ae 92 e0"  # Destination
+        "ac 96 68 9a a6 98 61"  # Source
+        "e3"  # Control
         "54 68 69 73 20 69 73 20 61 20 74 65 73 74",  # Payload
     )
 

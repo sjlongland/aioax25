@@ -1232,6 +1232,10 @@ class AX25TestFrame(AX25UnnumberedFrame):
     def payload(self):
         return self._payload
 
+    @property
+    def frame_payload(self):
+        return super(AX25TestFrame, self).frame_payload + bytes(self.payload)
+
     def _copy(self):
         return self.__class__(
             destination=self.header.destination,
