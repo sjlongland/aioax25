@@ -4,7 +4,8 @@ from aioax25.frame import AX25Frame, AX25RawFrame, \
         AX25UnnumberedInformationFrame, AX25FrameRejectFrame, \
         AX25UnnumberedFrame, AX258BitReceiveReadyFrame, \
         AX2516BitReceiveReadyFrame, AX258BitSupervisoryFrame, \
-        AX25FrameHeader, AX258BitRejectFrame
+        AX25FrameHeader, AX258BitRejectFrame, \
+        AX2516BitSupervisoryFrame, AX2516BitRejectFrame
 from ..nosecompat import eq_
 from ..hex import from_hex, hex_cmp
 
@@ -553,4 +554,24 @@ def test_8bs_rej_decode_frame():
             'ac 96 68 84 ae 92 60'      # Destination
             'ac 96 68 9a a6 98 e1'      # Source
             '09'                        # Control byte
+    )
+
+def test_16bs_rej_decode_frame():
+    """
+    Test we can decode a 16-bit REJ supervisory frame
+    """
+    frame = AX2516BitSupervisoryFrame.decode(
+            header=AX25FrameHeader(
+                destination='VK4BWI',
+                source='VK4MSL',
+            ),
+            control=0x0009
+    )
+    assert isinstance(frame, AX2516BitRejectFrame), \
+            'Did not decode to REJ frame'
+
+    hex_cmp(bytes(frame),
+            'ac 96 68 84 ae 92 60'      # Destination
+            'ac 96 68 9a a6 98 e1'      # Source
+            '09 00'                     # Control bytes
     )
