@@ -615,7 +615,7 @@ class AX25SupervisoryFrameMixin(object):
             self.header,
             self.nr,
             self.pf,
-            self.__name__,
+            self.__class__.__name__,
         )
 
     def _copy(self):
