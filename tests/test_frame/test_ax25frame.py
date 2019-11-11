@@ -90,6 +90,23 @@ def test_decode_sabm():
     assert isinstance(frame, AX25SetAsyncBalancedModeFrame), \
             'Did not decode to SABM frame'
 
+def test_decode_sabm_payload():
+    """
+    Test that a SABM frame forbids payload.
+    """
+    try:
+        frame = AX25Frame.decode(
+                from_hex(
+                    'ac 96 68 84 ae 92 e0'      # Destination
+                    'ac 96 68 9a a6 98 61'      # Source
+                    '6f'                        # Control byte
+                    '11 22 33 44 55'            # Payload
+                )
+        )
+        assert False, 'This should not have worked'
+    except ValueError as e:
+        eq_(str(e), 'Frame does not support payload')
+
 def test_decode_uframe_payload():
     """
     Test that U-frames other than FRMR and UI are forbidden to have payloads.
