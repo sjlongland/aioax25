@@ -143,10 +143,14 @@ class AX25Frame(object):
                 # This is an I frame.
                 return InformationFrame.decode(header, control, data)
             elif (control & cls.CONTROL_US_MASK) == cls.CONTROL_S_VAL:
-                # This is a S frame.
-                return SupervisoryFrame.decode(header, control, data)
-
-            assert False, "Unrecognised control field value: 0x%04x" % control
+                # This is a S frame.  No payload expected
+                if len(data):
+                    raise ValueError(
+                        "Supervisory frames do not " "support payloads."
+                    )
+                return SupervisoryFrame.decode(header, control)
+            else:  # pragma: no cover
+                assert False, "Unrecognised control field: 0x%04x" % control
 
     def __init__(
         self,
