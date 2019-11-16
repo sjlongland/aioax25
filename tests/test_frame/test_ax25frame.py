@@ -72,6 +72,22 @@ def test_decode_sframe():
     hex_cmp(frame.frame_payload, "01 11 22 33 44 55 66 77")
 
 
+def test_decode_rawframe():
+    """
+    Test that we can decode an AX25RawFrame.
+    """
+    rawframe = AX25RawFrame(
+        destination="VK4BWI",
+        source="VK4MSL",
+        cr=True,
+        payload=b"\x03\xf0This is a test",
+    )
+    frame = AX25Frame.decode(rawframe)
+    assert isinstance(frame, AX25UnnumberedInformationFrame)
+    assert frame.pid == 0xF0
+    assert frame.payload == b"This is a test"
+
+
 def test_frame_timestamp():
     """
     Test that the timestamp property is set from constructor.
@@ -633,6 +649,7 @@ def test_encode_pf():
         "f0"  # PID
         "54 68 69 73 20 69 73 20 61 20 74 65 73 74",  # Payload
     )
+    assert frame.control == 0x13
 
 
 def test_encode_frmr_w():
@@ -1000,57 +1017,106 @@ def test_ui_tnc2():
 # Supervisory frame tests
 
 
+def test_sframe_payload_reject():
+    """
+    Test payloads are forbidden for S-frames
+    """
+    try:
+        AX25Frame.decode(
+            from_hex(
+                "ac 96 68 84 ae 92 60"  # Destination
+                "ac 96 68 9a a6 98 e1"  # Source
+                "41"  # Control
+                "31 32 33 34 35"  # Payload
+            ),
+            modulo128=False,
+        )
+        assert False, "Should not have worked"
+    except ValueError as e:
+        assert str(e) == "Supervisory frames do not support payloads."
+
+
+def test_16bs_truncated_reject():
+    """
+    Test that 16-bit S-frames with truncated control fields are rejected.
+    """
+    try:
+        AX25Frame.decode(
+            from_hex(
+                "ac 96 68 84 ae 92 60"  # Destination
+                "ac 96 68 9a a6 98 e1"  # Source
+                "01"  # Control (LSB only)
+            ),
+            modulo128=True,
+        )
+        assert False, "Should not have worked"
+    except ValueError as e:
+        assert str(e) == "Insufficient packet data"
+
+
 def test_8bs_rr_frame():
     """
     Test we can generate a 8-bit RR supervisory frame
     """
-    frame = AX258BitReceiveReadyFrame(
-        destination="VK4BWI", source="VK4MSL", nr=2
+    frame = AX25Frame.decode(
+        from_hex(
+            "ac 96 68 84 ae 92 60"  # Destination
+            "ac 96 68 9a a6 98 e1"  # Source
+            "41"  # Control
+        ),
+        modulo128=False,
     )
-    hex_cmp(
-        bytes(frame),
-        "ac 96 68 84 ae 92 60"  # Destination
-        "ac 96 68 9a a6 98 e1"  # Source
-        "41",  # Control
-    )
+    assert isinstance(frame, AX258BitReceiveReadyFrame)
+    assert frame.nr == 2
 
 
 def test_16bs_rr_frame():
     """
     Test we can generate a 16-bit RR supervisory frame
     """
+    frame = AX25Frame.decode(
+        from_hex(
+            "ac 96 68 84 ae 92 60"  # Destination
+            "ac 96 68 9a a6 98 e1"  # Source
+            "01 5c"  # Control
+        ),
+        modulo128=True,
+    )
+    assert isinstance(frame, AX2516BitReceiveReadyFrame)
+    assert frame.nr == 46
+
+
+def test_16bs_rr_encode():
+    """
+    Test we can encode a 16-bit RR supervisory frame
+    """
     frame = AX2516BitReceiveReadyFrame(
-        destination="VK4BWI", source="VK4MSL", nr=46
+        destination="VK4BWI", source="VK4MSL", nr=46, pf=True
     )
     hex_cmp(
         bytes(frame),
         "ac 96 68 84 ae 92 60"  # Destination
         "ac 96 68 9a a6 98 e1"  # Source
-        "01 5c",  # Control
+        "01 5d",  # Control
     )
+    assert frame.control == 0x5D01
 
 
 def test_8bs_rej_decode_frame():
     """
     Test we can decode a 8-bit REJ supervisory frame
     """
-    frame = AX258BitSupervisoryFrame.decode(
-        header=AX25FrameHeader(
-            destination="VK4BWI",
-            source="VK4MSL",
+    frame = AX25Frame.decode(
+        from_hex(
+            "ac 96 68 84 ae 92 60"  # Destination
+            "ac 96 68 9a a6 98 e1"  # Source
+            "09"  # Control byte
         ),
-        control=0x09,
+        modulo128=False,
     )
     assert isinstance(
         frame, AX258BitRejectFrame
     ), "Did not decode to REJ frame"
-
-    hex_cmp(
-        bytes(frame),
-        "ac 96 68 84 ae 92 60"  # Destination
-        "ac 96 68 9a a6 98 e1"  # Source
-        "09",  # Control byte
-    )
     assert frame.nr == 0
     assert frame.pf == False
 
@@ -1059,23 +1125,17 @@ def test_16bs_rej_decode_frame():
     """
     Test we can decode a 16-bit REJ supervisory frame
     """
-    frame = AX2516BitSupervisoryFrame.decode(
-        header=AX25FrameHeader(
-            destination="VK4BWI",
-            source="VK4MSL",
+    frame = AX25Frame.decode(
+        from_hex(
+            "ac 96 68 84 ae 92 60"  # Destination
+            "ac 96 68 9a a6 98 e1"  # Source
+            "09 00"  # Control bytes
         ),
-        control=0x0009,
+        modulo128=True,
     )
     assert isinstance(
         frame, AX2516BitRejectFrame
     ), "Did not decode to REJ frame"
-
-    hex_cmp(
-        bytes(frame),
-        "ac 96 68 84 ae 92 60"  # Destination
-        "ac 96 68 9a a6 98 e1"  # Source
-        "09 00",  # Control bytes
-    )
     assert frame.nr == 0
     assert frame.pf == False
 
@@ -1118,22 +1178,20 @@ def test_8bit_iframe_decode():
     """
     Test we can decode an 8-bit information frame.
     """
-    frame = AX258BitInformationFrame.decode(
-        header=AX25FrameHeader(
-            destination="VK4BWI",
-            source="VK4MSL",
+    frame = AX25Frame.decode(
+        from_hex(
+            "ac 96 68 84 ae 92 60"  # Destination
+            "ac 96 68 9a a6 98 e1"  # Source
+            "d4"  # Control
+            "ff"  # PID
+            "54 68 69 73 20 69 73 20 61 20 74 65 73 74"  # Payload
         ),
-        control=0xD4,
-        data=b"\xffThis is a test",
+        modulo128=False,
     )
-    hex_cmp(
-        bytes(frame),
-        "ac 96 68 84 ae 92 60"  # Destination
-        "ac 96 68 9a a6 98 e1"  # Source
-        "d4"  # Control
-        "ff"  # PID
-        "54 68 69 73 20 69 73 20 61 20 74 65 73 74",  # Payload
-    )
+
+    assert isinstance(
+        frame, AX258BitInformationFrame
+    ), "Did not decode to 8-bit I-Frame"
     assert frame.nr == 6
     assert frame.ns == 2
     assert frame.pid == 0xFF
@@ -1144,22 +1202,20 @@ def test_16bit_iframe_decode():
     """
     Test we can decode an 16-bit information frame.
     """
-    frame = AX2516BitInformationFrame.decode(
-        header=AX25FrameHeader(
-            destination="VK4BWI",
-            source="VK4MSL",
+    frame = AX25Frame.decode(
+        from_hex(
+            "ac 96 68 84 ae 92 60"  # Destination
+            "ac 96 68 9a a6 98 e1"  # Source
+            "04 0d"  # Control
+            "ff"  # PID
+            "54 68 69 73 20 69 73 20 61 20 74 65 73 74"  # Payload
         ),
-        control=0x0D04,
-        data=b"\xffThis is a test",
+        modulo128=True,
     )
-    hex_cmp(
-        bytes(frame),
-        "ac 96 68 84 ae 92 60"  # Destination
-        "ac 96 68 9a a6 98 e1"  # Source
-        "04 0d"  # Control
-        "ff"  # PID
-        "54 68 69 73 20 69 73 20 61 20 74 65 73 74",  # Payload
-    )
+
+    assert isinstance(
+        frame, AX2516BitInformationFrame
+    ), "Did not decode to 16-bit I-Frame"
     assert frame.nr == 6
     assert frame.ns == 2
     assert frame.pid == 0xFF
