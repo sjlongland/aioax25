@@ -1301,7 +1301,7 @@ class AX25UnnumberedAcknowledgeFrame(AX25BaseUnnumberedFrame):
     This frame is used to acknowledge a SABM/SABME frame.
     """
 
-    MODIFIER = 0b10101111
+    MODIFIER = 0b01100011
 
 
 class AX25TestFrame(AX25UnnumberedFrame):
