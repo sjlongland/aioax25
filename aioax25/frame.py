@@ -16,6 +16,7 @@ class AX25Frame(object):
     Base class for AX.25 frames.
     """
 
+    # The following are the same for 8 and 16-bit control fields.
     CONTROL_I_MASK = 0b00000001
     CONTROL_I_VAL = 0b00000000
     CONTROL_US_MASK = 0b00000011
@@ -39,11 +40,18 @@ class AX25Frame(object):
     PID_ESCAPE = 0xFF
 
     @classmethod
-    def decode(cls, data):
+    def decode(cls, data, modulo128=None):
         """
         Decode a single AX.25 frame from the given data.
         """
-        (header, data) = AX25FrameHeader.decode(data)
+        if isinstance(data, AX25Frame):
+            # We were given a previously decoded frame.
+            header = data.header
+            data = data.frame_payload
+        else:
+            # We were given raw data.
+            (header, data) = AX25FrameHeader.decode(bytes(data))
+
         if not data:
             raise ValueError("Insufficient packet data")
 
@@ -59,17 +67,49 @@ class AX25Frame(object):
             return AX25UnnumberedFrame.decode(header, control, data[1:])
         else:
             # This is either a I or S frame, both of which can either
-            # have a 8-bit or 16-bit control field.  We don't know at
-            # this point so the only safe answer is to return a raw frame
-            # and decode it later.
-            return AX25RawFrame(
-                destination=header.destination,
-                source=header.source,
-                repeaters=header.repeaters,
-                cr=header.cr,
-                src_cr=header.src_cr,
-                payload=data,
-            )
+            # have a 8-bit or 16-bit control field.
+            if modulo128 is True:
+                # And the caller has told us it's a 16-bit field, so let's
+                # decode the rest of it!
+                if len(data) < 2:
+                    raise ValueError("Insufficient packet data")
+                control |= data[1] << 8
+
+                # Discard the control field from the data payload as we
+                # have decoded it now.
+                data = data[2:]
+
+                # We'll use these classes
+                InformationFrame = AX2516BitInformationFrame
+                SupervisoryFrame = AX2516BitSupervisoryFrame
+            elif modulo128 is False:
+                # Caller has told us it's an 8-bit field, so already decoded.
+                data = data[1:]
+
+                # We'll use these classes
+                InformationFrame = AX258BitInformationFrame
+                SupervisoryFrame = AX258BitSupervisoryFrame
+            else:
+                # We don't know at this point so the only safe answer is to
+                # return a raw frame and decode it later.
+                return AX25RawFrame(
+                    destination=header.destination,
+                    source=header.source,
+                    repeaters=header.repeaters,
+                    cr=header.cr,
+                    src_cr=header.src_cr,
+                    payload=data,
+                )
+
+            # We've got the full control field and payload now.
+            if (control & cls.CONTROL_I_MASK) == cls.CONTROL_I_VAL:
+                # This is an I frame.
+                return InformationFrame.decode(header, control, data)
+            elif (control & cls.CONTROL_US_MASK) == cls.CONTROL_S_VAL:
+                # This is a S frame.
+                return SupervisoryFrame.decode(header, control, data)
+
+            assert False, "Unrecognised control field value: 0x%04x" % control
 
     def __init__(
         self,
@@ -311,23 +351,25 @@ class AX25UnnumberedFrame(AX258BitFrame):
 
     MODIFIER_MASK = 0b11101111
 
+    SUBCLASSES = {}
+
+    @classmethod
+    def register(cls, subclass):
+        """
+        Register a sub-class of UnnumberedFrame with the decoder.
+        """
+        assert (
+            subclass.MODIFIER not in cls.SUBCLASSES
+        ), "Duplicate registration"
+        cls.SUBCLASSES[subclass.MODIFIER] = subclass
+
     @classmethod
     def decode(cls, header, control, data):
         # Decode based on the control field
         modifier = control & cls.MODIFIER_MASK
-        for subclass in (
-            AX25UnnumberedInformationFrame,
-            AX25FrameRejectFrame,
-            AX25SetAsyncBalancedModeFrame,
-            AX25SetAsyncBalancedModeExtendedFrame,
-            AX25DisconnectFrame,
-            AX25DisconnectModeFrame,
-            AX25ExchangeIdentificationFrame,
-            AX25UnnumberedAcknowledgeFrame,
-            AX25TestFrame,
-        ):
-            if modifier == subclass.MODIFIER:
-                return subclass.decode(header, control, data)
+        subclass = cls.SUBCLASSES.get(modifier, None)
+        if subclass is not None:
+            return subclass.decode(header, control, data)
 
         # If we're still here, clearly this is a plain U frame.
         if data:
@@ -865,6 +907,9 @@ class AX25UnnumberedInformationFrame(AX25UnnumberedFrame):
         )
 
 
+AX25UnnumberedFrame.register(AX25UnnumberedInformationFrame)
+
+
 class AX25FrameRejectFrame(AX25UnnumberedFrame):
     """
     A representation of a Frame Reject (FRMR) frame.
@@ -1033,6 +1078,9 @@ class AX25FrameRejectFrame(AX25UnnumberedFrame):
         )
 
 
+AX25UnnumberedFrame.register(AX25FrameRejectFrame)
+
+
 class AX25BaseUnnumberedFrame(AX25UnnumberedFrame):
     """
     Base unnumbered frame sub-class.  This is used to provide a common
@@ -1094,6 +1142,9 @@ class AX25SetAsyncBalancedModeFrame(AX25BaseUnnumberedFrame):
     MODIFIER = 0b01101111
 
 
+AX25UnnumberedFrame.register(AX25SetAsyncBalancedModeFrame)
+
+
 class AX25SetAsyncBalancedModeExtendedFrame(AX25BaseUnnumberedFrame):
     """
     Set Async Balanced Mode Extended (modulo 128).
@@ -1103,6 +1154,9 @@ class AX25SetAsyncBalancedModeExtendedFrame(AX25BaseUnnumberedFrame):
     """
 
     MODIFIER = 0b00101111
+
+
+AX25UnnumberedFrame.register(AX25SetAsyncBalancedModeExtendedFrame)
 
 
 class AX25DisconnectFrame(AX25BaseUnnumberedFrame):
@@ -1115,6 +1169,9 @@ class AX25DisconnectFrame(AX25BaseUnnumberedFrame):
     MODIFIER = 0b01000011
 
 
+AX25UnnumberedFrame.register(AX25DisconnectFrame)
+
+
 class AX25DisconnectModeFrame(AX25BaseUnnumberedFrame):
     """
     Disconnect mode frame.
@@ -1123,6 +1180,9 @@ class AX25DisconnectModeFrame(AX25BaseUnnumberedFrame):
     """
 
     MODIFIER = 0b00001111
+
+
+AX25UnnumberedFrame.register(AX25DisconnectModeFrame)
 
 
 class AX25ExchangeIdentificationFrame(AX25UnnumberedFrame):
@@ -1294,6 +1354,9 @@ class AX25ExchangeIdentificationFrame(AX25UnnumberedFrame):
         )
 
 
+AX25UnnumberedFrame.register(AX25ExchangeIdentificationFrame)
+
+
 class AX25UnnumberedAcknowledgeFrame(AX25BaseUnnumberedFrame):
     """
     Unnumbered Acknowledge frame.
@@ -1302,6 +1365,9 @@ class AX25UnnumberedAcknowledgeFrame(AX25BaseUnnumberedFrame):
     """
 
     MODIFIER = 0b01100011
+
+
+AX25UnnumberedFrame.register(AX25UnnumberedAcknowledgeFrame)
 
 
 class AX25TestFrame(AX25UnnumberedFrame):
@@ -1365,6 +1431,8 @@ class AX25TestFrame(AX25UnnumberedFrame):
             pf=self.pf,
         )
 
+
+AX25UnnumberedFrame.register(AX25TestFrame)
 
 # Helper classes
 
