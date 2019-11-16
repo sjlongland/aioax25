@@ -1,7 +1,44 @@
 #!/usr/bin/env python3
 
 """
-AX.25 framing
+AX.25 framing.  This module defines encoders and decoders for all frame types
+used in version 2.2 of the AX.25 standard.
+
+AX25Frame is the base class, and provides an abstract interface for interacting
+with all frame types.  AX.25 identifies the specific type of frame from bits in
+the control field which can be 8 or 16-bits wide.
+
+The only way to know if it's 16-bits is in witnessing the initial connection
+being made between two stations which means it's impossible for a stateless
+decoder to fully decode an arbitrary AX.25 frame.
+
+Thankfully the control field is sent little-endian format, so the first byte we
+encounter is the least significant bits -- which is sufficient to identify whether
+the frame is an I, S or U frame: the least significant two bits carry this
+information.
+
+For this reason there are 3 sub-classes of this top-level class:
+
+    - AX25RawFrame: This is used when we only need to decode the initial AX.25
+      addressing header to know whether we need to worry about the frame
+      further.
+
+    - AX258BitFrame: This is used for AX.25 frames with an 8-bit control field,
+      which is anything sent by an AX.25 v2.0 station, any un-numbered frame,
+      or any I or S frame where modulo-8 frame numbering is used.
+
+    - AX2516BitFrame: This is used for AX.25 v2.2 stations where modulo-128
+      frame numbering has been negotiated by both parties.
+
+Decoding is done by calling the AX25Frame.decode class method.  This takes two
+parameters:
+
+    - data: either raw bytes or an AX25Frame class.  The latter form is useful when
+      you've previously decoded a frame as a AX25RawFrame and need to further
+      dissect it as either a AX258BitFrame or AX2516BitFrame sub-class.
+
+    - modulo128: by default is None, but if set to a boolean, will decode I or S
+      frames accordingly instead of just returning AX25RawFrame.
 """
 
 import re
@@ -304,7 +341,14 @@ class AX2516BitFrame(AX25Frame):
 
 class AX25RawFrame(AX25Frame):
     """
-    A representation of a raw AX.25 frame.
+    A representation of a raw AX.25 frame.  This class is intended to capture
+    partially decoded frame data in the case where we don't know whether a control
+    field is 8 or 16-bits wide.
+
+    It may be fed to the AX25Frame.decode function again with modulo128=False for
+    known 8-bit frames, or modulo128=True for known 16-bit frames.  For digipeating
+    applications, often no further dissection is necessary and so the frame can be
+    used as-is.
     """
 
     def __init__(
@@ -346,7 +390,11 @@ class AX25RawFrame(AX25Frame):
 
 class AX25UnnumberedFrame(AX258BitFrame):
     """
-    A representation of an un-numbered frame.
+    A representation of an un-numbered frame.  U frames are used for all
+    sorts of in-band signalling as well as for connectionless data transfer
+    via UI frames (see AX25UnnumberedInformationFrame).
+
+    All U frames have an 8-bit control field.
     """
 
     MODIFIER_MASK = 0b11101111
@@ -365,6 +413,13 @@ class AX25UnnumberedFrame(AX258BitFrame):
 
     @classmethod
     def decode(cls, header, control, data):
+        """
+        Decode an unnumbered frame which has been partially decoded by
+        AX25Frame.decode.  This inspects the value of the modifier bits
+        in the control field (see AX.25 2.2 spec 4.3.3) and passes the
+        arguments given to the appropriate sub-class.
+        """
+
         # Decode based on the control field
         modifier = control & cls.MODIFIER_MASK
         subclass = cls.SUBCLASSES.get(modifier, None)
