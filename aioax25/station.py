@@ -63,7 +63,7 @@ class AX25Station(object):
         protocol = AX25Version(protocol)
         if protocol not in (AX25Version.AX25_20, AX25Version.AX25_22):
             raise ValueError('%r not a supported AX.25 protocol version'\
-                    % protocol)
+                    % protocol.value)
 
         # Configuration parameters
         self._address = AX25Address.decode(callsign, ssid)
