@@ -34,6 +34,37 @@ def test_decode_no_digis():
     eq_(len(header.repeaters), 0)
     eq_(data, b'frame data goes here')
 
+def test_decode_legacy():
+    """
+    Test we can decode an AX.25 1.x frame.
+    """
+    (header, data) = AX25FrameHeader.decode(
+            from_hex(
+                'ac 96 68 84 ae 92 e0'      # Destination
+                'ac 96 68 9a a6 98 e1'      # Source
+            ) + b'frame data goes here'     # Frame data
+    )
+    assert header.legacy
+    assert header.cr
+    eq_(header.destination, AX25Address('VK4BWI', ch=True))
+    eq_(header.source, AX25Address('VK4MSL', extension=True, ch=True))
+    eq_(len(header.repeaters), 0)
+    eq_(data, b'frame data goes here')
+
+def test_encode_legacy():
+    """
+    Test we can encode an AX.25 1.x frame.
+    """
+    header = AX25FrameHeader(
+            destination='VK4BWI',
+            source='VK4MSL',
+            cr=False, legacy=True
+    )
+    hex_cmp(bytes(header),
+                'ac 96 68 84 ae 92 60'      # Destination
+                'ac 96 68 9a a6 98 61'      # Source
+    )
+
 def test_decode_with_1digi():
     """
     Test we can decode an AX.25 frame with one digipeater.
