@@ -1,19 +1,17 @@
 #!/usr/bin/env python3
 
 from aioax25.station import AX25Station
-from aioax25.peer import AX25Peer
 from aioax25.version import AX25Version
+from aioax25.frame import AX25Address
 
 from nose.tools import eq_
+from ..mocks import DummyInterface
 
 
 def test_constructor_log():
     """
     Test the AX25Constructor uses the log given.
     """
-    class DummyInterface(object):
-        pass
-
     class DummyLogger(object):
         pass
 
@@ -27,9 +25,6 @@ def test_constructor_loop():
     """
     Test the AX25Constructor uses the IO loop given.
     """
-    class DummyInterface(object):
-        pass
-
     class DummyLoop(object):
         pass
 
@@ -44,9 +39,6 @@ def test_constructor_protocol():
     Test the AX25Constructor validates the protocol
     """
     try:
-        class DummyInterface(object):
-            pass
-
         AX25Station(interface=DummyInterface(), callsign='VK4MSL', ssid=3,
                 protocol=AX25Version.AX25_10)
         assert False, 'Should not have worked'
