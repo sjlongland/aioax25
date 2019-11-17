@@ -1523,16 +1523,24 @@ class AX25FrameHeader(object):
                 source=addresses[1],
                 repeaters=addresses[2:],
                 cr=addresses[0].ch,
-                src_cr=addresses[1].ch,
+                # Legacy AX.25 1.x stations set the C bits identically
+                legacy=addresses[0].ch is addresses[1].ch,
             ),
             data,
         )
 
     def __init__(
-        self, destination, source, repeaters=None, cr=False, src_cr=None
+        self,
+        destination,
+        source,
+        repeaters=None,
+        cr=False,
+        src_cr=None,
+        legacy=False,
     ):
         self._cr = bool(cr)
         self._src_cr = src_cr
+        self._legacy = bool(legacy)
         self._destination = AX25Address.decode(destination)
         self._source = AX25Address.decode(source)
         self._repeaters = AX25Path(*(repeaters or []))
@@ -1608,8 +1616,12 @@ class AX25FrameHeader(object):
         Command/Response bit in the source address.
         """
         if self._src_cr is None:
-            return not self.cr
+            if self.legacy:
+                return self.cr  # AX.25 1.x: the C/R bits are identical
+            else:
+                return not self.cr  # AX.25 2.x: the C/R bits are opposite
         else:
+            # We were given an explicit value.
             return self._src_cr
 
     @property
@@ -1627,6 +1639,10 @@ class AX25FrameHeader(object):
             self._destination.copy(ch=False),
             (",%s" % self._repeaters) if self._repeaters else "",
         )
+
+    @property
+    def legacy(self):
+        return self._legacy
 
 
 class AX25Path(Sequence):
