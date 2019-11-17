@@ -63,7 +63,7 @@ class AX25Station(object):
                     % protocol.value)
 
         # Configuration parameters
-        self._address = AX25Address.decode(callsign, ssid)
+        self._address = AX25Address.decode(callsign, ssid).normalised
         self._interface = weakref.ref(interface)
         self._protocol = protocol
         self._idle_timeout = idle_timeout
