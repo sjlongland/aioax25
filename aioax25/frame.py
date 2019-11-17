@@ -1147,6 +1147,10 @@ class AX25BaseUnnumberedFrame(AX25UnnumberedFrame):
     information fields.
     """
 
+    # Defaults for PF, CR fields
+    PF = False
+    CR = False
+
     @classmethod
     def decode(cls, header, control, data):
         if len(data):
@@ -1165,11 +1169,16 @@ class AX25BaseUnnumberedFrame(AX25UnnumberedFrame):
         destination,
         source,
         repeaters=None,
-        pf=False,
-        cr=False,
+        pf=None,
+        cr=None,
         timestamp=None,
         deadline=None,
     ):
+        if pf is None:
+            pf = self.PF
+        if cr is None:
+            cr = self.CR
+
         super(AX25BaseUnnumberedFrame, self).__init__(
             destination=destination,
             source=source,
@@ -1199,6 +1208,7 @@ class AX25SetAsyncBalancedModeFrame(AX25BaseUnnumberedFrame):
     """
 
     MODIFIER = 0b01101111
+    CR = True
 
 
 AX25UnnumberedFrame.register(AX25SetAsyncBalancedModeFrame)
@@ -1213,6 +1223,7 @@ class AX25SetAsyncBalancedModeExtendedFrame(AX25BaseUnnumberedFrame):
     """
 
     MODIFIER = 0b00101111
+    CR = True
 
 
 AX25UnnumberedFrame.register(AX25SetAsyncBalancedModeExtendedFrame)
@@ -1226,6 +1237,7 @@ class AX25DisconnectFrame(AX25BaseUnnumberedFrame):
     """
 
     MODIFIER = 0b01000011
+    CR = True
 
 
 AX25UnnumberedFrame.register(AX25DisconnectFrame)
@@ -1239,6 +1251,7 @@ class AX25DisconnectModeFrame(AX25BaseUnnumberedFrame):
     """
 
     MODIFIER = 0b00001111
+    CR = False
 
 
 AX25UnnumberedFrame.register(AX25DisconnectModeFrame)
@@ -1424,6 +1437,7 @@ class AX25UnnumberedAcknowledgeFrame(AX25BaseUnnumberedFrame):
     """
 
     MODIFIER = 0b01100011
+    CR = False
 
 
 AX25UnnumberedFrame.register(AX25UnnumberedAcknowledgeFrame)
