@@ -109,6 +109,18 @@ def test_decode_str_ssid():
     assert addr._ssid == 12
 
 
+def test_decode_str_override_ssid():
+    """
+    Test that we can override the SSID in a string.
+    """
+    addr = AX25Address.decode(
+        "VK4MSL-12",
+        # This will override the -12 above
+        ssid=9,
+    )
+    eq_(addr._ssid, 9)
+
+
 def test_decode_str_ch():
     """
     Test that we can decode the C/H bit in a string.
