@@ -973,6 +973,11 @@ class AX25BaseUnnumberedFrame(AX25UnnumberedFrame):
     decode and _copy implementation for basic forms of UI frames without
     information fields.
     """
+
+    # Defaults for PF, CR fields
+    PF = False
+    CR = False
+
     @classmethod
     def decode(cls, header, control, data):
         if len(data):
@@ -987,7 +992,12 @@ class AX25BaseUnnumberedFrame(AX25UnnumberedFrame):
         )
 
     def __init__(self, destination, source,
-            repeaters=None, pf=False, cr=False, timestamp=None, deadline=None):
+            repeaters=None, pf=None, cr=None, timestamp=None, deadline=None):
+        if pf is None:
+            pf = self.PF
+        if cr is None:
+            cr = self.CR
+
         super(AX25BaseUnnumberedFrame, self).__init__(destination=destination,
                 source=source, modifier=self.MODIFIER, repeaters=repeaters,
                 cr=cr, timestamp=timestamp, deadline=deadline)
@@ -1010,6 +1020,7 @@ class AX25SetAsyncBalancedModeFrame(AX25BaseUnnumberedFrame):
     AX.25 node.
     """
     MODIFIER = 0b01101111
+    CR = True
 
 AX25UnnumberedFrame.register(AX25SetAsyncBalancedModeFrame)
 
@@ -1022,6 +1033,7 @@ class AX25SetAsyncBalancedModeExtendedFrame(AX25BaseUnnumberedFrame):
     AX.25 node, using modulo 128 acknowledgements.
     """
     MODIFIER = 0b00101111
+    CR = True
 
 AX25UnnumberedFrame.register(AX25SetAsyncBalancedModeExtendedFrame)
 
@@ -1033,6 +1045,7 @@ class AX25DisconnectFrame(AX25BaseUnnumberedFrame):
     This frame is used to initiate a disconnection from the other station.
     """
     MODIFIER = 0b01000011
+    CR = True
 
 AX25UnnumberedFrame.register(AX25DisconnectFrame)
 
@@ -1044,6 +1057,7 @@ class AX25DisconnectModeFrame(AX25BaseUnnumberedFrame):
     This frame is used to indicate to the other station that it is disconnected.
     """
     MODIFIER = 0b00001111
+    CR = False
 
 AX25UnnumberedFrame.register(AX25DisconnectModeFrame)
 
@@ -1218,6 +1232,7 @@ class AX25UnnumberedAcknowledgeFrame(AX25BaseUnnumberedFrame):
     This frame is used to acknowledge a SABM/SABME frame.
     """
     MODIFIER = 0b01100011
+    CR = False
 
 AX25UnnumberedFrame.register(AX25UnnumberedAcknowledgeFrame)
 
