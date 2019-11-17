@@ -13,10 +13,7 @@ import asyncio
 from .signal import Signal
 import weakref
 
-from .frame import AX25Address, AX25Path, AX25TestFrame, \
-        AX25SetAsynchronousBalancedModeFrame, \
-        AX25SetAsynchronousBalancedModeExtendedFrame, \
-        AX25ExchangeIdentificationFrame
+from .frame import AX25Address, AX25Path, AX25TestFrame
 
 from .peer import AX25Peer
 from .version import AX25Version
