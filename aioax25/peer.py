@@ -556,7 +556,8 @@ class AX25Peer(object):
         """
         self._cancel_rr_notification()
         self._rr_notification_timeout_handle = \
-                self._loop.call_later(self._send_rr_notification)
+                self._loop.call_later(self._rr_delay, \
+                        self._send_rr_notification)
 
     def _send_rr_notification(self):
         """
