@@ -47,10 +47,10 @@ def test_decode_legacy():
     )
     assert header.legacy
     assert header.cr
-    eq_(header.destination, AX25Address("VK4BWI", ch=True))
-    eq_(header.source, AX25Address("VK4MSL", extension=True, ch=True))
-    eq_(len(header.repeaters), 0)
-    eq_(data, b"frame data goes here")
+    assert header.destination == AX25Address("VK4BWI", ch=True)
+    assert header.source == AX25Address("VK4MSL", extension=True, ch=True)
+    assert len(header.repeaters) == 0
+    assert data == b"frame data goes here"
 
 
 def test_encode_legacy():

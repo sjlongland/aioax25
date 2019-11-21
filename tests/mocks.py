@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+
 class DummyInterface(object):
     def __init__(self):
         self.bind_calls = []

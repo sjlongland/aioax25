@@ -31,24 +31,29 @@ class AX25Station(object):
     parameter; then call the attach method.
     """
 
-    def __init__(self, interface,
-            # Station call-sign and SSID
-            callsign, ssid=None,
-            # Parameters (AX.25 2.2 sect 6.7.2)
-            max_ifield=256,         # aka N1
-            max_retries=10,         # aka N2, value from figure 4.5
-            # k value, for mod128 and mod8 connections
-            max_outstanding_mod8=7,
-            max_outstanding_mod128=127,
-            # Timer parameters
-            idle_timeout=900.0,     # Idle timeout before we "forget" peers
-            rr_delay=10.0,          # Delay between I-frame and RR
-            rr_interval=30.0,       # Poll interval when peer in busy state
-            rnr_interval=10.0,      # Delay between RNRs when busy
-            # Protocol version to use for our station
-            protocol=AX25Version.AX25_22,
-            # IOLoop and logging
-            log=None, loop=None):
+    def __init__(
+        self,
+        interface,
+        # Station call-sign and SSID
+        callsign,
+        ssid=None,
+        # Parameters (AX.25 2.2 sect 6.7.2)
+        max_ifield=256,  # aka N1
+        max_retries=10,  # aka N2, value from figure 4.5
+        # k value, for mod128 and mod8 connections
+        max_outstanding_mod8=7,
+        max_outstanding_mod128=127,
+        # Timer parameters
+        idle_timeout=900.0,  # Idle timeout before we "forget" peers
+        rr_delay=10.0,  # Delay between I-frame and RR
+        rr_interval=30.0,  # Poll interval when peer in busy state
+        rnr_interval=10.0,  # Delay between RNRs when busy
+        # Protocol version to use for our station
+        protocol=AX25Version.AX25_22,
+        # IOLoop and logging
+        log=None,
+        loop=None,
+    ):
 
         if log is None:
             log = logging.getLogger(self.__class__.__module__)
@@ -59,8 +64,9 @@ class AX25Station(object):
         # Ensure we are running a supported version of AX.25
         protocol = AX25Version(protocol)
         if protocol not in (AX25Version.AX25_20, AX25Version.AX25_22):
-            raise ValueError('%r not a supported AX.25 protocol version'\
-                    % protocol.value)
+            raise ValueError(
+                "%r not a supported AX.25 protocol version" % protocol.value
+            )
 
         # Configuration parameters
         self._address = AX25Address.decode(callsign, ssid).normalised
@@ -102,23 +108,28 @@ class AX25Station(object):
         Connect the station to the interface.
         """
         interface = self._interface()
-        interface.bind(self._on_receive,
-                callsign=self.address.callsign,
-                ssid=self.address.ssid,
-                regex=False)
+        interface.bind(
+            self._on_receive,
+            callsign=self.address.callsign,
+            ssid=self.address.ssid,
+            regex=False,
+        )
 
     def detach(self):
         """
         Disconnect from the interface.
         """
         interface = self._interface()
-        interface.unbind(self._on_receive,
-                callsign=self.address.callsign,
-                ssid=self.address.ssid,
-                regex=False)
+        interface.unbind(
+            self._on_receive,
+            callsign=self.address.callsign,
+            ssid=self.address.ssid,
+            regex=False,
+        )
 
-    def getpeer(self, callsign, ssid=None, repeaters=None,
-            create=True, **kwargs):
+    def getpeer(
+        self, callsign, ssid=None, repeaters=None, create=True, **kwargs
+    ):
         """
         Retrieve an instance of a peer context.  This creates the peer
         object if it doesn't already exist unless create is set to False
@@ -133,20 +144,25 @@ class AX25Station(object):
             pass
 
         # Not there, so set some defaults, then create
-        kwargs.setdefault('max_ifield', self._max_ifield)
-        kwargs.setdefault('max_retries', self._max_retries)
-        kwargs.setdefault('max_outstanding_mod8', self._max_outstanding_mod8)
-        kwargs.setdefault('max_outstanding_mod128', self._max_outstanding_mod128)
-        kwargs.setdefault('rr_delay', self._rr_delay)
-        kwargs.setdefault('rr_interval', self._rr_interval)
-        kwargs.setdefault('rnr_interval', self._rnr_interval)
-        kwargs.setdefault('idle_timeout', self._idle_timeout)
-        kwargs.setdefault('protocol', AX25Version.UNKNOWN)
-        peer = AX25Peer(self, address,
-                repeaters=AX25Path(*(repeaters or [])),
-                log=self._log.getChild('peer.%s' % address),
-                loop=self._loop,
-                **kwargs)
+        kwargs.setdefault("max_ifield", self._max_ifield)
+        kwargs.setdefault("max_retries", self._max_retries)
+        kwargs.setdefault("max_outstanding_mod8", self._max_outstanding_mod8)
+        kwargs.setdefault(
+            "max_outstanding_mod128", self._max_outstanding_mod128
+        )
+        kwargs.setdefault("rr_delay", self._rr_delay)
+        kwargs.setdefault("rr_interval", self._rr_interval)
+        kwargs.setdefault("rnr_interval", self._rnr_interval)
+        kwargs.setdefault("idle_timeout", self._idle_timeout)
+        kwargs.setdefault("protocol", AX25Version.UNKNOWN)
+        peer = AX25Peer(
+            self,
+            address,
+            repeaters=AX25Path(*(repeaters or [])),
+            log=self._log.getChild("peer.%s" % address),
+            loop=self._loop,
+            **kwargs
+        )
         self._peers[address] = peer
         return peer
 
@@ -162,16 +178,17 @@ class AX25Station(object):
         """
         if frame.header.cr:
             # This is a command frame
-            self._log.debug('Checking command frame sub-class: %s', frame)
+            self._log.debug("Checking command frame sub-class: %s", frame)
             if isinstance(frame, AX25TestFrame):
                 # A TEST request frame, context not required
                 return self._on_receive_test(frame)
 
         # If we're still here, then we don't handle unsolicited frames
         # of this type, so pass it to a handler if we have one.
-        peer = self.getpeer(frame.header.source,
-                repeaters=frame.header.repeaters.reply)
-        self._log.debug('Passing frame to peer %s: %s', peer.address, frame)
+        peer = self.getpeer(
+            frame.header.source, repeaters=frame.header.repeaters.reply
+        )
+        self._log.debug("Passing frame to peer %s: %s", peer.address, frame)
         peer._on_receive(frame)
 
     def _on_receive_test(self, frame):
@@ -179,14 +196,14 @@ class AX25Station(object):
         Handle a TEST frame.
         """
         # The frame is a test request.
-        self._log.debug('Responding to test frame: %s', frame)
+        self._log.debug("Responding to test frame: %s", frame)
         interface = self._interface()
         interface.transmit(
-                AX25TestFrame(
-                    destination=frame.header.source,
-                    source=self.address,
-                    repeaters=frame.header.repeaters.reply,
-                    payload=frame.payload,
-                    cr=False
-                )
+            AX25TestFrame(
+                destination=frame.header.source,
+                source=self.address,
+                repeaters=frame.header.repeaters.reply,
+                payload=frame.payload,
+                cr=False,
+            )
         )

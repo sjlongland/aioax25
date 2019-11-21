@@ -118,7 +118,7 @@ def test_decode_str_override_ssid():
         # This will override the -12 above
         ssid=9,
     )
-    eq_(addr._ssid, 9)
+    assert addr._ssid == 9
 
 
 def test_decode_str_ch():

@@ -12,13 +12,17 @@ def test_address():
     """
     Test the address of the station is set from the constructor.
     """
-    station = AX25Station(interface=DummyInterface(), callsign='VK4MSL-5')
-    eq_(station.address, AX25Address(callsign='VK4MSL', ssid=5))
+    station = AX25Station(interface=DummyInterface(), callsign="VK4MSL-5")
+    eq_(station.address, AX25Address(callsign="VK4MSL", ssid=5))
+
 
 def test_protocol():
     """
     Test the protocol of the station is set from the constructor.
     """
-    station = AX25Station(interface=DummyInterface(), callsign='VK4MSL-5',
-            protocol=AX25Version.AX25_20)
+    station = AX25Station(
+        interface=DummyInterface(),
+        callsign="VK4MSL-5",
+        protocol=AX25Version.AX25_20,
+    )
     eq_(station.protocol, AX25Version.AX25_20)
