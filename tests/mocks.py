@@ -14,3 +14,14 @@ class DummyInterface(object):
 
     def transmit(self, *args, **kwargs):
         self.transmit_calls.append((args, kwargs))
+
+
+class DummyPeer(object):
+    def __init__(self, address):
+        self.address_read = False
+        self._address = address
+
+    @property
+    def address(self):
+        self.address_read = True
+        return self._address
