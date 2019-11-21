@@ -50,7 +50,7 @@ class AX25Peer(object):
         FRMR = 5
 
 
-    def __init__(self, station, destination, repeaters, max_ifield, max_retries,
+    def __init__(self, station, address, repeaters, max_ifield, max_retries,
             max_outstanding_mod8, max_outstanding_mod128, rr_delay, rr_interval,
             rnr_interval, idle_timeout, protocol, log, loop, reply_path=None,
             locked_path=False):
@@ -60,7 +60,7 @@ class AX25Peer(object):
         self._station = weakref.ref(station)
         self._repeaters = repeaters
         self._reply_path = reply_path
-        self._destination = destination
+        self._address = address
         self._idle_timeout = idle_timeout
         self._max_ifield = max_ifield
         self._max_retries = max_retries
@@ -132,6 +132,13 @@ class AX25Peer(object):
 
         # Kick off the idle timer
         self._reset_idle_timeout()
+
+    @property
+    def address(self):
+        """
+        Return the peer's AX.25 address
+        """
+        return self._address
 
     @property
     def reply_path(self):
