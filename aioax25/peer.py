@@ -175,6 +175,22 @@ class AX25Peer(object):
             weight += self._tx_path_score.get(path, 0)
         self._tx_path_score[path] = weight
 
+    def ping(self, payload=None, timeout=30.0, callback=None):
+        """
+        Ping the peer and wait for a response.
+        """
+        if self._testframe_handler is not None:
+            raise RuntimeError('Existing ping request in progress')
+
+        handler = AX25PeerTestHandler(self, bytes(payload or b''), timeout)
+        handler.done_sig.connect(self._on_test_done)
+
+        if callback is not None:
+            handler.done_sig.connect(callback)
+
+        handler._go()
+        return
+
     def _cancel_idle_timeout(self):
         """
         Cancel the idle timeout handle
@@ -327,8 +343,23 @@ class AX25Peer(object):
 
     def _on_receive_test(self, frame):
         self._log.debug('Received TEST response: %s', frame)
-        if self._testframe_handler:
-            self._testframe_handler._on_receive(frame)
+        if not self._testframe_handler:
+            return
+
+        handler = self._testframe_handler()
+        if not handler:
+            return
+
+        self.handler._on_receive(frame)
+
+    def _on_test_done(self, handler, **kwargs):
+        if not self._testframe_handler:
+            return
+
+        if handler is not self._testframe_handler():
+            return
+
+        self._testframe_handler = None
 
     def _on_receive_sabm(self, frame):
         modulo128 = isinstance(frame, AX25SetAsyncBalancedModeExtendedFrame)
@@ -634,7 +665,122 @@ class AX25Peer(object):
                 )
         )
 
-    def _transmit_frame(self, frame):
+    def _transmit_frame(self, frame, callback=None):
         # Kick off the idle timer
         self._reset_idle_timeout()
-        return self._station()._interface().transmit(frame)
+        return self._station()._interface().transmit(frame, callback=None)
+
+
+class AX25PeerTestHandler(object):
+    """
+    This class is used to manage the sending of a TEST frame to the peer
+    station and receiving the peer reply.  Round-trip time is made available
+    in case the calling application needs it.
+    """
+
+    def __init__(self, peer, payload, timeout):
+        self._peer = peer
+        self._timeout = timeout
+        self._timeout_handle = None
+
+        # Create the frame to send
+        self._tx_frame = AX25TestFrame(
+                destination=peer.address,
+                source=peer._station().address,
+                repeaters=self.reply_path,
+                payload=payload,
+                cr=True
+        )
+
+        # Store the received frame here
+        self._rx_frame = None
+
+        # Time of transmission
+        self._tx_time = None
+
+        # Time of reception
+        self._rx_time = None
+
+        # Flag indicating we are done
+        self._done = False
+
+        # Signal on "done" or time-out.
+        self.done_sig = Signal()
+
+    @property
+    def peer(self):
+        """
+        Return the peer being pinged
+        """
+        return self._peer
+
+    @property
+    def tx_time(self):
+        """
+        Return the transmit time, as measured by the IO loop
+        """
+        return self._tx_time
+
+    @property
+    def tx_frame(self):
+        """
+        Return the transmitted frame
+        """
+        return self._tx_frame
+
+    @property
+    def rx_time(self):
+        """
+        Return the receive time, as measured by the IO loop
+        """
+        return self._rx_time
+
+    @property
+    def rx_frame(self):
+        """
+        Return the received frame
+        """
+        return self._rx_frame
+
+    def _go(self):
+        """
+        Start the transmission.
+        """
+        self.peer._transmit_frame(self.tx_frame,
+                callback=self._transmit_done)
+
+        # Start the time-out timer
+        self._timeout_handle = self._peer._loop.call_later(
+                self._timeout, self._on_timeout)
+
+    def _transmit_done(self, *args, **kwargs):
+        """
+        Note the time that the transmission took place.
+        """
+        self._tx_time = self._peer._loop.time()
+
+    def _on_receive(self, frame, **kwargs):
+        """
+        Process the incoming frame.
+        """
+        if self._done:
+            # We are done
+            return
+
+        # Mark ourselves done
+        self._done = True
+
+        # Stop the clock!
+        self._timeout_handle.cancel()
+        self._rx_time = self._peer._loop.time()
+
+        # Stash the result and notify the caller
+        self._rx_frame = frame
+        self.done_sig.emit(handler=self)
+
+    def _on_timeout(self):
+        """
+        Process a time-out
+        """
+        self._done = True
+        self.done_sig.emit(handler=self)
