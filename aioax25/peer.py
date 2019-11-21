@@ -6,12 +6,12 @@ AX.25 Station Peer interface.
 This is used as the "proxy" for interacting with a remote AX.25 station.
 """
 
-import logging
 from .signal import Signal
 import weakref
 import enum
 
-from .frame import AX25Frame, AX25Address, AX25SetAsyncBalancedModeFrame, \
+from .version import AX25Version
+from .frame import AX25Frame, AX25Path, AX25SetAsyncBalancedModeFrame, \
         AX25SetAsyncBalancedModeExtendedFrame, \
         AX25ExchangeIdentificationFrame, AX25UnnumberedAcknowledgeFrame, \
         AX25TestFrame, AX25DisconnectFrame, AX25DisconnectModeFrame, \
@@ -20,7 +20,8 @@ from .frame import AX25Frame, AX25Address, AX25SetAsyncBalancedModeFrame, \
         AX258BitReceiveReadyFrame, AX2516BitReceiveReadyFrame, \
         AX258BitReceiveNotReadyFrame, AX2516BitReceiveNotReadyFrame, \
         AX258BitRejectFrame, AX2516BitRejectFrame, \
-        AX258BitSelectiveRejectFrame, AX2516BitSelectiveRejectFrame
+        AX258BitSelectiveRejectFrame, AX2516BitSelectiveRejectFrame, \
+        AX25InformationFrameMixin, AX25SupervisoryFrameMixin
 
 
 class AX25Peer(object):

@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
 
-import logging
-
 from ..nosecompat import eq_
 
 from aioax25.aprs.message import APRSMessageAckFrame
 from aioax25.frame import AX25UnnumberedInformationFrame
 from aioax25.aprs.router import APRSRouter
 
-from ..loop import DummyLoop
 
 def test_get_destination_msgframe():
     """

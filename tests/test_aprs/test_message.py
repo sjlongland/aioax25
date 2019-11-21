@@ -38,7 +38,6 @@ def test_msghandler_addressee():
     """
     Test the handler passes through the addressee given.
     """
-    calls = []
     aprshandler = DummyAPRSHandler()
     msghandler  = APRSMessageHandler(
             aprshandler=aprshandler,
@@ -49,6 +48,7 @@ def test_msghandler_addressee():
             log=logging.getLogger('messagehandler'))
 
     eq_(msghandler.addressee, AX25Address.decode('CQ'))
+
 
 def test_msghandler_enter_state_success():
     """
@@ -79,6 +79,7 @@ def test_msghandler_enter_state_success():
     assert_is(call['handler'], msghandler)
     eq_(call['state'], msghandler.HandlerState.SUCCESS)
 
+
 def test_msghandler_enter_state_reject():
     """
     Test the message considers 'REJECT' an exit state.
@@ -107,6 +108,7 @@ def test_msghandler_enter_state_reject():
     assert_set_equal(set(call.keys()), set(['handler', 'state']))
     assert_is(call['handler'], msghandler)
     eq_(call['state'], msghandler.HandlerState.REJECT)
+
 
 def test_msghandler_enter_state_timeout():
     """
@@ -137,6 +139,7 @@ def test_msghandler_enter_state_timeout():
     assert_is(call['handler'], msghandler)
     eq_(call['state'], msghandler.HandlerState.TIMEOUT)
 
+
 def test_msghandler_enter_state_cancel():
     """
     Test the message considers 'CANCEL' an exit state.
@@ -165,6 +168,7 @@ def test_msghandler_enter_state_cancel():
     assert_set_equal(set(call.keys()), set(['handler', 'state']))
     assert_is(call['handler'], msghandler)
     eq_(call['state'], msghandler.HandlerState.CANCEL)
+
 
 def test_msghandler_enter_state_no_handler():
     """
@@ -198,34 +202,8 @@ def test_msghandler_enter_state_no_handler():
     assert_is(call['handler'], msghandler)
     eq_(call['state'], msghandler.HandlerState.CANCEL)
 
-def test_msghandler_enter_state_reject():
-    """
-    Test the message considers 'REJECT' an exit state.
-    """
-    calls = []
-    aprshandler = DummyAPRSHandler()
-    msghandler  = APRSMessageHandler(
-            aprshandler=aprshandler,
-            addressee='CQ',
-            path=['WIDE1-1','WIDE2-1'],
-            message='testing',
-            replyack=False,
-            log=logging.getLogger('messagehandler'))
-    msghandler.done.connect(lambda **k : calls.append(k))
 
-    # Message handler is still in the INIT state
-    eq_(msghandler.state, msghandler.HandlerState.INIT)
 
-    # Tell it to go to the success state.
-    msghandler._enter_state(msghandler.HandlerState.REJECT)
-
-    # 'done' signal should have been called.
-    eq_(len(calls),1)
-    call = calls.pop(0)
-
-    assert_set_equal(set(call.keys()), set(['handler', 'state']))
-    assert_is(call['handler'], msghandler)
-    eq_(call['state'], msghandler.HandlerState.REJECT)
 
 def test_msghandler_enter_state_send():
     """
@@ -253,6 +231,7 @@ def test_msghandler_enter_state_send():
 
     # State should be reflected in the properties
     eq_(msghandler.state, msghandler.HandlerState.SEND)
+
 
 def test_msghandler_enter_state_retry():
     """
@@ -341,6 +320,7 @@ def test_msghandler_first_send():
     assert_greater(calltime, aprshandler._loop.time() + 5.0)
     eq_(callfunc, msghandler._on_timeout)
 
+
 def test_msghandler_subsequent_send():
     """
     Test the message handler re-transmits message on subsequent _send calls.
@@ -374,6 +354,7 @@ def test_msghandler_subsequent_send():
     # Retransmit counter should have decremented
     eq_(msghandler._retransmit_count, 1)
 
+
 def test_msghandler_timeout():
     """
     Test the message handler enters TIMEOUT state when retry count exhausted.
@@ -402,6 +383,7 @@ def test_msghandler_timeout():
     # There should be no calls pending
     eq_(len(aprshandler._loop.calls), 0)
 
+
 def test_msghandler_send_invalid_state():
     """
     Test the message handler refuses to send in the wrong state.
@@ -427,6 +409,7 @@ def test_msghandler_send_invalid_state():
 
     # There should be no calls pending
     eq_(len(aprshandler._loop.calls), 0)
+
 
 def test_msghandler_cancel():
     """
@@ -457,6 +440,7 @@ def test_msghandler_cancel():
     # We should no longer be referencing the time-out
     eq_(msghandler._retransmit_timeout, None)
 
+
 def test_on_timeout():
     """
     Test calling _on_timeout triggers _send
@@ -479,6 +463,7 @@ def test_on_timeout():
     # Should be pretty much now, calling _send
     assert_greater(calltime, aprshandler._loop.time() - 0.01)
     eq_(callfunc, msghandler._send)
+
 
 def test_on_response_timedout():
     """
@@ -516,6 +501,7 @@ def test_on_response_timedout():
     assert_is(msghandler.response, frame1)
     assert_is_not(msghandler.response, frame2)
 
+
 def test_on_response_ack():
     """
     Test calling _on_response with ACK when in SEND triggers SUCCESS
@@ -546,6 +532,7 @@ def test_on_response_ack():
 
     # And we should be done
     eq_(msghandler.state, msghandler.HandlerState.SUCCESS)
+
 
 def test_on_response_rej():
     """
@@ -578,6 +565,7 @@ def test_on_response_rej():
     # And we should be done
     eq_(msghandler.state, msghandler.HandlerState.REJECT)
 
+
 def test_message_frame_malformed_start():
     """
     Test the message frame decoder will reject malformed start of message.
@@ -587,6 +575,7 @@ def test_message_frame_malformed_start():
     except ValueError as e:
         eq_(str(e), "Not a message frame: 'x123456789:This is not valid'")
 
+
 def test_message_frame_malformed_delim():
     """
     Test the message frame decoder will reject malformed message delimiter
@@ -595,6 +584,7 @@ def test_message_frame_malformed_delim():
         APRSMessageFrame.decode(None, ':123456789xThis is not valid', None)
     except ValueError as e:
         eq_(str(e), "Not a message frame: ':123456789xThis is not valid'")
+
 
 def test_message_frame_bad_msgid():
     """
@@ -611,6 +601,7 @@ def test_message_frame_bad_msgid():
     except ValueError as e:
         eq_(str(e), "message ID '123456' too long")
 
+
 def test_message_frame_get_msg():
     """
     Test the message frame will return the message enclosed
@@ -623,6 +614,7 @@ def test_message_frame_get_msg():
                 msgid=12345
         )
     eq_(msg.message, 'Station under test')
+
 
 def test_message_frame_copy():
     """
@@ -643,6 +635,7 @@ def test_message_frame_copy():
             to_hex(bytes(msg))
     )
 
+
 def test_message_ack_copy():
     """
     Test we can copy a message ACK frame
@@ -660,6 +653,7 @@ def test_message_ack_copy():
             to_hex(bytes(msgcopy)),
             to_hex(bytes(msg))
     )
+
 
 def test_message_rej_copy():
     """

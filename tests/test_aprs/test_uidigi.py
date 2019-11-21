@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-from ..nosecompat import eq_, assert_set_equal, assert_is, assert_greater, \
-        assert_less
+from ..nosecompat import eq_
 
 from aioax25.aprs.uidigi import APRSDigipeater
 from aioax25.frame import AX25UnnumberedInformationFrame, AX25Address

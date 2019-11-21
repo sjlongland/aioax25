@@ -3,13 +3,12 @@
 from aioax25.frame import AX25Frame, AX25RawFrame, \
         AX25UnnumberedInformationFrame, AX25FrameRejectFrame, \
         AX25UnnumberedFrame, AX258BitReceiveReadyFrame, \
-        AX2516BitReceiveReadyFrame, AX258BitSupervisoryFrame, \
-        AX25FrameHeader, AX258BitRejectFrame, \
-        AX2516BitSupervisoryFrame, AX2516BitRejectFrame, \
-        AX258BitReceiveReadyFrame, \
-        AX258BitInformationFrame, AX2516BitInformationFrame, \
-        AX25DisconnectModeFrame, AX25SetAsyncBalancedModeFrame, \
-        AX25TestFrame, AX25ExchangeIdentificationFrame
+        AX2516BitReceiveReadyFrame, AX258BitRejectFrame, \
+        AX2516BitRejectFrame, AX258BitInformationFrame, \
+        AX2516BitInformationFrame, AX25DisconnectModeFrame, \
+        AX25SetAsyncBalancedModeFrame, AX25TestFrame, \
+        AX25ExchangeIdentificationFrame
+
 from nose.tools import eq_
 from ..hex import from_hex, hex_cmp
 
@@ -168,7 +167,7 @@ def test_decode_sabm_payload():
     Test that a SABM frame forbids payload.
     """
     try:
-        frame = AX25Frame.decode(
+        AX25Frame.decode(
                 from_hex(
                     'ac 96 68 84 ae 92 e0'      # Destination
                     'ac 96 68 9a a6 98 61'      # Source
@@ -464,7 +463,7 @@ def test_decode_xid_truncated_header():
     Test that decoding a XID with truncated header fails.
     """
     try:
-        frame = AX25Frame.decode(
+        AX25Frame.decode(
                 from_hex(
                     'ac 96 68 84 ae 92 e0'                  # Destination
                     'ac 96 68 9a a6 98 61'                  # Source
@@ -483,7 +482,7 @@ def test_decode_xid_truncated_payload():
     Test that decoding a XID with truncated payload fails.
     """
     try:
-        frame = AX25Frame.decode(
+        AX25Frame.decode(
                 from_hex(
                     'ac 96 68 84 ae 92 e0'                  # Destination
                     'ac 96 68 9a a6 98 61'                  # Source
@@ -503,7 +502,7 @@ def test_decode_xid_truncated_param_header():
     Test that decoding a XID with truncated parameter header fails.
     """
     try:
-        frame = AX25Frame.decode(
+        AX25Frame.decode(
                 from_hex(
                     'ac 96 68 84 ae 92 e0'                  # Destination
                     'ac 96 68 9a a6 98 61'                  # Source
@@ -523,7 +522,7 @@ def test_decode_xid_truncated_param_value():
     Test that decoding a XID with truncated parameter value fails.
     """
     try:
-        frame = AX25Frame.decode(
+        AX25Frame.decode(
                 from_hex(
                     'ac 96 68 84 ae 92 e0'                  # Destination
                     'ac 96 68 9a a6 98 61'                  # Source

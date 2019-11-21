@@ -329,7 +329,7 @@ def test_send_data_close_after_send():
     # The device should now be closed.
     eq_(kissdev.close_calls, 1)
 
-def test_send_data_block_size():
+def test_send_data_waits_until_sent():
     """
     Test that _send_data waits until all data sent before closing.
     """

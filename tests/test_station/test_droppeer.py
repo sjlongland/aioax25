@@ -3,7 +3,6 @@
 from aioax25.station import AX25Station
 from aioax25.frame import AX25Address
 
-from nose.tools import eq_
 from ..mocks import DummyInterface, DummyPeer
 
 
@@ -18,6 +17,6 @@ def test_known_peer_fetch_instance():
     station._peers[mypeer._address] = mypeer
 
     # Drop the peer
-    peer = station._drop_peer(mypeer)
+    station._drop_peer(mypeer)
     assert mypeer._address not in station._peers
     assert mypeer.address_read
