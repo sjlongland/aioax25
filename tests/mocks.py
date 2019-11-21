@@ -21,7 +21,12 @@ class DummyPeer(object):
         self.address_read = False
         self._address = address
 
+        self.on_receive_calls = []
+
     @property
     def address(self):
         self.address_read = True
         return self._address
+
+    def _on_receive(self, *args, **kwargs):
+        self.on_receive_calls.append((args, kwargs))
