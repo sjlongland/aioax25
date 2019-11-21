@@ -494,7 +494,7 @@ class AX25Peer(object):
         self._log.debug('Sending DM')
         self._transmit_frame(
                 AX25DisconnectModeFrame(
-                    destination=self._address,
+                    destination=self.address,
                     source=self._station().address,
                     repeaters=self.reply_path
                 )
@@ -507,7 +507,7 @@ class AX25Peer(object):
         self._log.debug('Sending UA')
         self._transmit_frame(
                 AX25UnnumberedAcknowledgeFrame(
-                    destination=self._address,
+                    destination=self.address,
                     source=self._station().address,
                     repeaters=self.reply_path
                 )
@@ -530,7 +530,7 @@ class AX25Peer(object):
         # See https://www.tapr.org/pub_ax25.html
         self._transmit_frame(
                 AX25FrameRejectFrame(
-                    destination=self._address,
+                    destination=self.address,
                     source=self._station().address,
                     repeaters=self.reply_path,
                     w=w, x=x, y=y, z=z,
@@ -564,7 +564,7 @@ class AX25Peer(object):
         self._cancel_rr_notification()
         self._transmit_frame(
                 self._RRFrameClass(
-                    destination=self._address,
+                    destination=self.address,
                     source=self._station().address,
                     repeaters=self.reply_path,
                     pf=False, nr=self._recv_state
@@ -579,7 +579,7 @@ class AX25Peer(object):
         if (now - self._last_rnr_sent) > self._rnr_interval:
             self._transmit_frame(
                     self._RNRFrameClass(
-                        destination=self._address,
+                        destination=self.address,
                         source=self._station().address,
                         repeaters=self.reply_path,
                         nr=self._recv_seq,
@@ -622,7 +622,7 @@ class AX25Peer(object):
         (pid, payload) = self._pending_iframes[ns]
         self._transmit_frame(
                 self._IFrameClass(
-                    destination=self._address,
+                    destination=self.address,
                     source=self._station().address,
                     repeaters=self.reply_path,
                     nr=self._recv_seq,
