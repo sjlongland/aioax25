@@ -162,6 +162,7 @@ class AX25Station(object):
         """
         if frame.header.cr:
             # This is a command frame
+            self._log.debug('Checking command frame sub-class: %s', frame)
             if isinstance(frame, AX25TestFrame):
                 # A TEST request frame, context not required
                 return self._on_receive_test(frame)
@@ -170,6 +171,7 @@ class AX25Station(object):
         # of this type, so pass it to a handler if we have one.
         peer = self.getpeer(frame.header.source,
                 repeaters=frame.header.repeaters.reply)
+        self._log.debug('Passing frame to peer %s: %s', peer.address, frame)
         peer._on_receive(frame)
 
     def _on_receive_test(self, frame):
@@ -177,6 +179,7 @@ class AX25Station(object):
         Handle a TEST frame.
         """
         # The frame is a test request.
+        self._log.debug('Responding to test frame: %s', frame)
         interface = self._interface()
         interface.transmit(
                 AX25TestFrame(
