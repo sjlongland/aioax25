@@ -1276,7 +1276,10 @@ class AX25XIDParameterIdentifier(enum.Enum):
     # Sets the incoming I field length in bits (not bytes)
     IFieldLengthReceive = 6
 
-    # Sets the number of outstanding I-frames (k)
+    # Sets the outgoing number of outstanding I-frames (k)
+    WindowSizeTransmit = 7
+
+    # Sets the incoming number of outstanding I-frames (k)
     WindowSizeReceive = 8
 
     # Sets the duration of the Wait For Acknowledge (T1) timer
@@ -1296,6 +1299,16 @@ class AX25XIDParameter(object):
     """
     Representation of a single XID parameter.
     """
+
+    PARAMETERS = {}
+
+    @classmethod
+    def register(cls, subclass):
+        """
+        Register a sub-class of XID parameter.
+        """
+        assert subclass.PI not in cls.PARAMETERS
+        cls.PARAMETERS[subclass.PI] = subclass
 
     @classmethod
     def decode(cls, data):
@@ -1318,9 +1331,16 @@ class AX25XIDParameter(object):
         else:
             pv = None
 
-        return (cls(pi=pi, pv=pv), data)
+        try:
+            # Hand to the sub-class to decode
+            param = cls.PARAMETERS[AX25XIDParameterIdentifier(pi)].decode(pv)
+        except (KeyError, ValueError):
+            # Not recognised, so return a base class
+            param = AX25XIDRawParameter(pi=pi, pv=pv)
 
-    def __init__(self, pi, pv):
+        return (param, data)
+
+    def __init__(self, pi):
         """
         Create a new XID parameter
         """
@@ -1331,7 +1351,6 @@ class AX25XIDParameter(object):
             pass
 
         self._pi = pi
-        self._pv = pv
 
     @property
     def pi(self):
@@ -1341,11 +1360,12 @@ class AX25XIDParameter(object):
         return self._pi
 
     @property
-    def pv(self):
+    def pv(self): # pragma: no cover
         """
         Return the Parameter Value
         """
-        return self._pv
+        raise NotImplementedError('To be implemented in %s' \
+                % self.__class__.__name__)
 
     def __bytes__(self):
         """
@@ -1361,11 +1381,451 @@ class AX25XIDParameter(object):
 
         return param
 
+    def copy(self): # pragma: no cover
+        """
+        Return a copy of this parameter.
+        """
+        raise NotImplementedError('To be implemented in %s' \
+                % self.__class__.__name__)
+
+
+class AX25XIDRawParameter(AX25XIDParameter):
+    """
+    Representation of a single XID parameter that we don't recognise.
+    """
+
+    def __init__(self, pi, pv):
+        """
+        Create a new XID parameter
+        """
+        if pv is not None:
+            pv = bytes(pv)
+        self._pv = pv
+        super(AX25XIDRawParameter, self).__init__(pi=pi)
+
+    @property
+    def pv(self):
+        """
+        Return the Parameter Value
+        """
+        return self._pv
+
     def copy(self):
         """
         Return a copy of this parameter.
         """
         return self.__class__(pi=self.pi, pv=self.pv)
+
+
+class AX25XIDClassOfProceduresParameter(AX25XIDParameter):
+    """
+    Class of Procedures XID parameter.  This parameter is used to negotiate
+    half or full duplex communications between two TNCs.
+    """
+    PI = AX25XIDParameterIdentifier.ClassesOfProcedure
+
+    # Bit fields for this parameter:
+    BALANCED_ABM        = 0b0000000000000001    # Should be 1
+    UNBALANCED_NRM_PRI  = 0b0000000000000010    # Should be 0
+    UNBALANCED_NRM_SEC  = 0b0000000000000100    # Should be 0
+    UNBALANCED_ARM_PRI  = 0b0000000000001000    # Should be 0
+    UNBALANCED_ARM_SEC  = 0b0000000000010000    # Should be 0
+    HALF_DUPLEX         = 0b0000000000100000    # Should oppose FULL_DUPLEX
+    FULL_DUPLEX         = 0b0000000001000000    # Should oppose HALF_DUPLEX
+    RESERVED_MASK       = 0b1111111110000000    # Should be all zeros
+    RESERVED_POS        = 7
+
+    @classmethod
+    def decode(cls, pv):
+        # Decode the PV
+        pv = uint.decode(pv, big_endian=False)
+        return cls(
+            full_duplex=bool(pv & cls.FULL_DUPLEX),
+            half_duplex=bool(pv & cls.HALF_DUPLEX),
+            unbalanced_nrm_pri=bool(pv & cls.UNBALANCED_NRM_PRI),
+            unbalanced_nrm_sec=bool(pv & cls.UNBALANCED_NRM_SEC),
+            unbalanced_arm_pri=bool(pv & cls.UNBALANCED_ARM_PRI),
+            unbalanced_arm_sec=bool(pv & cls.UNBALANCED_ARM_SEC),
+            balanced_abm=bool(pv & cls.BALANCED_ABM),
+            reserved=((pv & cls.RESERVED_MASK) >> cls.RESERVED_POS)
+        )
+
+    def __init__(self, full_duplex=False, half_duplex=False,
+            unbalanced_nrm_pri=False, unbalanced_nrm_sec=False,
+            unbalanced_arm_pri=False, unbalanced_arm_sec=False,
+            balanced_abm=True, reserved=0):
+        """
+        Create a Class Of Procedures XID parameter.  The defaults are set
+        so that at most, only half_duplex or full_duplex should need setting.
+        """
+        self._half_duplex = half_duplex
+        self._full_duplex = full_duplex
+        self._unbalanced_nrm_pri = unbalanced_nrm_pri
+        self._unbalanced_nrm_sec = unbalanced_nrm_sec
+        self._unbalanced_arm_pri = unbalanced_arm_pri 
+        self._unbalanced_arm_sec = unbalanced_arm_sec
+        self._balanced_abm = balanced_abm
+        self._reserved = reserved
+        super(AX25XIDClassOfProceduresParameter, self).__init__(pi=self.PI)
+
+    @property
+    def pv(self):
+        # We reproduce all bits as given, even if the combination is invalid
+        # Value is encoded in little-endian format as two bytes.
+        return uint.encode(
+            (   ((self.reserved << self.RESERVED_POS)
+                    & self.RESERVED_MASK)
+            |   ((self.full_duplex and self.FULL_DUPLEX) or 0)
+            |   ((self.half_duplex and self.HALF_DUPLEX) or 0)
+            |   ((self.unbalanced_nrm_pri and self.UNBALANCED_NRM_PRI) or 0)
+            |   ((self.unbalanced_nrm_sec and self.UNBALANCED_NRM_SEC) or 0)
+            |   ((self.unbalanced_arm_pri and self.UNBALANCED_ARM_PRI) or 0)
+            |   ((self.unbalanced_arm_sec and self.UNBALANCED_ARM_SEC) or 0)
+            |   ((self.balanced_abm and self.BALANCED_ABM) or 0)),
+            big_endian=False, length=2
+        )
+
+    @property
+    def half_duplex(self):
+        return self._half_duplex
+
+    @property
+    def full_duplex(self):
+        return self._full_duplex
+
+    @property
+    def unbalanced_nrm_pri(self):
+        return self._unbalanced_nrm_pri
+
+    @property
+    def unbalanced_nrm_sec(self):
+        return self._unbalanced_nrm_sec
+
+    @property
+    def unbalanced_arm_pri(self):
+        return self._unbalanced_arm_pri
+
+    @property
+    def unbalanced_arm_sec(self):
+        return self._unbalanced_arm_sec
+
+    @property
+    def balanced_abm(self):
+        return self._balanced_abm
+
+    @property
+    def reserved(self):
+        return self._reserved
+
+    def copy(self):
+        return self.__class__(
+                half_duplex=self.half_duplex,
+                full_duplex=self.full_duplex,
+                unbalanced_nrm_pri=self.unbalanced_nrm_pri,
+                unbalanced_nrm_sec=self.unbalanced_nrm_sec,
+                unbalanced_arm_pri=self.unbalanced_arm_pri,
+                unbalanced_arm_sec=self.unbalanced_arm_sec,
+                reserved=self.reserved
+        )
+AX25XIDParameter.register(AX25XIDClassOfProceduresParameter)
+
+
+class AX25XIDHDLCOptionalFunctionsParameter(AX25XIDParameter):
+    """
+    HDLC Optional Functions XID parameter.  This parameter is used to negotiate
+    what optional features of the HDLC specification will be used to
+    synchronise communications.
+    """
+    PI = AX25XIDParameterIdentifier.HDLCOptionalFunctions
+
+    # Bit fields for this parameter:
+    RESERVED1           = 0b000000000000000000000001    # Should be 0
+    REJ                 = 0b000000000000000000000010    # Negotiable
+    SREJ                = 0b000000000000000000000100    # Negotiable
+    UI                  = 0b000000000000000000001000    # Should be 0
+    SIM_RIM             = 0b000000000000000000010000    # Should be 0
+    UP                  = 0b000000000000000000100000    # Should be 0
+    BASIC_ADDR          = 0b000000000000000001000000    # Should be 1
+    EXTD_ADDR           = 0b000000000000000010000000    # Should be 0
+    DELETE_I_RESP       = 0b000000000000000100000000    # Should be 0
+    DELETE_I_CMD        = 0b000000000000001000000000    # Should be 0
+    MODULO8             = 0b000000000000010000000000    # Negotiable
+    MODULO128           = 0b000000000000100000000000    # Negotiable
+    RSET                = 0b000000000001000000000000    # Should be 0
+    TEST                = 0b000000000010000000000000    # Should be 1
+    RD                  = 0b000000000100000000000000    # Should be 0
+    FCS16               = 0b000000001000000000000000    # Should be 1
+    FCS32               = 0b000000010000000000000000    # Should be 0
+    SYNC_TX             = 0b000000100000000000000000    # Should be 1
+    START_STOP_TX       = 0b000001000000000000000000    # Should be 0
+    START_STOP_FLOW_CTL = 0b000010000000000000000000    # Should be 0
+    START_STOP_TRANSP   = 0b000100000000000000000000    # Should be 0
+    SREJ_MULTIFRAME     = 0b001000000000000000000000    # Should be 0
+    RESERVED2_MASK      = 0b110000000000000000000000    # Should be 00
+    RESERVED2_POS       = 22
+
+    @classmethod
+    def decode(cls, pv):
+        # Decode the PV
+        pv = uint.decode(pv, big_endian=False)
+        return cls(
+                modulo128=pv & cls.MODULO128,
+                modulo8=pv & cls.MODULO8,
+                srej=pv & cls.SREJ,
+                rej=pv & cls.REJ,
+                srej_multiframe=pv & cls.SREJ_MULTIFRAME,
+                start_stop_transp=pv & cls.START_STOP_TRANSP,
+                start_stop_flow_ctl=pv & cls.START_STOP_FLOW_CTL,
+                start_stop_tx=pv & cls.START_STOP_TX,
+                sync_tx=pv & cls.SYNC_TX,
+                fcs32=pv & cls.FCS32,
+                fcs16=pv & cls.FCS16,
+                rd=pv & cls.RD,
+                test=pv & cls.TEST,
+                rset=pv & cls.RSET,
+                delete_i_cmd=pv & cls.DELETE_I_CMD,
+                delete_i_resp=pv & cls.DELETE_I_RESP,
+                extd_addr=pv & cls.EXTD_ADDR,
+                basic_addr=pv & cls.BASIC_ADDR,
+                up=pv & cls.UP,
+                sim_rim=pv & cls.SIM_RIM,
+                ui=pv & cls.UI,
+                reserved2=(pv & cls.RESERVED2_MASK) >> cls.RESERVED2_POS,
+                reserved1=pv & cls.RESERVED1
+        )
+
+    def __init__(self, modulo128=False, modulo8=False, srej=False, rej=False,
+            srej_multiframe=False, start_stop_transp=False,
+            start_stop_flow_ctl=False, start_stop_tx=False, sync_tx=True,
+            fcs32=False, fcs16=True, rd=False, test=True, rset=False,
+            delete_i_cmd=False, delete_i_resp=False, extd_addr=True,
+            basic_addr=False, up=False, sim_rim=False, ui=False,
+            reserved2=0, reserved1=False):
+        """
+        HDLC Optional Features XID parameter.  The defaults are set
+        so that at most, only srej, rej, modulo8 and/or modulo128 need setting.
+        """
+        self._modulo128 = modulo128
+        self._modulo8 = modulo8
+        self._srej = srej
+        self._rej = rej
+        self._srej_multiframe = srej_multiframe
+        self._start_stop_transp = start_stop_transp
+        self._start_stop_flow_ctl = start_stop_flow_ctl
+        self._start_stop_tx = start_stop_tx
+        self._sync_tx = sync_tx
+        self._fcs32 = fcs32
+        self._fcs16 = fcs16
+        self._rd = rd
+        self._test = test
+        self._rset = rset
+        self._delete_i_cmd = delete_i_cmd
+        self._delete_i_resp = delete_i_resp
+        self._extd_addr = extd_addr
+        self._basic_addr = basic_addr
+        self._up = up
+        self._sim_rim = sim_rim
+        self._ui = ui
+        self._reserved2 = reserved2
+        self._reserved1 = reserved1
+
+        super(AX25XIDHDLCOptionalFunctionsParameter, self).__init__(pi=self.PI)
+
+    @property
+    def pv(self):
+        # We reproduce all bits as given, even if the combination is invalid
+        return uint.encode(
+            (   ((self.reserved2 << self.RESERVED2_POS)
+                    & self.RESERVED2_MASK)
+            |   ((self.modulo128 and self.MODULO128) or 0)
+            |   ((self.modulo8 and self.MODULO8) or 0)
+            |   ((self.srej and self.SREJ) or 0)
+            |   ((self.rej and self.REJ) or 0)
+            |   ((self.srej_multiframe and self.SREJ_MULTIFRAME) or 0)
+            |   ((self.start_stop_transp and self.START_STOP_TRANSP) or 0)
+            |   ((self.start_stop_flow_ctl and self.START_STOP_FLOW_CTL) or 0)
+            |   ((self.start_stop_tx and self.START_STOP_TX) or 0)
+            |   ((self.sync_tx and self.SYNC_TX) or 0)
+            |   ((self.fcs32 and self.FCS32) or 0)
+            |   ((self.fcs16 and self.FCS16) or 0)
+            |   ((self.rd and self.RD) or 0)
+            |   ((self.test and self.TEST) or 0)
+            |   ((self.rset and self.RSET) or 0)
+            |   ((self.delete_i_cmd and self.DELETE_I_CMD) or 0)
+            |   ((self.delete_i_resp and self.DELETE_I_RESP) or 0)
+            |   ((self.extd_addr and self.EXTD_ADDR) or 0)
+            |   ((self.basic_addr and self.BASIC_ADDR) or 0)
+            |   ((self.up and self.UP) or 0)
+            |   ((self.sim_rim and self.SIM_RIM) or 0)
+            |   ((self.ui and self.UI) or 0)
+            |   ((self.reserved1 and self.RESERVED1) or 0)),
+            big_endian=False, length=3
+       )
+
+    @property
+    def modulo128(self):
+        return self._modulo128
+
+    @property
+    def modulo8(self):
+        return self._modulo8
+
+    @property
+    def srej(self):
+        return self._srej
+
+    @property
+    def rej(self):
+        return self._rej
+
+    @property
+    def srej_multiframe(self):
+        return self._srej_multiframe
+
+    @property
+    def start_stop_transp(self):
+        return self._start_stop_transp
+
+    @property
+    def start_stop_flow_ctl(self):
+        return self._start_stop_flow_ctl
+
+    @property
+    def start_stop_tx(self):
+        return self._start_stop_tx
+
+    @property
+    def sync_tx(self):
+        return self._sync_tx
+
+    @property
+    def fcs32(self):
+        return self._fcs32
+
+    @property
+    def fcs16(self):
+        return self._fcs16
+
+    @property
+    def rd(self):
+        return self._rd
+
+    @property
+    def test(self):
+        return self._test
+
+    @property
+    def rset(self):
+        return self._rset
+
+    @property
+    def delete_i_cmd(self):
+        return self._delete_i_cmd
+
+    @property
+    def delete_i_resp(self):
+        return self._delete_i_resp
+
+    @property
+    def extd_addr(self):
+        return self._extd_addr
+
+    @property
+    def basic_addr(self):
+        return self._basic_addr
+
+    @property
+    def up(self):
+        return self._up
+
+    @property
+    def sim_rim(self):
+        return self._sim_rim
+
+    @property
+    def ui(self):
+        return self._ui
+
+    @property
+    def reserved2(self):
+        return self._reserved2
+
+    @property
+    def reserved1(self):
+        return self._reserved1
+
+    def copy(self):
+        return self.__class__(
+                modulo128=self.modulo128, modulo8=self.modulo8,
+                srej=self.srej, rej=self.rej,
+                srej_multiframe=self.srej_multiframe,
+                start_stop_transp=self.start_stop_transp,
+                start_stop_flow_ctl=self.start_stop_flow_ctl,
+                start_stop_tx=self.start_stop_tx, sync_tx=self.sync_tx,
+                fcs32=self.fcs32, fcs16=self.fcs16, rd=self.rd, test=self.test,
+                rset=self.rset, delete_i_cmd=self.delete_i_cmd,
+                delete_i_resp=self.delete_i_resp, extd_addr=self.extd_addr,
+                basic_addr=self.basic_addr, up=self.up, sim_rim=self.sim_rim,
+                ui=self.ui, reserved2=self.reserved2, reserved1=self.reserved1
+        )
+AX25XIDParameter.register(AX25XIDHDLCOptionalFunctionsParameter)
+
+
+class AX25XIDBigEndianParameter(AX25XIDParameter):
+    """
+    Base class for all big-endian parameters (field lengths, window sizes, ACK
+    timers, retries).
+    """
+    LENGTH = None
+
+    @classmethod
+    def decode(cls, pv):
+        return cls(value=uint.decode(pv, big_endian=True))
+
+    def __init__(self, value):
+        """
+        Create a big-endian integer parameter.
+        """
+        self._value = value
+
+        super(AX25XIDHDLCOptionalFunctionsParameter, self).__init__(pi=self.PI)
+
+    @property
+    def pv(self):
+        return uint.encode(self.value, big_endian=True, length=self.LENGTH)
+
+    @property
+    def value(self):
+        return self._value
+
+    def copy(self):
+        return self.__class__(value=self.value)
+
+
+class AX25XIDIFieldLengthTransmitParameter(AX25XIDBigEndianParameter):
+    PI = AX25XIDParameterIdentifier.IFieldLengthTransmit
+
+
+class AX25XIDIFieldLengthReceiveParameter(AX25XIDBigEndianParameter):
+    PI = AX25XIDParameterIdentifier.WindowSizeReceive
+
+
+class AX25XIDWindowSizeTransmitParameter(AX25XIDBigEndianParameter):
+    PI = AX25XIDParameterIdentifier.IFieldLengthTransmit
+    LENGTH = 1
+
+
+class AX25XIDWindowSizeReceiveParameter(AX25XIDBigEndianParameter):
+    PI = AX25XIDParameterIdentifier.WindowSizeReceive
+    LENGTH = 1
+
+
+class AX25XIDAcknowledgeTimerParameter(AX25XIDBigEndianParameter):
+    PI = AX25XIDParameterIdentifier.AcknowledgeTimer
+
+
+class AX25XIDRetriesParameter(AX25XIDBigEndianParameter):
+    PI = AX25XIDParameterIdentifier.Retries
 
 
 class AX25ExchangeIdentificationFrame(AX25UnnumberedFrame):
