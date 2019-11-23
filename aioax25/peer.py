@@ -443,8 +443,83 @@ class AX25Peer(object):
         """
         Handle a S-frame from the peer.
         """
-        # TODO
-        pass
+        if isinstance(frame, self._RRFrameClass):
+            self._on_receive_rr(frame)
+        elif isinstance(frame, self._RNRFrameClass):
+            self._on_receive_rnr(frame)
+        elif isinstance(frame, self._REJFrameClass):
+            self._on_receive_rej(frame)
+        elif isinstance(frame, self._SREJFrameClass):
+            self._on_receive_srej(frame)
+
+    def _on_receive_rr(self, frame):
+        if frame.header.pf:
+            # Peer requesting our RR status
+            self._on_receive_rr_rnr_rej_query()
+        else:
+            # Received peer's RR status, peer no longer busy
+            self._log.debug('RR notification received from peer')
+            # AX.25 sect 4.3.2.1: "acknowledges properly received
+            # I frames up to and including N(R)-1"
+            self._ack_outstanding((frame.nr - 1) % self._modulo)
+            self._peer_busy = False
+            self._send_next_iframe()
+
+    def _on_receive_rnr(self, frame):
+        if frame.header.pf:
+            # Peer requesting our RNR status
+            self._on_receive_rr_rnr_rej_query()
+        else:
+            # Received peer's RNR status, peer is busy
+            self._log.debug('RNR notification received from peer')
+            # AX.25 sect 4.3.2.2: "Frames up to N(R)-1 are acknowledged."
+            self._ack_outstanding((frame.nr - 1) % self._modulo)
+            self._peer_busy = True
+
+    def _on_receive_rej(self, frame):
+        if frame.header.pf:
+            # Peer requesting rejected frame status.
+            self._on_receive_rr_rnr_rej_query()
+        else:
+            # Reject reject.
+            # AX.25 sect 4.3.2.3: "Any frames sent with a sequence number
+            # of N(R)-1 or less are acknowledged."
+            self._ack_outstanding((frame.nr - 1) % self._modulo)
+            # AX.25 2.2 section 6.4.7 says we set V(S) to this frame's
+            # N(R) and begin re-transmission.
+            self._send_state = frame.nr
+            self._send_next_iframe()
+
+    def _on_receive_srej(self, frame):
+        if frame.header.pf:
+            # AX.25 2.2 sect 4.3.2.4: "If the P/F bit in the SREJ is set to
+            # '1', then I frames numbered up to N(R)-1 inclusive are considered
+            # as acknowledged."
+            self._ack_outstanding((frame.nr - 1) % self._modulo)
+
+        # Re-send the outstanding frame
+        self._log.debug('Re-sending I-frame %d due to SREJ', frame.nr)
+        self._transmit_iframe(frame.nr)
+
+    def _on_receive_rr_rnr_rej_query(self):
+        """
+        Handle a RR or RNR query
+        """
+        if self._local_busy:
+            self._log.debug('RR poll request from peer: we\'re busy')
+            self._send_rnr_notification()
+        else:
+            self._log.debug('RR poll request from peer: we\'re ready')
+            self._send_rr_notification()
+
+    def _ack_outstanding(self, nr):
+        """
+        Receive all frames up to N(R)
+        """
+        self._log.debug('%d through to %d are received', self._send_state, nr)
+        while self._send_state != nr:
+            self._pending_iframes.pop(self._send_state)
+            self._send_state = (self._send_state + 1) % self._modulo
 
     def _on_receive_test(self, frame):
         self._log.debug('Received TEST response: %s', frame)
@@ -1061,8 +1136,7 @@ class AX25Peer(object):
         """
         Send the next I-frame, if there aren't too many frames pending.
         """
-        if not len(self._pending_data) or (len(self._pending_iframes) \
-                                        >= self._max_outstanding):
+        if len(self._pending_iframes) >= self._max_outstanding:
             self._log.debug('Waiting for pending I-frames to be ACKed')
             return
 
@@ -1070,19 +1144,23 @@ class AX25Peer(object):
         # it sends the I frame with the N(S) of the control field equal to
         # its current send state variable V(S)…"
         ns = self._send_state
-        assert ns not in self._pending_iframes, 'Duplicate N(S) pending'
+        if ns not in self._pending_iframes:
+            if not self._pending_data:
+                # No data waiting
+                self._log.debug('No data pending transmission')
+                return
 
-        # Retrieve the next pending I-frame payload
-        (pid, payload) = self._pending_data.pop(0)
-        self._pending_iframes[ns] = (pid, payload)
+            # Retrieve the next pending I-frame payload and add it to the queue
+            self._pending_iframes[ns] = self._pending_data.pop(0)
+            self._log.debug('Creating new I-Frame %d', ns)
 
         # Send it
+        self._log.debug('Sending new I-Frame %d', ns)
         self._transmit_iframe(ns)
 
         # "After the I frame is sent, the send state variable is incremented
         # by one."
-        self._send_state = (self._send_state + 1) \
-                % self._modulo
+        self._send_state = (self._send_state + 1) % self._modulo
 
     def _transmit_iframe(self, ns):
         """
