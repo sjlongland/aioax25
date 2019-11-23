@@ -1441,7 +1441,7 @@ class AX25XIDClassOfProceduresParameter(AX25XIDParameter):
     @classmethod
     def decode(cls, pv):
         # Decode the PV
-        pv = uint.decode(pv, big_endian=False)
+        pv = uint.decode(pv, big_endian=True)
         return cls(
             full_duplex=bool(pv & cls.FULL_DUPLEX),
             half_duplex=bool(pv & cls.HALF_DUPLEX),
@@ -1493,7 +1493,7 @@ class AX25XIDClassOfProceduresParameter(AX25XIDParameter):
                 | ((self.unbalanced_arm_sec and self.UNBALANCED_ARM_SEC) or 0)
                 | ((self.balanced_abm and self.BALANCED_ABM) or 0)
             ),
-            big_endian=False,
+            big_endian=True,
             length=2,
         )
 
@@ -1584,29 +1584,29 @@ class AX25XIDHDLCOptionalFunctionsParameter(AX25XIDParameter):
         # Decode the PV
         pv = uint.decode(pv, big_endian=False)
         return cls(
-            modulo128=pv & cls.MODULO128,
-            modulo8=pv & cls.MODULO8,
-            srej=pv & cls.SREJ,
-            rej=pv & cls.REJ,
-            srej_multiframe=pv & cls.SREJ_MULTIFRAME,
-            start_stop_transp=pv & cls.START_STOP_TRANSP,
-            start_stop_flow_ctl=pv & cls.START_STOP_FLOW_CTL,
-            start_stop_tx=pv & cls.START_STOP_TX,
-            sync_tx=pv & cls.SYNC_TX,
-            fcs32=pv & cls.FCS32,
-            fcs16=pv & cls.FCS16,
-            rd=pv & cls.RD,
-            test=pv & cls.TEST,
-            rset=pv & cls.RSET,
-            delete_i_cmd=pv & cls.DELETE_I_CMD,
-            delete_i_resp=pv & cls.DELETE_I_RESP,
-            extd_addr=pv & cls.EXTD_ADDR,
-            basic_addr=pv & cls.BASIC_ADDR,
-            up=pv & cls.UP,
-            sim_rim=pv & cls.SIM_RIM,
-            ui=pv & cls.UI,
+            modulo128=bool(pv & cls.MODULO128),
+            modulo8=bool(pv & cls.MODULO8),
+            srej=bool(pv & cls.SREJ),
+            rej=bool(pv & cls.REJ),
+            srej_multiframe=bool(pv & cls.SREJ_MULTIFRAME),
+            start_stop_transp=bool(pv & cls.START_STOP_TRANSP),
+            start_stop_flow_ctl=bool(pv & cls.START_STOP_FLOW_CTL),
+            start_stop_tx=bool(pv & cls.START_STOP_TX),
+            sync_tx=bool(pv & cls.SYNC_TX),
+            fcs32=bool(pv & cls.FCS32),
+            fcs16=bool(pv & cls.FCS16),
+            rd=bool(pv & cls.RD),
+            test=bool(pv & cls.TEST),
+            rset=bool(pv & cls.RSET),
+            delete_i_cmd=bool(pv & cls.DELETE_I_CMD),
+            delete_i_resp=bool(pv & cls.DELETE_I_RESP),
+            extd_addr=bool(pv & cls.EXTD_ADDR),
+            basic_addr=bool(pv & cls.BASIC_ADDR),
+            up=bool(pv & cls.UP),
+            sim_rim=bool(pv & cls.SIM_RIM),
+            ui=bool(pv & cls.UI),
             reserved2=(pv & cls.RESERVED2_MASK) >> cls.RESERVED2_POS,
-            reserved1=pv & cls.RESERVED1,
+            reserved1=bool(pv & cls.RESERVED1),
         )
 
     def __init__(
