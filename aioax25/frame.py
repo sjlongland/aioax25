@@ -43,6 +43,7 @@ parameters:
 
 import re
 import time
+import enum
 from collections.abc import Sequence
 
 # Frame type classes
@@ -1257,6 +1258,115 @@ class AX25DisconnectModeFrame(AX25BaseUnnumberedFrame):
 AX25UnnumberedFrame.register(AX25DisconnectModeFrame)
 
 
+class AX25XIDParameterIdentifier(enum.Enum):
+    """
+    Known values of PI in XID frames.
+    """
+
+    # Negotiates half/full duplex operation
+    ClassesOfProcedure = 2
+
+    # Selects between REJ, SREJ or both
+    HDLCOptionalFunctions = 3
+
+    # Sets the outgoing I field length in bits (not bytes)
+    IFieldLengthTransmit = 5
+
+    # Sets the incoming I field length in bits (not bytes)
+    IFieldLengthReceive = 6
+
+    # Sets the number of outstanding I-frames (k)
+    WindowSizeReceive = 8
+
+    # Sets the duration of the Wait For Acknowledge (T1) timer
+    AcknowledgeTimer = 9
+
+    # Sets the retry count (N1)
+    Retries = 10
+
+    def __int__(self):
+        """
+        Return the value of the PI.
+        """
+        return self.value
+
+
+class AX25XIDParameter(object):
+    """
+    Representation of a single XID parameter.
+    """
+
+    @classmethod
+    def decode(cls, data):
+        """
+        Decode the parameter value given, return the parameter and the
+        remaining data.
+        """
+        if len(data) < 2:
+            raise ValueError("Insufficient data for parameter")
+
+        pi = data[0]
+        pl = data[1]
+        data = data[2:]
+
+        if pl > 0:
+            if len(data) < pl:
+                raise ValueError("Parameter is truncated")
+            pv = data[0:pl]
+            data = data[pl:]
+        else:
+            pv = None
+
+        return (cls(pi=pi, pv=pv), data)
+
+    def __init__(self, pi, pv):
+        """
+        Create a new XID parameter
+        """
+        try:
+            pi = AX25XIDParameterIdentifier(pi)
+        except ValueError:
+            # Pass through the PI as given.
+            pass
+
+        self._pi = pi
+        self._pv = pv
+
+    @property
+    def pi(self):
+        """
+        Return the Parameter Identifier
+        """
+        return self._pi
+
+    @property
+    def pv(self):
+        """
+        Return the Parameter Value
+        """
+        return self._pv
+
+    def __bytes__(self):
+        """
+        Return the encoded parameter value.
+        """
+        pv = self.pv
+        param = bytes([int(self.pi)])
+
+        if pv is None:
+            param += bytes([0])
+        else:
+            param += bytes([len(pv)]) + pv
+
+        return param
+
+    def copy(self):
+        """
+        Return a copy of this parameter.
+        """
+        return self.__class__(pi=self.pi, pv=self.pv)
+
+
 class AX25ExchangeIdentificationFrame(AX25UnnumberedFrame):
     """
     Exchange Identification frame.
@@ -1265,74 +1375,6 @@ class AX25ExchangeIdentificationFrame(AX25UnnumberedFrame):
     """
 
     MODIFIER = 0b10101111
-
-    class AX25XIDParameter(object):
-        """
-        Representation of a single XID parameter.
-        """
-
-        @classmethod
-        def decode(cls, data):
-            """
-            Decode the parameter value given, return the parameter and the
-            remaining data.
-            """
-            if len(data) < 2:
-                raise ValueError("Insufficient data for parameter")
-
-            pi = data[0]
-            pl = data[1]
-            data = data[2:]
-
-            if pl > 0:
-                if len(data) < pl:
-                    raise ValueError("Parameter is truncated")
-                pv = data[0:pl]
-                data = data[pl:]
-            else:
-                pv = None
-
-            return (cls(pi=pi, pv=pv), data)
-
-        def __init__(self, pi, pv):
-            """
-            Create a new XID parameter
-            """
-            self._pi = pi
-            self._pv = pv
-
-        @property
-        def pi(self):
-            """
-            Return the Parameter Identifier
-            """
-            return self._pi
-
-        @property
-        def pv(self):
-            """
-            Return the Parameter Value
-            """
-            return self._pv
-
-        def __bytes__(self):
-            """
-            Return the encoded parameter value.
-            """
-            pv = self.pv
-            param = bytes([self.pi])
-            if pv is None:
-                param += bytes([0])
-            else:
-                param += bytes([len(pv)]) + pv
-
-            return param
-
-        def copy(self):
-            """
-            Return a copy of this parameter.
-            """
-            return self.__class__(pi=self.pi, pv=self.pv)
 
     @classmethod
     def decode(cls, header, control, data):
@@ -1350,7 +1392,7 @@ class AX25ExchangeIdentificationFrame(AX25UnnumberedFrame):
 
         parameters = []
         while data:
-            (param, data) = cls.AX25XIDParameter.decode(data)
+            (param, data) = AX25XIDParameter.decode(data)
             parameters.append(param)
 
         return cls(
