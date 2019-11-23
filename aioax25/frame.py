@@ -1710,7 +1710,11 @@ class AX25ExchangeIdentificationFrame(AX25UnnumberedFrame):
                 cr=header.cr
         )
 
-    def __init__(self, destination, source, fi, gi, parameters,
+    # AX.25 2.2 sect 4.3.3.7 defines the following values for FI and GI:
+    FI = 0x82
+    GI = 0x80
+
+    def __init__(self, destination, source, parameters, fi=FI, gi=GI,
             repeaters=None, pf=False, cr=False, timestamp=None, deadline=None):
         super(AX25ExchangeIdentificationFrame, self).__init__(
                 destination=destination, source=source,
