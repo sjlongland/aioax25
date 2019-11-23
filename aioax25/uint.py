@@ -17,14 +17,14 @@ def encode(value, length=None, big_endian=False):
 
     output = bytearray()
     while (value != 0) if (length is None) else (length > 0):
-        output += bytes([value & 0xff])
+        output += bytes([value & 0xFF])
         value >>= 8
         if length is not None:
             length -= 1
 
     if not output:
         # No output, so return a null byte
-        output += b'\x00'
+        output += b"\x00"
 
     if big_endian:
         output.reverse()
@@ -38,7 +38,7 @@ def decode(value, big_endian=False):
     """
 
     output = 0
-    for byte in (value if big_endian else reversed(value)):
+    for byte in value if big_endian else reversed(value):
         output <<= 8
         output |= byte
     return output

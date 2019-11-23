@@ -46,6 +46,8 @@ import time
 import enum
 from collections.abc import Sequence
 
+from . import uint
+
 # Frame type classes
 
 
@@ -340,8 +342,7 @@ class AX2516BitFrame(AX25Frame):
         """
         # The control field is sent in LITTLE ENDIAN format so as to avoid
         # S frames possibly getting confused with U frames.
-        control = self.control
-        return bytes([control & 0x00FF, (control >> 8) & 0x00FF])
+        return uint.encode(self.control, big_endian=False, length=2)
 
 
 class AX25RawFrame(AX25Frame):
@@ -1384,7 +1385,7 @@ class AX25ExchangeIdentificationFrame(AX25UnnumberedFrame):
         fi = data[0]
         gi = data[1]
         # Yep, GL is big-endian, just for a change!
-        gl = (data[2] << 8) | data[3]
+        gl = uint.decode(data[2:4], big_endian=True)
         data = data[4:]
 
         if len(data) != gl:
@@ -1448,10 +1449,10 @@ class AX25ExchangeIdentificationFrame(AX25UnnumberedFrame):
     @property
     def frame_payload(self):
         parameters = b"".join([bytes(param) for param in self.parameters])
-        gl = len(parameters)
         return (
             super(AX25ExchangeIdentificationFrame, self).frame_payload
-            + bytes([self.fi, self.gi, (gl >> 8) & 0xFF, gl & 0xFF])
+            + bytes([self.fi, self.gi])
+            + uint.encode(len(parameters), length=2, big_endian=True)
             + parameters
         )
 
