@@ -7,7 +7,8 @@ from aioax25.frame import AX25Frame, AX25RawFrame, \
         AX2516BitRejectFrame, AX258BitInformationFrame, \
         AX2516BitInformationFrame, AX25DisconnectModeFrame, \
         AX25SetAsyncBalancedModeFrame, AX25TestFrame, \
-        AX25ExchangeIdentificationFrame
+        AX25ExchangeIdentificationFrame, AX25XIDParameter, \
+        AX25XIDParameterIdentifier
 
 from nose.tools import eq_
 from ..hex import from_hex, hex_cmp
@@ -402,10 +403,15 @@ def test_encode_xid():
             cr=True,
             fi=0x82, gi=0x80,
             parameters=[
-                AX25ExchangeIdentificationFrame.AX25XIDParameter(
+                AX25XIDParameter(
+                    # Should be encoded to bytes for us
+                    pi=AX25XIDParameterIdentifier.IFieldLengthTransmit,
+                    pv=bytes([0x08, 0x00])
+                ),
+                AX25XIDParameter(
                     pi=0x12, pv=bytes([0x34, 0x56])
                 ),
-                AX25ExchangeIdentificationFrame.AX25XIDParameter(
+                AX25XIDParameter(
                     pi=0x34, pv=None
                 )
             ]
@@ -416,12 +422,16 @@ def test_encode_xid():
             'af'                                            # Control
             '82'                                            # Format indicator
             '80'                                            # Group Ident
-            '00 06'                                         # Group length
+            '00 0a'                                         # Group length
             # First parameter
+            '05'                                            # Parameter ID
+            '02'                                            # Length
+            '08 00'                                         # Value
+            # Second parameter
             '12'                                            # Parameter ID
             '02'                                            # Length
             '34 56'                                         # Value
-            # Second parameter
+            # Third parameter
             '34'                                            # Parameter ID
             '00'                                            # Length (no value)
     )
@@ -449,14 +459,69 @@ def test_decode_xid():
     eq_(frame.fi, 0x82)
     eq_(frame.gi, 0x80)
     eq_(len(frame.parameters), 4)
-    eq_(frame.parameters[0].pi, 0x01)
-    eq_(frame.parameters[0].pv, b'\xaa')
-    eq_(frame.parameters[1].pi, 0x02)
-    eq_(frame.parameters[1].pv, b'\xbb')
-    eq_(frame.parameters[2].pi, 0x03)
-    eq_(frame.parameters[2].pv, b'\x11\x22')
-    eq_(frame.parameters[3].pi, 0x04)
-    assert frame.parameters[3].pv is None
+
+    param = frame.parameters[0]
+    eq_(param.pi, 0x01)
+    eq_(param.pv, b'\xaa')
+
+    param = frame.parameters[1]
+    eq_(param.pi, AX25XIDParameterIdentifier.ClassesOfProcedure)
+    eq_(param.pv, b'\xbb')
+
+    param = frame.parameters[2]
+    eq_(param.pi, AX25XIDParameterIdentifier.HDLCOptionalFunctions)
+    eq_(param.pv, b'\x11\x22')
+
+    param = frame.parameters[3]
+    eq_(param.pi, 0x04)
+    assert param.pv is None
+
+def test_decode_xid_fig46():
+    """
+    Test that we can decode the XID example from AX.25 2.2 figure 4.6.
+    """
+    frame = AX25Frame.decode(
+            from_hex(
+                '9c 94 6e a0 40 40 e0'                      # Destination
+                '9c 6e 98 8a 9a 40 61'                      # Source
+                'af'                                        # Control
+                '82'                                        # FI
+                '80'                                        # GI
+                '00 17'                                     # GL
+                '02 02 00 20'
+                '03 03 86 a8 02'
+                '06 02 04 00'
+                '08 01 02'
+                '09 02 10 00'
+                '0a 01 03'
+            )
+    )
+    eq_(len(frame.parameters), 6)
+
+    param = frame.parameters[0]
+    eq_(param.pi, AX25XIDParameterIdentifier.ClassesOfProcedure)
+    eq_(param.pv, b'\x00\x20')
+
+    param = frame.parameters[1]
+    eq_(param.pi, AX25XIDParameterIdentifier.HDLCOptionalFunctions)
+    eq_(param.pv, b'\x86\xa8\x02')
+
+    param = frame.parameters[2]
+    eq_(param.pi, AX25XIDParameterIdentifier.IFieldLengthReceive)
+    eq_(param.pv, b'\x04\x00')
+
+    param = frame.parameters[3]
+    eq_(param.pi, AX25XIDParameterIdentifier.WindowSizeReceive)
+    eq_(param.pv, b'\x02')
+
+    param = frame.parameters[4]
+    eq_(param.pi, AX25XIDParameterIdentifier.AcknowledgeTimer)
+    eq_(param.pv, b'\x10\x00')
+
+    param = frame.parameters[5]
+    eq_(param.pi, AX25XIDParameterIdentifier.Retries)
+    eq_(param.pv, b'\x03')
+
 
 def test_decode_xid_truncated_header():
     """
@@ -547,10 +612,10 @@ def test_copy_xid():
             cr=True,
             fi=0x82, gi=0x80,
             parameters=[
-                AX25ExchangeIdentificationFrame.AX25XIDParameter(
+                AX25XIDParameter(
                     pi=0x12, pv=bytes([0x34, 0x56])
                 ),
-                AX25ExchangeIdentificationFrame.AX25XIDParameter(
+                AX25XIDParameter(
                     pi=0x34, pv=None
                 )
             ]
