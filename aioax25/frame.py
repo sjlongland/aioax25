@@ -1612,28 +1612,34 @@ class AX25XIDBigEndianParameter(AX25XIDParameter):
 
 class AX25XIDIFieldLengthTransmitParameter(AX25XIDBigEndianParameter):
     PI = AX25XIDParameterIdentifier.IFieldLengthTransmit
+AX25XIDParameter.register(AX25XIDIFieldLengthTransmitParameter)
 
 
 class AX25XIDIFieldLengthReceiveParameter(AX25XIDBigEndianParameter):
     PI = AX25XIDParameterIdentifier.IFieldLengthReceive
+AX25XIDParameter.register(AX25XIDIFieldLengthReceiveParameter)
 
 
 class AX25XIDWindowSizeTransmitParameter(AX25XIDBigEndianParameter):
     PI = AX25XIDParameterIdentifier.WindowSizeTransmit
     LENGTH = 1
+AX25XIDParameter.register(AX25XIDWindowSizeTransmitParameter)
 
 
 class AX25XIDWindowSizeReceiveParameter(AX25XIDBigEndianParameter):
     PI = AX25XIDParameterIdentifier.WindowSizeReceive
     LENGTH = 1
+AX25XIDParameter.register(AX25XIDWindowSizeReceiveParameter)
 
 
 class AX25XIDAcknowledgeTimerParameter(AX25XIDBigEndianParameter):
     PI = AX25XIDParameterIdentifier.AcknowledgeTimer
+AX25XIDParameter.register(AX25XIDAcknowledgeTimerParameter)
 
 
 class AX25XIDRetriesParameter(AX25XIDBigEndianParameter):
     PI = AX25XIDParameterIdentifier.Retries
+AX25XIDParameter.register(AX25XIDRetriesParameter)
 
 
 class AX25ExchangeIdentificationFrame(AX25UnnumberedFrame):

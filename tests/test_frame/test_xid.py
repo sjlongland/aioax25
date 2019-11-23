@@ -427,3 +427,34 @@ def test_encode_hdlcfunc_param():
                 '8c a8 83'
             )
     )
+
+def test_encode_retries_param():
+    """
+    Test we can encode a Retries parameter.
+    """
+    param = AX25XIDRetriesParameter(96)
+
+    hex_cmp(param.pv,
+            from_hex(
+                '60'
+            )
+    )
+def test_decode_retries_param():
+    """
+    Test we can decode a Retries parameter.
+    """
+    param = AX25XIDRetriesParameter.decode(from_hex(
+        '10'
+    ))
+    eq_(param.value, 16)
+
+def test_copy_retries_param():
+    """
+    Test we can copy a Retries parameter.
+    """
+    param = AX25XIDRetriesParameter(38)
+    copyparam = param.copy()
+    assert param is not copyparam
+
+    # Ensure all parameters match
+    eq_(param.value, copyparam.value)
