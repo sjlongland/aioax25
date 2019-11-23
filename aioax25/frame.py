@@ -1545,11 +1545,12 @@ AX25XIDParameter.register(AX25XIDClassOfProceduresParameter)
 
 # From AX.25 2.2 spec section 6.3.2:
 AX25_20_DEFAULT_XID_COP = AX25XIDClassOfProceduresParameter(
-        half_duplex=True, full_duplex=False
+    half_duplex=True, full_duplex=False
 )
 AX25_22_DEFAULT_XID_COP = AX25XIDClassOfProceduresParameter(
-        half_duplex=True, full_duplex=False
+    half_duplex=True, full_duplex=False
 )
+
 
 class AX25XIDHDLCOptionalFunctionsParameter(AX25XIDParameter):
     """
@@ -1834,10 +1835,10 @@ AX25XIDParameter.register(AX25XIDHDLCOptionalFunctionsParameter)
 
 # From AX.25 2.2 spec section 6.3.2:
 AX25_20_DEFAULT_XID_HDLCOPTFUNC = AX25XIDHDLCOptionalFunctionsParameter(
-        rej=True, srej=False, modulo8=True, modulo128=False
+    rej=True, srej=False, modulo8=True, modulo128=False
 )
 AX25_22_DEFAULT_XID_HDLCOPTFUNC = AX25XIDHDLCOptionalFunctionsParameter(
-        rej=False, srej=True, modulo8=True, modulo128=False
+    rej=False, srej=True, modulo8=True, modulo128=False
 )
 
 
@@ -1972,13 +1973,17 @@ class AX25ExchangeIdentificationFrame(AX25UnnumberedFrame):
             cr=header.cr,
         )
 
+    # AX.25 2.2 sect 4.3.3.7 defines the following values for FI and GI:
+    FI = 0x82
+    GI = 0x80
+
     def __init__(
         self,
         destination,
         source,
-        fi,
-        gi,
         parameters,
+        fi=FI,
+        gi=GI,
         repeaters=None,
         pf=False,
         cr=False,
