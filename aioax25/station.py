@@ -34,13 +34,23 @@ class AX25Station(object):
     def __init__(self, interface,
             # Station call-sign and SSID
             callsign, ssid=None,
+            # Classes of Procedures options
+            full_duplex=False,
+            # HDLC Optional Functions
+            modulo128=False,        # Whether to use Mod128 by default
+            reject_mode=AX25Peer.AX25RejectMode.SELECTIVE_RR,
+                                    # What reject mode to use?
             # Parameters (AX.25 2.2 sect 6.7.2)
             max_ifield=256,         # aka N1
+            max_ifield_rx=256,      # the N1 we advertise in XIDs
             max_retries=10,         # aka N2, value from figure 4.5
-            # k value, for mod128 and mod8 connections
+            # k value, for mod128 and mod8 connections, this sets the
+            # advertised window size in XID.  Peer station sets actual
+            # value used here.
             max_outstanding_mod8=7,
             max_outstanding_mod128=127,
             # Timer parameters
+            ack_timeout=3.0,        # Acknowledge timeout (aka T1)
             idle_timeout=900.0,     # Idle timeout before we "forget" peers
             rr_delay=10.0,          # Delay between I-frame and RR
             rr_interval=30.0,       # Poll interval when peer in busy state
@@ -66,8 +76,12 @@ class AX25Station(object):
         self._address = AX25Address.decode(callsign, ssid).normalised
         self._interface = weakref.ref(interface)
         self._protocol = protocol
+        self._ack_timeout = ack_timeout
         self._idle_timeout = idle_timeout
+        self._reject_mode = AX25Peer.AX25RejectMode(reject_mode)
+        self._modulo128 = modulo128
         self._max_ifield = max_ifield
+        self._max_ifield_rx = max_ifield_rx
         self._max_retries = max_retries
         self._max_outstanding_mod8 = max_outstanding_mod8
         self._max_outstanding_mod128 = max_outstanding_mod128
@@ -133,13 +147,17 @@ class AX25Station(object):
             pass
 
         # Not there, so set some defaults, then create
+        kwargs.setdefault('reject_mode', self._reject_mode)
+        kwargs.setdefault('modulo128', self._modulo128)
         kwargs.setdefault('max_ifield', self._max_ifield)
+        kwargs.setdefault('max_ifield_rx', self._max_ifield_rx)
         kwargs.setdefault('max_retries', self._max_retries)
         kwargs.setdefault('max_outstanding_mod8', self._max_outstanding_mod8)
         kwargs.setdefault('max_outstanding_mod128', self._max_outstanding_mod128)
         kwargs.setdefault('rr_delay', self._rr_delay)
         kwargs.setdefault('rr_interval', self._rr_interval)
         kwargs.setdefault('rnr_interval', self._rnr_interval)
+        kwargs.setdefault('ack_timeout', self._ack_timeout)
         kwargs.setdefault('idle_timeout', self._idle_timeout)
         kwargs.setdefault('protocol', AX25Version.UNKNOWN)
         peer = AX25Peer(self, address,

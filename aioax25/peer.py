@@ -21,7 +21,27 @@ from .frame import AX25Frame, AX25Path, AX25SetAsyncBalancedModeFrame, \
         AX258BitReceiveNotReadyFrame, AX2516BitReceiveNotReadyFrame, \
         AX258BitRejectFrame, AX2516BitRejectFrame, \
         AX258BitSelectiveRejectFrame, AX2516BitSelectiveRejectFrame, \
-        AX25InformationFrameMixin, AX25SupervisoryFrameMixin
+        AX25InformationFrameMixin, AX25SupervisoryFrameMixin, \
+        AX25XIDParameterIdentifier, AX25XIDClassOfProceduresParameter, \
+        AX25XIDHDLCOptionalFunctionsParameter, \
+        AX25XIDIFieldLengthTransmitParameter, \
+        AX25XIDIFieldLengthReceiveParameter, \
+        AX25XIDWindowSizeTransmitParameter, \
+        AX25XIDWindowSizeReceiveParameter, \
+        AX25XIDAcknowledgeTimerParameter, \
+        AX25XIDRetriesParameter, \
+        AX25_20_DEFAULT_XID_COP, \
+        AX25_22_DEFAULT_XID_COP, \
+        AX25_20_DEFAULT_XID_HDLCOPTFUNC, \
+        AX25_22_DEFAULT_XID_HDLCOPTFUNC, \
+        AX25_20_DEFAULT_XID_IFIELDRX, \
+        AX25_22_DEFAULT_XID_IFIELDRX, \
+        AX25_20_DEFAULT_XID_WINDOWSZRX, \
+        AX25_22_DEFAULT_XID_WINDOWSZRX, \
+        AX25_20_DEFAULT_XID_ACKTIMER, \
+        AX25_22_DEFAULT_XID_ACKTIMER, \
+        AX25_20_DEFAULT_XID_RETRIES, \
+        AX25_22_DEFAULT_XID_RETRIES
 
 
 class AX25Peer(object):
@@ -30,6 +50,26 @@ class AX25Peer(object):
     connected to this station.  The factory for these objects is the
     AX25Station's getpeer method.
     """
+
+    class AX25RejectMode(enum.Enum):
+        IMPLICIT = 'implicit'
+        SELECTIVE = 'selective'
+        SELECTIVE_RR = 'selective_rr'
+
+        # Value precedence:
+        _PRECEDENCE = {
+                'selective_rr': 2,
+                'selective': 1,
+                'implicit': 0
+        }
+
+        @property
+        def precedence(self):
+            """
+            Get the precedence of this mode.
+            """
+            return self._PRECEDENCE[self.value]
+
 
     class AX25PeerState(enum.Enum):
         # DISCONNECTED: No connection has been established
@@ -51,10 +91,11 @@ class AX25Peer(object):
         FRMR = 5
 
 
-    def __init__(self, station, address, repeaters, max_ifield, max_retries,
-            max_outstanding_mod8, max_outstanding_mod128, rr_delay, rr_interval,
-            rnr_interval, idle_timeout, protocol, log, loop, reply_path=None,
-            locked_path=False):
+    def __init__(self, station, address, repeaters, max_ifield, max_ifield_rx,
+            max_retries, max_outstanding_mod8, max_outstanding_mod128,
+            rr_delay, rr_interval, rnr_interval, ack_timeout, idle_timeout,
+            protocol, modulo128, log, loop, reject_mode,
+            reply_path=None, locked_path=False):
         """
         Create a peer context for the station named by 'address'.
         """
@@ -62,9 +103,13 @@ class AX25Peer(object):
         self._repeaters = repeaters
         self._reply_path = reply_path
         self._address = address
+        self._ack_timeout = ack_timeout
         self._idle_timeout = idle_timeout
+        self._reject_mode = reject_mode
         self._max_ifield = max_ifield
+        self._max_ifield_rx = max_ifield_rx
         self._max_retries = max_retries
+        self._modulo128 = modulo128
         self._max_outstanding_mod8 = max_outstanding_mod8
         self._max_outstanding_mod128 = max_outstanding_mod128
         self._rr_delay = rr_delay
@@ -77,6 +122,7 @@ class AX25Peer(object):
 
         # Internal state (see AX.25 2.2 spec 4.2.4)
         self._state = self.AX25PeerState.DISCONNECTED
+        self._reject_mode = None
         self._max_outstanding = None    # Decided when SABM(E) received
         self._modulo = None             # Set when SABM(E) received
         self._connected = False         # Set to true on SABM UA
@@ -503,6 +549,7 @@ class AX25Peer(object):
                     'Received XID from peer, we are not in AX.25 2.2 mode'
             )
             return self._send_frmr(frame, w=True)
+
         if self._state in (
                 self.AX25PeerState.CONNECTING,
                 self.AX25PeerState.DISCONNECTING
@@ -515,9 +562,182 @@ class AX25Peer(object):
             )
             return
 
-        # TODO: figure out XID and send an appropriate response.
-        self._log.error('TODO: implement XID')
-        return self._send_frmr(frame, w=True)
+        # We have received an XID, AX.25 2.0 and earlier stations do not know
+        # this frame, so clearly this is at least AX.25 2.2.
+        if self._protocol == AX25Version.UNKNOWN:
+            self._protocol = AX25Version.AX25_22
+
+        # Don't process the contents of the frame unless FI and GI match.
+        if (frame.fi == frame.FI) and (frame.gi == frame.GI):
+            for param in frame.parameters:
+                if param.pi == AX25XIDParameterIdentifier.ClassesOfProcedure:
+                    self._process_xid_cop(param)
+                elif param.pi == \
+                        AX25XIDParameterIdentifier.HDLCOptionalFunctions:
+                    self._process_xid_hdlcoptfunc(param)
+                elif param.pi == \
+                        AX25XIDParameterIdentifier.IFieldLengthReceive:
+                    self._process_xid_ifieldlenrx(param)
+                elif param.pi == \
+                        AX25XIDParameterIdentifier.WindowSizeReceive:
+                    self._process_xid_winszrx(param)
+                elif param.pi == \
+                        AX25XIDParameterIdentifier.AcknowledgeTimer:
+                    self._process_xid_acktimer(param)
+                elif param.pi == \
+                        AX25XIDParameterIdentifier.Retries:
+                    self._process_xid_retrycounter(param)
+
+        if frame.header.cr:
+            # Other station is requesting negotiation, send response.
+            self._send_xid(cr=False)
+
+    def _process_xid_cop(self, param):
+        if param.pv is None:
+            # We were told to use defaults.  This is from a XID frame,
+            # so assume AX.25 2.2 defaults.
+            self._log.debug('XID: Assuming default Classes of Procedure')
+            param = AX25_22_DEFAULT_XID_COP
+
+        # Ensure we don't confuse ourselves if the station sets both
+        # full-duplex and half-duplex bits.  Half-duplex is always a
+        # safe choice in case of such confusion.
+        self._full_duplex = \
+                self._full_duplex \
+                and param.full_duplex \
+                and (not param.half_duplex)
+        self._log.debug('XID: Setting full-duplex: %s', self._full_duplex)
+
+    def _process_xid_hdlcoptfunc(self, param):
+        if param.pv is None:
+            # We were told to use defaults.  This is from a XID frame,
+            # so assume AX.25 2.2 defaults.
+            self._log.debug('XID: Assuming default HDLC Optional Features')
+            param = AX25_22_DEFAULT_XID_HDLCOPTFUNC
+
+        # Negotiable parts of this parameter are:
+        # - SREJ/REJ bits
+        if param.srej and param.rej:
+            reject_mode = self.AX25RejectMode.SELECTIVE_RR
+        elif param.srej:
+            reject_mode = self.AX25RejectMode.SELECTIVE
+        else:
+            # Technically this means also the invalid SREJ=0 REJ=0,
+            # we'll assume they meant REJ=1 in that case.
+            reject_mode = self.AX25RejectMode.IMPLICIT
+
+        if self._reject_mode.precedence > reject_mode:
+            self._reject_mode = reject_mode
+        self._log.debug('XID: Set reject mode: %s', self._reject_mode.value)
+
+        if self._modulo128 and (not param.modulo128):
+            self._modulo128 = False
+        self._log.debug('XID: Set modulo128 mode: %s', self._modulo128)
+
+    def _process_xid_ifieldlenrx(self, param):
+        if param.pv is None:
+            # We were told to use defaults.  This is from a XID frame,
+            # so assume AX.25 2.2 defaults.
+            self._log.debug('XID: Assuming default I-Field Receive Length')
+            param = AX25_22_DEFAULT_XID_IFIELDRX
+
+        self._max_ifield = min([
+            self._max_ifield,
+            param.value
+        ])
+        self._log.debug('XID: Setting I-Field Receive Length: %d',
+                self._max_ifield)
+
+    def _process_xid_winszrx(self, param):
+        if param.pv is None:
+            # We were told to use defaults.  This is from a XID frame,
+            # so assume AX.25 2.2 defaults.
+            self._log.debug('XID: Assuming default Window Size Receive')
+            param = AX25_22_DEFAULT_XID_WINDOWSZRX
+
+        self._max_outstanding = min([
+            self._max_outstanding_mod128 \
+                    if self._modulo128
+                    else self._max_outstanding_mod8,
+            param.value
+        ])
+        self._log.debug('XID: Setting Window Size Receive: %d',
+                self._max_outstanding)
+
+    def _process_xid_acktimer(self, param):
+        if param.pv is None:
+            # We were told to use defaults.  This is from a XID frame,
+            # so assume AX.25 2.2 defaults.
+            self._log.debug('XID: Assuming default ACK timer')
+            param = AX25_22_DEFAULT_XID_ACKTIMER
+
+        self._ack_timeout = max([
+            self._ack_timeout * 1000,
+            param.value
+        ]) / 1000
+        self._log.debug('XID: Setting ACK timeout: %.3f sec',
+                self._ack_timeout)
+
+    def _process_xid_retrycounter(self, param):
+        if param.pv is None:
+            # We were told to use defaults.  This is from a XID frame,
+            # so assume AX.25 2.2 defaults.
+            self._log.debug('XID: Assuming default retry limit')
+            param = AX25_22_DEFAULT_XID_ACKTIMER
+
+        self._max_retries = max([
+            self._max_retries,
+            param.value
+        ])
+        self._log.debug('XID: Setting retry limit: %d',
+                self._max_retries)
+
+    def _send_xid(self, cr):
+        self._transmit_frame(
+                AX25ExchangeIdentificationFrame(
+                    destination=self.address,
+                    source=self._station().address,
+                    repeaters=self.reply_path,
+                    parameters=[
+                        # TODO: do we want to support full-duplex?
+                        # what changes?
+                        AX25XIDClassOfProceduresParameter(
+                            half_duplex=True,
+                            full_duplex=False
+                            ),
+                        AX25XIDHDLCOptionalFunctionsParameter(
+                            rej=(self._reject_mode in (
+                                self.AX25RejectMode.IMPLICIT,
+                                self.AX25RejectMode.SELECTIVE_RR
+                                )),
+                            srej=(self._reject_mode in (
+                                self.AX25RejectMode.SELECTIVE,
+                                self.AX25RejectMode.SELECTIVE_RR
+                                )),
+                            modulo8=(not self._modulo128),
+                            modulo128=(self._modulo128)
+                            ),
+                        AX25XIDIFieldLengthTransmitParameter(
+                            self._max_ifield * 8
+                            ),
+                        AX25XIDIFieldLengthReceiveParameter(
+                            self._max_ifield_rx * 8
+                            ),
+                        AX25XIDWindowSizeTransmitParameter(
+                            self._max_outstanding
+                            ),
+                        AX25XIDWindowSizeReceiveParameter(
+                            self._max_outstanding_mod128 \
+                                    if self._modulus128
+                                    else self._max_outstanding_mod8
+                                    ),
+                        AX25XIDAcknowledgeTimerParameter(
+                            int(self._ack_timeout * 1000)
+                            ),
+                        ],
+                    cr=cr
+                    )
+        )
 
     def _send_dm(self):
         """
