@@ -1337,6 +1337,13 @@ class AX25XIDClassOfProceduresParameter(AX25XIDParameter):
         )
 AX25XIDParameter.register(AX25XIDClassOfProceduresParameter)
 
+# From AX.25 2.2 spec section 6.3.2:
+AX25_20_DEFAULT_XID_COP = AX25XIDClassOfProceduresParameter(
+        half_duplex=True, full_duplex=False
+)
+AX25_22_DEFAULT_XID_COP = AX25XIDClassOfProceduresParameter(
+        half_duplex=True, full_duplex=False
+)
 
 class AX25XIDHDLCOptionalFunctionsParameter(AX25XIDParameter):
     """
@@ -1578,6 +1585,14 @@ class AX25XIDHDLCOptionalFunctionsParameter(AX25XIDParameter):
         )
 AX25XIDParameter.register(AX25XIDHDLCOptionalFunctionsParameter)
 
+# From AX.25 2.2 spec section 6.3.2:
+AX25_20_DEFAULT_XID_HDLCOPTFUNC = AX25XIDHDLCOptionalFunctionsParameter(
+        rej=True, srej=False, modulo8=True, modulo128=False
+)
+AX25_22_DEFAULT_XID_HDLCOPTFUNC = AX25XIDHDLCOptionalFunctionsParameter(
+        rej=False, srej=True, modulo8=True, modulo128=False
+)
+
 
 class AX25XIDBigEndianParameter(AX25XIDParameter):
     """
@@ -1619,6 +1634,10 @@ class AX25XIDIFieldLengthReceiveParameter(AX25XIDBigEndianParameter):
     PI = AX25XIDParameterIdentifier.IFieldLengthReceive
 AX25XIDParameter.register(AX25XIDIFieldLengthReceiveParameter)
 
+# From AX.25 2.2 spec section 6.3.2:
+AX25_20_DEFAULT_XID_IFIELDRX = AX25XIDIFieldLengthReceiveParameter(2048)
+AX25_22_DEFAULT_XID_IFIELDRX = AX25XIDIFieldLengthReceiveParameter(2048)
+
 
 class AX25XIDWindowSizeTransmitParameter(AX25XIDBigEndianParameter):
     PI = AX25XIDParameterIdentifier.WindowSizeTransmit
@@ -1631,15 +1650,27 @@ class AX25XIDWindowSizeReceiveParameter(AX25XIDBigEndianParameter):
     LENGTH = 1
 AX25XIDParameter.register(AX25XIDWindowSizeReceiveParameter)
 
+# From AX.25 2.2 spec section 6.3.2:
+AX25_20_DEFAULT_XID_WINDOWSZRX = AX25XIDIFieldLengthReceiveParameter(7)
+AX25_22_DEFAULT_XID_WINDOWSZRX = AX25XIDIFieldLengthReceiveParameter(7)
+
 
 class AX25XIDAcknowledgeTimerParameter(AX25XIDBigEndianParameter):
     PI = AX25XIDParameterIdentifier.AcknowledgeTimer
 AX25XIDParameter.register(AX25XIDAcknowledgeTimerParameter)
 
+# From AX.25 2.2 spec section 6.3.2:
+AX25_20_DEFAULT_XID_ACKTIMER = AX25XIDIFieldLengthReceiveParameter(3000)
+AX25_22_DEFAULT_XID_ACKTIMER = AX25XIDIFieldLengthReceiveParameter(3000)
+
 
 class AX25XIDRetriesParameter(AX25XIDBigEndianParameter):
     PI = AX25XIDParameterIdentifier.Retries
 AX25XIDParameter.register(AX25XIDRetriesParameter)
+
+# From AX.25 2.2 spec section 6.3.2:
+AX25_20_DEFAULT_XID_RETRIES = AX25XIDIFieldLengthReceiveParameter(10)
+AX25_22_DEFAULT_XID_RETRIES = AX25XIDIFieldLengthReceiveParameter(10)
 
 
 class AX25ExchangeIdentificationFrame(AX25UnnumberedFrame):
