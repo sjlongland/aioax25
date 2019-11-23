@@ -7,6 +7,8 @@ from aioax25.frame import (
     AX25XIDParameterIdentifier,
     AX25XIDClassOfProceduresParameter,
     AX25XIDHDLCOptionalFunctionsParameter,
+    AX25XIDIFieldLengthReceiveParameter,
+    AX25XIDRetriesParameter,
 )
 
 from nose.tools import eq_
@@ -24,6 +26,14 @@ def test_encode_xid():
         fi=0x82,
         gi=0x80,
         parameters=[
+            # Typical parameters we'd expect to see
+            AX25XIDClassOfProceduresParameter(half_duplex=True),
+            AX25XIDHDLCOptionalFunctionsParameter(
+                srej=True, rej=True, modulo128=True
+            ),
+            AX25XIDIFieldLengthReceiveParameter(1024),
+            AX25XIDRetriesParameter(5),
+            # Arbitrary parameters for testing
             AX25XIDRawParameter(pi=0x12, pv=bytes([0x34, 0x56])),
             AX25XIDRawParameter(pi=0x34, pv=None),
         ],
@@ -35,14 +45,23 @@ def test_encode_xid():
         "af"  # Control
         "82"  # Format indicator
         "80"  # Group Ident
-        "00 06"  # Group length
-        # First parameter
-        "12"  # Parameter ID
+        "00 16"  # Group length
+        # First parameter: CoP
+        "02"  # Parameter ID
         "02"  # Length
-        "34 56"  # Value
-        # Second parameter
-        "34"  # Parameter ID
-        "00",  # Length (no value)
+        "00 21"  # Value
+        # Second parameter: HDLC Optional Functions
+        "03"  # Parameter ID
+        "03"  # Length
+        "86 a8 02"  # Value
+        # Third parameter: I field receive size
+        "06" "02" "04 00"
+        # Fourth parameter: retries
+        "0a" "01" "05"
+        # Fifth parameter: custom
+        "12" "02" "34 56"
+        # Sixth parameter: custom, no length set
+        "34" "00",
     )
 
 

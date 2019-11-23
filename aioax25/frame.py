@@ -1844,9 +1844,7 @@ class AX25XIDBigEndianParameter(AX25XIDParameter):
         """
         self._value = value
 
-        super(AX25XIDHDLCOptionalFunctionsParameter, self).__init__(
-            pi=self.PI
-        )
+        super(AX25XIDBigEndianParameter, self).__init__(pi=self.PI)
 
     @property
     def pv(self):
@@ -1865,11 +1863,11 @@ class AX25XIDIFieldLengthTransmitParameter(AX25XIDBigEndianParameter):
 
 
 class AX25XIDIFieldLengthReceiveParameter(AX25XIDBigEndianParameter):
-    PI = AX25XIDParameterIdentifier.WindowSizeReceive
+    PI = AX25XIDParameterIdentifier.IFieldLengthReceive
 
 
 class AX25XIDWindowSizeTransmitParameter(AX25XIDBigEndianParameter):
-    PI = AX25XIDParameterIdentifier.IFieldLengthTransmit
+    PI = AX25XIDParameterIdentifier.WindowSizeTransmit
     LENGTH = 1
 
 
