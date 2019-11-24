@@ -899,7 +899,7 @@ class AX25Peer(object):
 
         self._max_ifield = min([
             self._max_ifield,
-            param.value
+            int(param.value/8)  # Value is given in bits
         ])
         self._log.debug('XID: Setting I-Field Receive Length: %d',
                 self._max_ifield)
