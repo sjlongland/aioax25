@@ -90,10 +90,14 @@ class DummyIOLoop(object):
 
 class DummyStation(object):
     def __init__(self, address, reply_path=None):
+        self._interface_ref = DummyInterface()
         self.address = address
         self.reply_path = reply_path or []
         self._full_duplex = False
         self._protocol = AX25Version.AX25_22
+
+    def _interface(self):
+        return self._interface_ref
 
 
 class DummyPeer(object):
