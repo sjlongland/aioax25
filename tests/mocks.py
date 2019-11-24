@@ -67,14 +67,14 @@ class DummyTimeout(object):
         assert not self.cancelled, 'Cancel called twice!'
         self.cancelled = True
 
-    def time(self):
-        return time.monotonic()
-
 
 class DummyIOLoop(object):
     def __init__(self):
         self.call_soon_list = []
         self.call_later_list = []
+
+    def time(self):
+        return time.monotonic()
 
     def call_soon(self, callback, *args, **kwargs):
         self.call_soon_list.append((callback, args, kwargs))
