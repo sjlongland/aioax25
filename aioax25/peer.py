@@ -110,6 +110,7 @@ class AX25Peer(object):
         self._ack_timeout = ack_timeout
         self._idle_timeout = idle_timeout
         self._reject_mode = reject_mode
+        self._full_duplex = full_duplex
         self._max_ifield = max_ifield
         self._max_ifield_rx = max_ifield_rx
         self._max_retries = max_retries
@@ -126,8 +127,6 @@ class AX25Peer(object):
 
         # Internal state (see AX.25 2.2 spec 4.2.4)
         self._state = self.AX25PeerState.DISCONNECTED
-        self._full_duplex = full_duplex
-        self._reject_mode = None
         self._max_outstanding = None    # Decided when SABM(E) received
         self._modulo = None             # Set when SABM(E) received
         self._negotiated = False        # Set to True after XID negotiation
