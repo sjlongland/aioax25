@@ -1005,7 +1005,7 @@ class AX25Peer(object):
                             ),
                         AX25XIDWindowSizeReceiveParameter(
                             self._max_outstanding_mod128 \
-                                    if self._modulus128
+                                    if self._modulo128
                                     else self._max_outstanding_mod8
                                     ),
                         AX25XIDAcknowledgeTimerParameter(
