@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import time
 import logging
 from aioax25.version import AX25Version
 
@@ -65,6 +66,9 @@ class DummyTimeout(object):
     def cancel(self):
         assert not self.cancelled, 'Cancel called twice!'
         self.cancelled = True
+
+    def time(self):
+        return time.monotonic()
 
 
 class DummyIOLoop(object):
