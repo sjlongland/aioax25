@@ -107,6 +107,7 @@ class DummyPeer(object):
         self.transmit_calls = []
         self.on_receive_calls = []
 
+        self._testframe_handler = None
         self._uaframe_handler = None
         self._frmrframe_handler = None
         self._dmframe_handler = None
