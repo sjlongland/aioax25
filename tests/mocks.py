@@ -85,8 +85,15 @@ class DummyIOLoop(object):
         return timeout
 
 
+class DummyStation(object):
+    def __init__(self, address, reply_path=None):
+        self.address = address
+        self.reply_path = reply_path or []
+
+
 class DummyPeer(object):
-    def __init__(self, address):
+    def __init__(self, station, address):
+        self._station_ref = station
         self._log = DummyLogger('peer')
         self._loop = DummyIOLoop()
 
@@ -107,6 +114,10 @@ class DummyPeer(object):
 
         self._negotiated = False
         self._protocol = AX25Version.UNKNOWN
+
+    # Our fake weakref
+    def _station(self):
+        return self._station_ref
 
     @property
     def address(self):

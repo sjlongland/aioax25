@@ -58,8 +58,8 @@ def test_route_testframe_reply():
     station._on_test_frame = stub_on_test_frame
 
     # Inject a couple of peers
-    peer1 = DummyPeer(AX25Address('VK4MSL', ssid=7))
-    peer2 = DummyPeer(AX25Address('VK4BWI', ssid=7))
+    peer1 = DummyPeer(station, AX25Address('VK4MSL', ssid=7))
+    peer2 = DummyPeer(station, AX25Address('VK4BWI', ssid=7))
     station._peers[peer1._address] = peer1
     station._peers[peer2._address] = peer2
 
@@ -99,8 +99,8 @@ def test_route_incoming_msg():
     station._on_test_frame = stub_on_test_frame
 
     # Inject a couple of peers
-    peer1 = DummyPeer(AX25Address('VK4MSL', ssid=7))
-    peer2 = DummyPeer(AX25Address('VK4BWI', ssid=7))
+    peer1 = DummyPeer(station, AX25Address('VK4MSL', ssid=7))
+    peer2 = DummyPeer(station, AX25Address('VK4BWI', ssid=7))
     station._peers[peer1._address] = peer1
     station._peers[peer2._address] = peer2
 

@@ -11,7 +11,7 @@ def test_known_peer_fetch_instance():
     Test calling _drop_peer removes the peer
     """
     station = AX25Station(interface=DummyInterface(), callsign='VK4MSL-5')
-    mypeer = DummyPeer(AX25Address('VK4BWI'))
+    mypeer = DummyPeer(station, AX25Address('VK4BWI'))
 
     # Inject the peer
     station._peers[mypeer._address] = mypeer
