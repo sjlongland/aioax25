@@ -1362,7 +1362,7 @@ class AX25PeerTestHandler(AX25PeerHelper):
         self._tx_frame = AX25TestFrame(
                 destination=peer.address,
                 source=peer._station().address,
-                repeaters=self.reply_path,
+                repeaters=peer._station().reply_path,
                 payload=payload,
                 cr=True
         )
