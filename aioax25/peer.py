@@ -212,11 +212,16 @@ class AX25Peer(object):
             # Enumerate all possible paths and select the "best" path
             all_paths = list(self._tx_path_score.items()) \
                     + [(path, 0) for path in self._rx_path_count.keys()]
-            all_paths.sort(key=lambda p : p[0])
-            best_path = all_paths[-1][0]
+
+            if all_paths:
+                all_paths.sort(key=lambda p : p[0])
+                best_path = all_paths[-1][0]
+            else:
+                # If no paths exist, use whatver default path is set
+                best_path = self._repeaters
 
             # Use this until we have reason to change
-            self._reply_path = AX25Path(*best_path)
+            self._reply_path = AX25Path(*(best_path or []))
 
         return self._reply_path
 
