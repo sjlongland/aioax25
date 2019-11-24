@@ -89,6 +89,7 @@ class DummyStation(object):
     def __init__(self, address, reply_path=None):
         self.address = address
         self.reply_path = reply_path or []
+        self._protocol = AX25Version.AX25_22
 
 
 class DummyPeer(object):
@@ -124,6 +125,9 @@ class DummyPeer(object):
     def address(self):
         self.address_read = True
         return self._address
+
+    def _negotiate(self, callback):
+        self._negotiate_calls.append(callback)
 
     def _on_receive(self, *args, **kwargs):
         self.on_receive_calls.append((args, kwargs))
