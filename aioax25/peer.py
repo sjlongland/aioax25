@@ -1310,9 +1310,15 @@ class AX25PeerNegotiationHandler(AX25PeerHelper):
         # Specs say AX.25 2.2 should respond with XID and 2.0 should respond
         # with FRMR.  It is also possible we could get a DM as some buggy AX.25
         # implementations respond with that in reply to unknown frames.
+        if (self.peer._xidframe_handler is not None) \
+                or (self.peer._frmrframe_handler is not None) \
+                or (self.peer._dmframe_handler is not None):
+            raise RuntimeError('Another frame handler is busy')
+
         self.peer._xidframe_handler = self._on_receive_xid
         self.peer._frmrframe_handler = self._on_receive_frmr
         self.peer._dmframe_handler = self._on_receive_dm
+
         self.peer._send_xid(cr=True)
         self._start_timer()
 
@@ -1342,9 +1348,12 @@ class AX25PeerNegotiationHandler(AX25PeerHelper):
 
     def _finish(self, **kwargs):
         # Clean up hooks
-        self.peer._xidframe_handler = None
-        self.peer._frmrframe_handler = None
-        self.peer._dmframe_handler = None
+        if self.peer._xidframe_handler == self._on_receive_xid:
+            self.peer._xidframe_handler = None
+        if self.peer._frmrframe_handler == self._on_receive_frmr:
+            self.peer._frmrframe_handler = None
+        if self.peer._dmframe_handler == self._on_receive_dm:
+            self.peer._dmframe_handler = None
         super(AX25PeerNegotiationHandler, self)._finish(**kwargs)
 
 
