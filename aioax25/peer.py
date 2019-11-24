@@ -264,9 +264,6 @@ class AX25Peer(object):
         """
         Ping the peer and wait for a response.
         """
-        if self._testframe_handler is not None:
-            raise RuntimeError("Existing ping request in progress")
-
         handler = AX25PeerTestHandler(self, bytes(payload or b""), timeout)
         handler.done_sig.connect(self._on_test_done)
 
@@ -1485,6 +1482,9 @@ class AX25PeerTestHandler(AX25PeerHelper):
         """
         Start the transmission.
         """
+        if self.peer._testframe_handler is not None:
+            raise RuntimeError("Test frame already pending")
+        self.peer._testframe_handler = self
         self.peer._transmit_frame(self.tx_frame, callback=self._transmit_done)
         self._start_timer()
 

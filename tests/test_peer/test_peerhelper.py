@@ -15,7 +15,8 @@ def test_peerhelper_start_timer():
     """
     Test _start_timer sets up a timeout timer.
     """
-    peer = DummyPeer(AX25Address('VK4MSL'))
+    peer = DummyPeer(AX25Address("VK4MSL"))
+
     class TestHelper(AX25PeerHelper):
         def _on_timeout(self):
             pass
@@ -39,11 +40,11 @@ def test_peerhelper_stop_timer():
     """
     Test _stop_timer clears an existing timeout timer.
     """
-    peer = DummyPeer(AX25Address('VK4MSL'))
+    peer = DummyPeer(AX25Address("VK4MSL"))
     helper = AX25PeerHelper(peer, timeout=0.1)
 
     # Inject a timeout timer
-    timeout = peer._loop.call_later(0, lambda : None)
+    timeout = peer._loop.call_later(0, lambda: None)
     helper._timeout_handle = timeout
     assert not timeout.cancelled
 
@@ -57,11 +58,11 @@ def test_peerhelper_stop_timer_cancelled():
     """
     Test _stop_timer does not call cancel on already cancelled timer.
     """
-    peer = DummyPeer(AX25Address('VK4MSL'))
+    peer = DummyPeer(AX25Address("VK4MSL"))
     helper = AX25PeerHelper(peer, timeout=0.1)
 
     # Inject a timeout timer
-    timeout = peer._loop.call_later(0, lambda : None)
+    timeout = peer._loop.call_later(0, lambda: None)
     helper._timeout_handle = timeout
 
     # Cancel it
@@ -76,7 +77,7 @@ def test_peerhelper_stop_timer_absent():
     """
     Test _stop_timer does nothing if time-out object absent.
     """
-    peer = DummyPeer(AX25Address('VK4MSL'))
+    peer = DummyPeer(AX25Address("VK4MSL"))
     helper = AX25PeerHelper(peer, timeout=0.1)
 
     # Cancel the non-existent timer, this should not trigger errors
@@ -87,26 +88,26 @@ def test_finish():
     """
     Test _finish stops the timer and emits the done signal.
     """
-    peer = DummyPeer(AX25Address('VK4MSL'))
+    peer = DummyPeer(AX25Address("VK4MSL"))
     helper = AX25PeerHelper(peer, timeout=0.1)
     assert not helper._done
 
     # Hook the done signal
     done_events = []
-    helper.done_sig.connect(lambda **kw : done_events.append(kw))
+    helper.done_sig.connect(lambda **kw: done_events.append(kw))
 
     # Inject a timeout timer
-    timeout = peer._loop.call_later(0, lambda : None)
+    timeout = peer._loop.call_later(0, lambda: None)
     helper._timeout_handle = timeout
 
     # Call _finish to end the helper
-    helper._finish(arg1='abc', arg2=123)
+    helper._finish(arg1="abc", arg2=123)
 
     # Task should be done
     assert helper._done
 
     # Signal should have fired
-    eq_(done_events, [{'arg1': 'abc', 'arg2': 123}])
+    eq_(done_events, [{"arg1": "abc", "arg2": 123}])
 
     # Timeout should have been cancelled
     assert timeout.cancelled
@@ -116,7 +117,7 @@ def test_finish_repeat():
     """
     Test _finish does nothing if already "done"
     """
-    peer = DummyPeer(AX25Address('VK4MSL'))
+    peer = DummyPeer(AX25Address("VK4MSL"))
     helper = AX25PeerHelper(peer, timeout=0.1)
 
     # Force the done flag.
@@ -124,14 +125,14 @@ def test_finish_repeat():
 
     # Hook the done signal
     done_events = []
-    helper.done_sig.connect(lambda **kw : done_events.append(kw))
+    helper.done_sig.connect(lambda **kw: done_events.append(kw))
 
     # Inject a timeout timer
-    timeout = peer._loop.call_later(0, lambda : None)
+    timeout = peer._loop.call_later(0, lambda: None)
     helper._timeout_handle = timeout
 
     # Call _finish to end the helper
-    helper._finish(arg1='abc', arg2=123)
+    helper._finish(arg1="abc", arg2=123)
 
     # Signal should not have fired
     eq_(done_events, [])
