@@ -1314,10 +1314,10 @@ class AX25PeerConnectionHandler(AX25PeerHelper):
         if self.peer._negotiated:
             # Already done, we can connect immediately
             self._on_negotiated(response="already")
-        elif self.peer._protocol not in (
-            AX25Version.AX25_22,
-            AX25Version.UNKNOWN,
-        ):
+        elif (
+            self.peer._protocol
+            not in (AX25Version.AX25_22, AX25Version.UNKNOWN)
+        ) or (self.peer._station()._protocol != AX25Version.AX25_22):
             # Not compatible, just connect
             self._on_negotiated(response="not_compatible")
         else:
@@ -1325,9 +1325,24 @@ class AX25PeerConnectionHandler(AX25PeerHelper):
             self.peer._negotiate(self._on_negotiated)
 
     def _on_negotiated(self, response, **kwargs):
-        if response in ("xid", "frmr", "dm", "already", "retry"):
+        if response in (
+            "xid",
+            "frmr",
+            "dm",
+            "already",
+            "not_compatible",
+            "retry",
+        ):
             # We successfully negotiated with this station (or it was not
             # required)
+            if (
+                (self.peer._uaframe_handler is not None)
+                or (self.peer._frmrframe_handler is not None)
+                or (self.peer._dmframe_handler is not None)
+            ):
+                # We're handling another frame now.
+                self._finish(response="station_busy")
+                return
             self.peer._uaframe_handler = self._on_receive_ua
             self.peer._frmrframe_handler = self._on_receive_frmr
             self.peer._dmframe_handler = self._on_receive_dm
@@ -1358,9 +1373,15 @@ class AX25PeerConnectionHandler(AX25PeerHelper):
 
     def _finish(self, **kwargs):
         # Clean up hooks
-        self.peer._uaframe_handler = None
-        self.peer._frmrframe_handler = None
-        self.peer._dmframe_handler = None
+        if self.peer._uaframe_handler == self._on_receive_ua:
+            self.peer._uaframe_handler = None
+
+        if self.peer._frmrframe_handler == self._on_receive_frmr:
+            self.peer._frmrframe_handler = None
+
+        if self.peer._dmframe_handler == self._on_receive_dm:
+            self.peer._dmframe_handler = None
+
         super(AX25PeerConnectionHandler, self)._finish(**kwargs)
 
 
@@ -1381,10 +1402,12 @@ class AX25PeerNegotiationHandler(AX25PeerHelper):
         # Specs say AX.25 2.2 should respond with XID and 2.0 should respond
         # with FRMR.  It is also possible we could get a DM as some buggy AX.25
         # implementations respond with that in reply to unknown frames.
-        if (self.peer._xidframe_handler is not None) \
-                or (self.peer._frmrframe_handler is not None) \
-                or (self.peer._dmframe_handler is not None):
-            raise RuntimeError('Another frame handler is busy')
+        if (
+            (self.peer._xidframe_handler is not None)
+            or (self.peer._frmrframe_handler is not None)
+            or (self.peer._dmframe_handler is not None)
+        ):
+            raise RuntimeError("Another frame handler is busy")
 
         self.peer._xidframe_handler = self._on_receive_xid
         self.peer._frmrframe_handler = self._on_receive_frmr

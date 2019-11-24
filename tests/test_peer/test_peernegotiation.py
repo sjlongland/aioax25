@@ -4,8 +4,13 @@
 Tests for AX25PeerNegotiationHandler
 """
 
-from nose.tools import eq_, assert_almost_equal, assert_is, \
-        assert_is_not_none, assert_is_none
+from nose.tools import (
+    eq_,
+    assert_almost_equal,
+    assert_is,
+    assert_is_not_none,
+    assert_is_none,
+)
 
 from aioax25.peer import AX25PeerNegotiationHandler
 from aioax25.frame import AX25Address, AX25TestFrame
@@ -16,8 +21,8 @@ def test_peerneg_go():
     """
     Test _go transmits a test frame with CR=True and starts a timer.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerNegotiationHandler(peer)
 
     # Nothing should be set up
@@ -40,7 +45,7 @@ def test_peerneg_go():
     (frame, callback) = peer.transmit_calls.pop(0)
 
     # Frame should be a test frame, with CR=True
-    eq_(frame, 'xid:cr=True')
+    eq_(frame, "xid:cr=True")
     assert_is_none(callback)
 
 
@@ -48,8 +53,8 @@ def test_peerneg_go_xidframe_handler():
     """
     Test _go refuses to run if another XID frame handler is hooked.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerNegotiationHandler(peer)
 
     # Nothing should be set up
@@ -58,14 +63,14 @@ def test_peerneg_go_xidframe_handler():
     eq_(peer.transmit_calls, [])
 
     # Hook the XID handler
-    peer._xidframe_handler = lambda *a, **kwa : None
+    peer._xidframe_handler = lambda *a, **kwa: None
 
     # Try to start it off
     try:
         helper._go()
-        assert False, 'Should not have worked'
+        assert False, "Should not have worked"
     except RuntimeError as e:
-        if str(e) != 'Another frame handler is busy':
+        if str(e) != "Another frame handler is busy":
             raise
 
 
@@ -73,8 +78,8 @@ def test_peerneg_go_frmrframe_handler():
     """
     Test _go refuses to run if another FRMR frame handler is hooked.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerNegotiationHandler(peer)
 
     # Nothing should be set up
@@ -83,14 +88,14 @@ def test_peerneg_go_frmrframe_handler():
     eq_(peer.transmit_calls, [])
 
     # Hook the FRMR handler
-    peer._frmrframe_handler = lambda *a, **kwa : None
+    peer._frmrframe_handler = lambda *a, **kwa: None
 
     # Try to start it off
     try:
         helper._go()
-        assert False, 'Should not have worked'
+        assert False, "Should not have worked"
     except RuntimeError as e:
-        if str(e) != 'Another frame handler is busy':
+        if str(e) != "Another frame handler is busy":
             raise
 
 
@@ -98,8 +103,8 @@ def test_peerneg_go_dmframe_handler():
     """
     Test _go refuses to run if another DM frame handler is hooked.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerNegotiationHandler(peer)
 
     # Nothing should be set up
@@ -108,14 +113,14 @@ def test_peerneg_go_dmframe_handler():
     eq_(peer.transmit_calls, [])
 
     # Hook the DM handler
-    peer._dmframe_handler = lambda *a, **kwa : None
+    peer._dmframe_handler = lambda *a, **kwa: None
 
     # Try to start it off
     try:
         helper._go()
-        assert False, 'Should not have worked'
+        assert False, "Should not have worked"
     except RuntimeError as e:
-        if str(e) != 'Another frame handler is busy':
+        if str(e) != "Another frame handler is busy":
             raise
 
 
@@ -123,8 +128,8 @@ def test_peerneg_receive_xid():
     """
     Test _on_receive_xid ends the helper
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerNegotiationHandler(peer)
 
     # Nothing should be set up
@@ -133,22 +138,22 @@ def test_peerneg_receive_xid():
 
     # Hook the done signal
     done_evts = []
-    helper.done_sig.connect(lambda **kw : done_evts.append(kw))
+    helper.done_sig.connect(lambda **kw: done_evts.append(kw))
 
     # Call _on_receive_xid
     helper._on_receive_xid()
 
     # See that the helper finished
     assert_is(helper._done, True)
-    eq_(done_evts, [{'response': 'xid'}])
+    eq_(done_evts, [{"response": "xid"}])
 
 
 def test_peerneg_receive_frmr():
     """
     Test _on_receive_frmr ends the helper
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerNegotiationHandler(peer)
 
     # Nothing should be set up
@@ -157,22 +162,22 @@ def test_peerneg_receive_frmr():
 
     # Hook the done signal
     done_evts = []
-    helper.done_sig.connect(lambda **kw : done_evts.append(kw))
+    helper.done_sig.connect(lambda **kw: done_evts.append(kw))
 
     # Call _on_receive_frmr
     helper._on_receive_frmr()
 
     # See that the helper finished
     assert_is(helper._done, True)
-    eq_(done_evts, [{'response': 'frmr'}])
+    eq_(done_evts, [{"response": "frmr"}])
 
 
 def test_peerneg_receive_dm():
     """
     Test _on_receive_dm ends the helper
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerNegotiationHandler(peer)
 
     # Nothing should be set up
@@ -181,22 +186,22 @@ def test_peerneg_receive_dm():
 
     # Hook the done signal
     done_evts = []
-    helper.done_sig.connect(lambda **kw : done_evts.append(kw))
+    helper.done_sig.connect(lambda **kw: done_evts.append(kw))
 
     # Call _on_receive_frmr
     helper._on_receive_dm()
 
     # See that the helper finished
     assert_is(helper._done, True)
-    eq_(done_evts, [{'response': 'dm'}])
+    eq_(done_evts, [{"response": "dm"}])
 
 
 def test_peerneg_on_timeout_first():
     """
     Test _on_timeout retries if there are retries left
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerNegotiationHandler(peer)
 
     # Nothing should be set up
@@ -227,7 +232,7 @@ def test_peerneg_on_timeout_first():
     (frame, callback) = peer.transmit_calls.pop(0)
 
     # Frame should be a test frame, with CR=True
-    eq_(frame, 'xid:cr=True')
+    eq_(frame, "xid:cr=True")
     assert_is_none(callback)
 
 
@@ -235,8 +240,8 @@ def test_peerneg_on_timeout_last():
     """
     Test _on_timeout finishes the helper if retries exhausted
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerNegotiationHandler(peer)
 
     # Nothing should be set up
@@ -254,7 +259,7 @@ def test_peerneg_on_timeout_last():
 
     # Hook the done signal
     done_evts = []
-    helper.done_sig.connect(lambda **kw : done_evts.append(kw))
+    helper.done_sig.connect(lambda **kw: done_evts.append(kw))
 
     # Call the time-out handler
     helper._on_timeout()
@@ -272,19 +277,19 @@ def test_peerneg_on_timeout_last():
 
     # See that the helper finished
     assert_is(helper._done, True)
-    eq_(done_evts, [{'response': 'timeout'}])
+    eq_(done_evts, [{"response": "timeout"}])
 
 
 def test_peerneg_finish_disconnect_xid():
     """
     Test _finish leaves other XID hooks intact
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerNegotiationHandler(peer)
 
     # Pretend we're hooked up
-    dummy_xidframe_handler = lambda *a, **kw : None
+    dummy_xidframe_handler = lambda *a, **kw: None
     peer._xidframe_handler = dummy_xidframe_handler
     peer._frmrframe_handler = helper._on_receive_frmr
     peer._dmframe_handler = helper._on_receive_dm
@@ -302,12 +307,12 @@ def test_peerneg_finish_disconnect_frmr():
     """
     Test _finish leaves other FRMR hooks intact
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerNegotiationHandler(peer)
 
     # Pretend we're hooked up
-    dummy_frmrframe_handler = lambda *a, **kw : None
+    dummy_frmrframe_handler = lambda *a, **kw: None
     peer._xidframe_handler = helper._on_receive_xid
     peer._frmrframe_handler = dummy_frmrframe_handler
     peer._dmframe_handler = helper._on_receive_dm
@@ -325,12 +330,12 @@ def test_peerneg_finish_disconnect_dm():
     """
     Test _finish leaves other DM hooks intact
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerNegotiationHandler(peer)
 
     # Pretend we're hooked up
-    dummy_dmframe_handler = lambda *a, **kw : None
+    dummy_dmframe_handler = lambda *a, **kw: None
     peer._xidframe_handler = helper._on_receive_xid
     peer._frmrframe_handler = helper._on_receive_frmr
     peer._dmframe_handler = dummy_dmframe_handler
