@@ -1376,9 +1376,6 @@ class AX25PeerTestHandler(AX25PeerHelper):
         # Time of reception
         self._rx_time = None
 
-        # Flag indicating we are done
-        self._done = False
-
     @property
     def tx_time(self):
         """
