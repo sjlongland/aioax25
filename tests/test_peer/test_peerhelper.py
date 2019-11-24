@@ -8,14 +8,15 @@ from nose.tools import eq_
 
 from aioax25.peer import AX25PeerHelper
 from aioax25.frame import AX25Address
-from ..mocks import DummyPeer
+from ..mocks import DummyPeer, DummyStation
 
 
 def test_peerhelper_start_timer():
     """
     Test _start_timer sets up a timeout timer.
     """
-    peer = DummyPeer(AX25Address("VK4MSL"))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
 
     class TestHelper(AX25PeerHelper):
         def _on_timeout(self):
@@ -40,7 +41,8 @@ def test_peerhelper_stop_timer():
     """
     Test _stop_timer clears an existing timeout timer.
     """
-    peer = DummyPeer(AX25Address("VK4MSL"))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerHelper(peer, timeout=0.1)
 
     # Inject a timeout timer
@@ -58,7 +60,8 @@ def test_peerhelper_stop_timer_cancelled():
     """
     Test _stop_timer does not call cancel on already cancelled timer.
     """
-    peer = DummyPeer(AX25Address("VK4MSL"))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerHelper(peer, timeout=0.1)
 
     # Inject a timeout timer
@@ -77,7 +80,8 @@ def test_peerhelper_stop_timer_absent():
     """
     Test _stop_timer does nothing if time-out object absent.
     """
-    peer = DummyPeer(AX25Address("VK4MSL"))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerHelper(peer, timeout=0.1)
 
     # Cancel the non-existent timer, this should not trigger errors
@@ -88,7 +92,8 @@ def test_finish():
     """
     Test _finish stops the timer and emits the done signal.
     """
-    peer = DummyPeer(AX25Address("VK4MSL"))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerHelper(peer, timeout=0.1)
     assert not helper._done
 
@@ -117,7 +122,8 @@ def test_finish_repeat():
     """
     Test _finish does nothing if already "done"
     """
-    peer = DummyPeer(AX25Address("VK4MSL"))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerHelper(peer, timeout=0.1)
 
     # Force the done flag.
