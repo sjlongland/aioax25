@@ -1103,31 +1103,33 @@ class AX25Peer(object):
         Send a RR notification frame
         """
         self._cancel_rr_notification()
-        self._transmit_frame(
-                self._RRFrameClass(
-                    destination=self.address,
-                    source=self._station().address,
-                    repeaters=self.reply_path,
-                    pf=False, nr=self._recv_state
-                )
-        )
+        if self._state == self.AX25PeerState.CONNECTED:
+            self._transmit_frame(
+                    self._RRFrameClass(
+                        destination=self.address,
+                        source=self._station().address,
+                        repeaters=self.reply_path,
+                        pf=False, nr=self._recv_state
+                    )
+            )
 
     def _send_rnr_notification(self):
         """
         Send a RNR notification if the RNR interval has elapsed.
         """
-        now = self._loop.time()
-        if (now - self._last_rnr_sent) > self._rnr_interval:
-            self._transmit_frame(
-                    self._RNRFrameClass(
-                        destination=self.address,
-                        source=self._station().address,
-                        repeaters=self.reply_path,
-                        nr=self._recv_seq,
-                        pf=False
-                    )
-            )
-            self._last_rnr_sent = now
+        if self._state == self.AX25PeerState.CONNECTED:
+            now = self._loop.time()
+            if (now - self._last_rnr_sent) > self._rnr_interval:
+                self._transmit_frame(
+                        self._RNRFrameClass(
+                            destination=self.address,
+                            source=self._station().address,
+                            repeaters=self.reply_path,
+                            nr=self._recv_seq,
+                            pf=False
+                        )
+                )
+                self._last_rnr_sent = now
 
     def _send_next_iframe(self):
         """
