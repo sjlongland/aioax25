@@ -92,6 +92,7 @@ class DummyStation(object):
     def __init__(self, address, reply_path=None):
         self.address = address
         self.reply_path = reply_path or []
+        self._full_duplex = False
         self._protocol = AX25Version.AX25_22
 
 
