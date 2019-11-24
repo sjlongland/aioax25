@@ -956,7 +956,9 @@ class AX25Peer(object):
             self._log.debug("XID: Assuming default I-Field Receive Length")
             param = AX25_22_DEFAULT_XID_IFIELDRX
 
-        self._max_ifield = min([self._max_ifield, param.value])
+        self._max_ifield = min(
+            [self._max_ifield, int(param.value / 8)]  # Value is given in bits
+        )
         self._log.debug(
             "XID: Setting I-Field Receive Length: %d", self._max_ifield
         )
