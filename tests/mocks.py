@@ -27,10 +27,13 @@ class DummyLogger(object):
         self.name = name
         self.logs = []
 
-    def log(self, level, msg, *args, **kwargs):
-        if parent is not None:
-            parent.logs.append((self.name, level, msg, args, kwargs))
+    def _log(self, name, level, msg, *args, **kwargs):
+        if self.parent is not None:
+            self.parent._log(self.name, level, msg, *args, **kwargs)
         self.logs.append((self.name, level, msg, args, kwargs))
+
+    def log(self, level, msg, *args, **kwargs):
+        self._log(self.name, level, msg, *args, **kwargs)
 
     def critical(self, msg, *args, **kwargs):
         self.log(logging.CRITICAL, msg, *args, **kwargs)
