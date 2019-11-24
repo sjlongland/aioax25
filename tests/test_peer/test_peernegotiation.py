@@ -12,7 +12,7 @@ from aioax25.frame import AX25Address, AX25TestFrame
 from ..mocks import DummyPeer, DummyStation
 
 
-def test_peertest_go():
+def test_peerneg_go():
     """
     Test _go transmits a test frame with CR=True and starts a timer.
     """
@@ -44,7 +44,7 @@ def test_peertest_go():
     assert_is_none(callback)
 
 
-def test_peertest_go_xidframe_handler():
+def test_peerneg_go_xidframe_handler():
     """
     Test _go refuses to run if another XID frame handler is hooked.
     """
@@ -69,7 +69,7 @@ def test_peertest_go_xidframe_handler():
             raise
 
 
-def test_peertest_go_frmrframe_handler():
+def test_peerneg_go_frmrframe_handler():
     """
     Test _go refuses to run if another FRMR frame handler is hooked.
     """
@@ -94,7 +94,7 @@ def test_peertest_go_frmrframe_handler():
             raise
 
 
-def test_peertest_go_dmframe_handler():
+def test_peerneg_go_dmframe_handler():
     """
     Test _go refuses to run if another DM frame handler is hooked.
     """
@@ -119,7 +119,7 @@ def test_peertest_go_dmframe_handler():
             raise
 
 
-def test_peertest_receive_xid():
+def test_peerneg_receive_xid():
     """
     Test _on_receive_xid ends the helper
     """
@@ -143,7 +143,7 @@ def test_peertest_receive_xid():
     eq_(done_evts, [{'response': 'xid'}])
 
 
-def test_peertest_receive_frmr():
+def test_peerneg_receive_frmr():
     """
     Test _on_receive_frmr ends the helper
     """
@@ -167,7 +167,7 @@ def test_peertest_receive_frmr():
     eq_(done_evts, [{'response': 'frmr'}])
 
 
-def test_peertest_receive_dm():
+def test_peerneg_receive_dm():
     """
     Test _on_receive_dm ends the helper
     """
@@ -191,7 +191,7 @@ def test_peertest_receive_dm():
     eq_(done_evts, [{'response': 'dm'}])
 
 
-def test_peertest_on_timeout_first():
+def test_peerneg_on_timeout_first():
     """
     Test _on_timeout retries if there are retries left
     """
@@ -231,7 +231,7 @@ def test_peertest_on_timeout_first():
     assert_is_none(callback)
 
 
-def test_peertest_on_timeout_last():
+def test_peerneg_on_timeout_last():
     """
     Test _on_timeout finishes the helper if retries exhausted
     """
@@ -275,7 +275,7 @@ def test_peertest_on_timeout_last():
     eq_(done_evts, [{'response': 'timeout'}])
 
 
-def test_peertest_finish_disconnect_xid():
+def test_peerneg_finish_disconnect_xid():
     """
     Test _finish leaves other XID hooks intact
     """
@@ -298,7 +298,7 @@ def test_peertest_finish_disconnect_xid():
     assert_is_none(peer._dmframe_handler)
 
 
-def test_peertest_finish_disconnect_frmr():
+def test_peerneg_finish_disconnect_frmr():
     """
     Test _finish leaves other FRMR hooks intact
     """
@@ -321,7 +321,7 @@ def test_peertest_finish_disconnect_frmr():
     assert_is_none(peer._dmframe_handler)
 
 
-def test_peertest_finish_disconnect_dm():
+def test_peerneg_finish_disconnect_dm():
     """
     Test _finish leaves other DM hooks intact
     """
