@@ -98,7 +98,7 @@ class AX25Peer(object):
     def __init__(self, station, address, repeaters, max_ifield, max_ifield_rx,
             max_retries, max_outstanding_mod8, max_outstanding_mod128,
             rr_delay, rr_interval, rnr_interval, ack_timeout, idle_timeout,
-            protocol, modulo128, log, loop, reject_mode,
+            protocol, modulo128, log, loop, reject_mode, full_duplex,
             reply_path=None, locked_path=False):
         """
         Create a peer context for the station named by 'address'.
@@ -126,6 +126,7 @@ class AX25Peer(object):
 
         # Internal state (see AX.25 2.2 spec 4.2.4)
         self._state = self.AX25PeerState.DISCONNECTED
+        self._full_duplex = full_duplex
         self._reject_mode = None
         self._max_outstanding = None    # Decided when SABM(E) received
         self._modulo = None             # Set when SABM(E) received

@@ -88,6 +88,7 @@ class AX25Station(object):
         self._rr_delay = rr_delay
         self._rr_interval = rr_interval
         self._rnr_interval = rnr_interval
+        self._full_duplex = full_duplex
         self._log = log
         self._loop = loop
 
@@ -147,6 +148,7 @@ class AX25Station(object):
             pass
 
         # Not there, so set some defaults, then create
+        kwargs.setdefault('full_duplex', self._full_duplex)
         kwargs.setdefault('reject_mode', self._reject_mode)
         kwargs.setdefault('modulo128', self._modulo128)
         kwargs.setdefault('max_ifield', self._max_ifield)
