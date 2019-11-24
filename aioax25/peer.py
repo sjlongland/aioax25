@@ -1202,6 +1202,9 @@ class AX25PeerHelper(object):
         self._timeout = timeout
         self._timeout_handle = None
 
+        # Signal on "done" or time-out.
+        self.done_sig = Signal()
+
     @property
     def peer(self):
         """
@@ -1378,9 +1381,6 @@ class AX25PeerTestHandler(AX25PeerHelper):
 
         # Flag indicating we are done
         self._done = False
-
-        # Signal on "done" or time-out.
-        self.done_sig = Signal()
 
     @property
     def tx_time(self):
