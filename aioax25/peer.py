@@ -60,6 +60,10 @@ from .frame import (
 )
 
 
+# AX25RejectMode precedence:
+_REJECT_MODE_PRECEDENCE = {"selective_rr": 2, "selective": 1, "implicit": 0}
+
+
 class AX25Peer(object):
     """
     This class is a proxy representation of the remote AX.25 peer that may be
@@ -72,15 +76,12 @@ class AX25Peer(object):
         SELECTIVE = "selective"
         SELECTIVE_RR = "selective_rr"
 
-        # Value precedence:
-        _PRECEDENCE = {"selective_rr": 2, "selective": 1, "implicit": 0}
-
         @property
         def precedence(self):
             """
             Get the precedence of this mode.
             """
-            return self._PRECEDENCE[self.value]
+            return _REJECT_MODE_PRECEDENCE[self.value]
 
     class AX25PeerState(enum.Enum):
         # DISCONNECTED: No connection has been established
