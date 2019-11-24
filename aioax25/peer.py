@@ -563,7 +563,7 @@ class AX25Peer(object):
                 self._protocol = AX25Version.AX25_22
 
             # Make sure both ends are enabled for AX.25 2.2
-            if self._station().protocol != AX25Version.AX25_22:
+            if self._station()._protocol != AX25Version.AX25_22:
                 # We are not in AX.25 2.2 mode.
                 #
                 # "A TNC that uses a version of AX.25 prior to v2.2 responds
@@ -774,7 +774,7 @@ class AX25Peer(object):
         Handle a request to negotiate parameters.
         """
         self._log.info('Received XID from peer')
-        if self._station().protocol != AX25Version.AX25_22:
+        if self._station()._protocol != AX25Version.AX25_22:
             # Not supporting this in AX.25 2.0 mode
             self._log.warning(
                     'Received XID from peer, we are not in AX.25 2.2 mode'
