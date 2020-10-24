@@ -4,8 +4,8 @@ from aioax25.signal import Signal
 from aioax25.interface import AX25Interface
 from aioax25.frame import AX25UnnumberedInformationFrame
 
-from ..async import asynctest
-from asyncio import Future, get_event_loop, sleep
+from ..asynctest import asynctest
+from asyncio import Future, get_event_loop, sleep, coroutine
 
 from nose.tools import assert_greater, assert_less, assert_is, \
         assert_greater_equal, eq_
@@ -443,6 +443,7 @@ def test_transmit_waits_cts():
 
 
 @asynctest
+@coroutine
 def test_transmit_cancel():
     """
     Test that pending messages can be cancelled.
