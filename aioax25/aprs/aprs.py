@@ -140,19 +140,27 @@ class APRSInterface(APRSRouter):
         handler._send()
         return handler
 
-    def send_response(self, message, ack=True):
+    def send_response(self, message, ack=True, direct=False):
         """
-        Send a ACK (or if ack=False, REJ) to a numbered message.
+        Send a ACK (or if ack=False, REJ) to a numbered message.  If direct is
+        true, we send the ACK (or REJ) via the path that the message was received
+        by (this complies with AX.25 2.0 but does not work with all APRS
+        digipeaters).
         """
         if message.msgid is None:
             return
 
         self._log.debug('Responding to message %s with ack=%s',
                 message, ack)
+
+        if direct and (message.header.repeaters is not None):
+            response_path = message.header.repeaters.reply
+        else:
+            response_path = None
+
         self.send_message(
                 addressee=message.header.source.normalised,
-                path=message.header.repeaters.reply \
-                        if message.header.repeaters is not None else None,
+                path=response_path,
                 message='%s%s' % ('ack' if ack else 'rej', message.msgid),
                 oneshot=True
         )
