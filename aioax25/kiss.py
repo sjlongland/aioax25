@@ -12,6 +12,9 @@ from .signal import Signal
 from binascii import b2a_hex
 import time
 import logging
+import asyncio
+import serial_asyncio
+import types
 
 
 # Constants
@@ -395,19 +398,43 @@ class BaseKISSDevice(object):
             self._close()
 
 
-class SerialKISSDevice(BaseKISSDevice):
+class SerialKISSDevice(BaseKISSDevice, asyncio.Protocol):
     def __init__(self, device, baudrate, *args, **kwargs):
         super(SerialKISSDevice, self).__init__(*args, **kwargs)
         self._serial = None
         self._device = device
         self._baudrate = baudrate
 
+    def connection_made(self, transport):
+        self._serial = transport
+
+    def data_received(self, data):
+        try:
+            self._receive(data)
+        except:
+            self._log.exception("Failed to read from serial device")
+
+    def connection_lost(self, exc):
+        self._serial.loop.stop()
+
     def _open(self):
-        self._serial = Serial(port=self._device, baudrate=self._baudrate,
-                bytesize=EIGHTBITS, parity=PARITY_NONE, stopbits=STOPBITS_ONE,
-                timeout=None, xonxoff=False, rtscts=False, write_timeout=None,
-                dsrdtr=False, inter_byte_timeout=None)
-        self._loop.add_reader(self._serial.fileno(), self._on_recv_ready)
+        self._serial_async = serial_asyncio.create_serial_connection(
+            self._loop,
+            lambda: self,
+            self._device,
+            baudrate=self._baudrate,
+            bytesize=EIGHTBITS,
+            parity=PARITY_NONE,
+            stopbits=STOPBITS_ONE,
+            timeout=None,
+            xonxoff=False,
+            rtscts=False,
+            write_timeout=None,
+            dsrdtr=False,
+            inter_byte_timeout=None,
+        )
+        self._loop.run_until_complete(self._serial_async)
+        
         self._loop.call_soon(self._init_kiss)
 
     def _close(self):
@@ -421,12 +448,6 @@ class SerialKISSDevice(BaseKISSDevice):
         self._serial.close()
         self._serial = None
         self._state = KISSDeviceState.CLOSED
-
-    def _on_recv_ready(self):
-        try:
-            self._receive(self._serial.read(self._serial.in_waiting))
-        except:
-            self._log.exception('Failed to read from serial device')
 
     def _send_raw_data(self, data):
         self._serial.write(data)
