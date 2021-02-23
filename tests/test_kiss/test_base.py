@@ -388,3 +388,12 @@ def test_getitem():
     port = kissdev[7]
     assert isinstance(port, KISSPort)
     assert_is(kissdev._port[7], port)
+
+def test__send_kiss_cmd():
+    kissdev = DummyKISSDevice(loop=DummyLoop())
+    kissdev._kiss_rem_commands = []
+
+    kissdev._send_kiss_cmd()
+    eq_(KISSDeviceState.OPEN, kissdev._state)
+    eq_(bytearray(), kissdev._rx_buffer)
+

@@ -330,19 +330,16 @@ class BaseKISSDevice(object):
             self._loop.call_later(self._send_block_delay, self._send_data)
 
     def _init_kiss(self):
-        self._log.debug("init")
         assert self.state == KISSDeviceState.OPENING, \
                 'Device is not opening'
 
         self._kiss_rem_commands = self._kiss_commands.copy()
-        self._log.debug("kiss_rem_commands = '{}'".format(self._kiss_rem_commands))
         self._send_kiss_cmd()
 
     def _send_kiss_cmd(self):
         try:
             command = self._kiss_rem_commands.pop(0)
         except IndexError:
-            self._log.debug("INDEX error")
             # Should be open now.
             self._open_time = time.time()
             self._state = KISSDeviceState.OPEN
@@ -375,7 +372,6 @@ class BaseKISSDevice(object):
 
         self._log.debug('OPEN new port %d', port)
         p = KISSPort(self, port, log=self._log.getChild('port%d' % port))
-        self._log.debug(p)
         self._port[port] = p
         return p
 
