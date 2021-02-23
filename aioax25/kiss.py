@@ -12,6 +12,7 @@ from .signal import Signal
 from binascii import b2a_hex
 import time
 import logging
+import socket
 
 
 # Constants
@@ -329,20 +330,24 @@ class BaseKISSDevice(object):
             self._loop.call_later(self._send_block_delay, self._send_data)
 
     def _init_kiss(self):
+        self._log.debug("init")
         assert self.state == KISSDeviceState.OPENING, \
                 'Device is not opening'
 
         self._kiss_rem_commands = self._kiss_commands.copy()
+        self._log.debug("kiss_rem_commands = '{}'".format(self._kiss_rem_commands))
         self._send_kiss_cmd()
 
     def _send_kiss_cmd(self):
         try:
             command = self._kiss_rem_commands.pop(0)
         except IndexError:
+            self._log.debug("INDEX error")
             # Should be open now.
             self._open_time = time.time()
             self._state = KISSDeviceState.OPEN
             self._rx_buffer = bytearray()
+            return
 
         self._log.debug('Sending %r', command)
         command = command.encode('US-ASCII')
@@ -370,6 +375,7 @@ class BaseKISSDevice(object):
 
         self._log.debug('OPEN new port %d', port)
         p = KISSPort(self, port, log=self._log.getChild('port%d' % port))
+        self._log.debug(p)
         self._port[port] = p
         return p
 
@@ -430,6 +436,38 @@ class SerialKISSDevice(BaseKISSDevice):
 
     def _send_raw_data(self, data):
         self._serial.write(data)
+
+
+class TCPKISSDevice(BaseKISSDevice):
+
+    _interface = None
+    READ_BYTES = 1000
+
+    def __init__(self, host: str, port: int, *args, **kwargs):
+        super(TCPKISSDevice, self).__init__(*args, **kwargs)
+        self.address = (host, port)
+
+    def _open(self):
+        self._interface = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._interface.connect(self.address)
+        self._loop.add_reader(self._interface, self._on_recv_ready)
+        self._loop.call_soon(self._init_kiss)
+
+    def _on_recv_ready(self):
+        try:
+            read_data = self._interface.recv(self.READ_BYTES)
+            self._receive(read_data)
+        except:
+            self._log.exception('Failed to read from socket device')
+
+    def _send_raw_data(self, data):
+        self._interface.send(data)
+
+    def _close(self):
+        self._loop.remove_reader(self._interface)
+        self._interface.close()
+        self._interface = None
+        self._state = KISSDeviceState.CLOSED
 
 
 # Port interface
