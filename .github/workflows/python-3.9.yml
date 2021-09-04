@@ -18,7 +18,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 nose
+        pip install flake8 nose coverage coverage-lcov
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Lint with flake8
       run: |
@@ -28,7 +28,8 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --statistics
     - name: Test with nosetests
       run: |
-        nosetests --with-coverage --cover-package=aioax25
+        coverage run -m nose
+        coverage-lcov
     - name: Coveralls
       uses: coverallsapp/github-action@master
       with:
