@@ -17,7 +17,7 @@ jobs:
         python-version: 3.4.10
     - name: Install dependencies
       run: |
-        pip install flake8 pytest coverage coverage-lcov toml
+        pip install flake8 pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Lint with flake8
       run: |
@@ -25,12 +25,6 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings.
         flake8 . --count --exit-zero --max-complexity=10 --statistics
-    - name: Test with py.test
+    - name: Test with py.test (no coverage)
       run: |
-        coverage run -m pytest
-        coverage-lcov
-    - name: Coveralls
-      uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: ./lcov.info
+        python -m pytest
