@@ -79,6 +79,17 @@ def test_encode_no_digis():
             'ac 96 68 9a a6 98 61'          # Source
     )
 
+def test_encode_no_digis_ax25v1():
+    """
+    Test we can encode an AX.25v1 frame without digipeaters.
+    """
+    header = AX25FrameHeader(destination='VK4BWI', source='VK4MSL',
+            cr=False, src_cr=False)
+    hex_cmp(bytes(header),
+            'ac 96 68 84 ae 92 60 '         # Destination
+            'ac 96 68 9a a6 98 61'          # Source
+    )
+
 def test_encode_1digi():
     """
     Test we can encode an AX.25 frame with one digipeater.

@@ -477,12 +477,14 @@ class AX25FrameHeader(object):
             destination=addresses[0],
             source=addresses[1],
             repeaters=addresses[2:],
-            cr=addresses[0].ch
+            cr=addresses[0].ch,
+            src_cr=addresses[1].ch
         ), data)
 
     def __init__(self, destination, source, repeaters=None,
-            cr=False):
+            cr=False, src_cr=None):
         self._cr = bool(cr)
+        self._src_cr = src_cr
         self._destination = AX25Address.decode(destination)
         self._source = AX25Address.decode(source)
         self._repeaters = AX25Path(*(repeaters or []))
@@ -494,14 +496,14 @@ class AX25FrameHeader(object):
         # Extension bit should be 0
         # CH bit should be 1 for command, 0 for response
         self._destination.extension = False
-        self._destination.ch = self._cr
+        self._destination.ch = self.cr
         for byte in bytes(self._destination):
             yield byte
 
         # Extension bit should be 0 if digipeaters follow, 1 otherwise
         # CH bit should be 0 for command, 1 for response
         self._source.extension = not bool(self._repeaters)
-        self._source.ch = not self._cr
+        self._source.ch = self.src_cr
         for byte in bytes(self._source):
             yield byte
 
@@ -548,7 +550,20 @@ class AX25FrameHeader(object):
 
     @property
     def cr(self):
+        """
+        Command/Response bit in the destination address.
+        """
         return self._cr
+
+    @property
+    def src_cr(self):
+        """
+        Command/Response bit in the source address.
+        """
+        if self._src_cr is None:
+            return not self.cr
+        else:
+            return self._src_cr
 
 
 class AX25Path(Sequence):
