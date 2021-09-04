@@ -101,7 +101,7 @@ class APRSInterface(APRSRouter):
             for spec in [
                     dict(callsign=self._mycall.callsign,
                         ssid=self._mycall.ssid, regex=False)
-                    ] + listen_destinations + (listen_altnets or []):
+                    ] + (listen_destinations or []) + (listen_altnets or []):
                 self._ax25int.bind(self._on_receive, **spec)
 
 
