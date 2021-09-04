@@ -4,7 +4,7 @@
 Tests for signalslot wrappers
 """
 
-from nose.tools import eq_, assert_set_equal
+from ..nosecompat import eq_, assert_set_equal
 
 from aioax25.signal import Signal, Slot, OneshotSlot
 

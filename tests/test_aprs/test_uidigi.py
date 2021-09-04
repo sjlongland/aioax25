@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from nose.tools import eq_, assert_set_equal, assert_is, assert_greater, \
+from ..nosecompat import eq_, assert_set_equal, assert_is, assert_greater, \
         assert_less
 
 from aioax25.aprs.uidigi import APRSDigipeater

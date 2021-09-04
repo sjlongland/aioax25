@@ -7,7 +7,7 @@ from aioax25.frame import AX25UnnumberedInformationFrame
 from ..asynctest import asynctest
 from asyncio import Future, get_event_loop, sleep, coroutine
 
-from nose.tools import assert_greater, assert_less, assert_is, \
+from ..nosecompat import assert_greater, assert_less, assert_is, \
         assert_greater_equal, eq_
 
 import time

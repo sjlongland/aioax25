@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from aioax25.frame import AX25Address
-from nose.tools import eq_
+from ..nosecompat import eq_
 from ..hex import from_hex, to_hex
 
 def test_decode_wrongtype():

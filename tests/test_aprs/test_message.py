@@ -3,7 +3,7 @@
 import logging
 import gc
 
-from nose.tools import eq_, assert_greater, assert_is, \
+from ..nosecompat import eq_, assert_greater, assert_is, \
         assert_is_not, assert_set_equal
 
 from aioax25.aprs.message import APRSMessageHandler, \

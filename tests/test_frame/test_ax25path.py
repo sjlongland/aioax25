@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from aioax25.frame import AX25Address, AX25Path
-from nose.tools import eq_
+from ..nosecompat import eq_
 
 
 def test_decode():

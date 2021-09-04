@@ -2,7 +2,7 @@
 
 import logging
 
-from nose.tools import eq_, assert_is, assert_is_not
+from ..nosecompat import eq_, assert_is, assert_is_not
 
 from aioax25.aprs.frame import APRSFrame
 from aioax25.aprs.message import \

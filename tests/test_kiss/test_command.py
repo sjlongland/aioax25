@@ -5,7 +5,7 @@ KISS command unit tests
 """
 
 from aioax25.kiss import KISSCommand, KISSCmdReturn, KISSCmdData
-from nose.tools import eq_
+from ..nosecompat import eq_
 
 def test_stuff_bytes():
     """

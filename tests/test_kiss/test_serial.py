@@ -8,7 +8,7 @@ from aioax25 import kiss
 import time
 from serial import EIGHTBITS, PARITY_NONE, STOPBITS_ONE
 
-from nose.tools import eq_, assert_less, assert_in
+from ..nosecompat import eq_, assert_less, assert_in
 from ..loop import DummyLoop
 
 class DummySerial(object):

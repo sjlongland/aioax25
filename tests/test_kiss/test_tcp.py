@@ -8,7 +8,7 @@ from aioax25 import kiss
 from unittest import mock
 import time
 
-from nose.tools import eq_, assert_less, assert_in
+from ..nosecompat import eq_, assert_less, assert_in
 from ..loop import DummyLoop
 
 

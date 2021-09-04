@@ -8,7 +8,7 @@ from aioax25.kiss import BaseKISSDevice, KISSDeviceState, KISSCommand, KISSPort
 from ..loop import DummyLoop
 from asyncio import BaseEventLoop
 
-from nose.tools import eq_, assert_is, assert_greater, assert_less
+from ..nosecompat import eq_, assert_is, assert_greater, assert_less
 
 
 class DummyKISSDevice(BaseKISSDevice):

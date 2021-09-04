@@ -5,7 +5,7 @@ KISS command unit tests
 """
 
 from aioax25.kiss import KISSPort, KISSCmdData, KISSCommand
-from nose.tools import eq_
+from ..nosecompat import eq_
 import logging
 
 

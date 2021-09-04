@@ -2,7 +2,7 @@
 
 import logging
 
-from nose.tools import eq_
+from ..nosecompat import eq_
 
 from aioax25.aprs.message import APRSMessageAckFrame
 from aioax25.frame import AX25UnnumberedInformationFrame
