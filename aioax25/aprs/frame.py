@@ -47,11 +47,12 @@ class APRSFrame(AX25UnnumberedInformationFrame):
             return uiframe
 
     def __init__(self, destination, source, payload, repeaters=None,
-            pf=False, cr=False):
+            pf=False, cr=False, src_cr=None
+    ):
         super(APRSFrame, self).__init__(
                 destination=destination,
                 source=source,
                 pid=self.PID_NO_L3, # APRS spec
                 payload=payload,
                 repeaters=repeaters,
-                pf=pf, cr=cr)
+                pf=pf, cr=cr, src_cr=src_cr)
