@@ -745,14 +745,26 @@ class AX25Address(object):
 
     @property
     def callsign(self):
+        """
+        The call-sign of the station being referenced.
+        """
         return self._callsign
 
     @property
     def ssid(self):
+        """
+        Secondary Station Identifier.
+        """
         return self._ssid
 
     @property
     def extension(self):
+        """
+        Extension bit, used in digipeater SSID lists to indicate
+        that this address is the last AX.25 digipeater address in the list.
+
+        AX.25 2.0 doc § 2.2.13.3
+        """
         return self._extension
 
     @extension.setter
@@ -761,14 +773,29 @@ class AX25Address(object):
 
     @property
     def res0(self):
+        """
+        Reserved bit 0 in the AX.25 address field.
+        """
         return self._res0
 
     @property
     def res1(self):
+        """
+        Reserved bit 1 in the AX.25 address field.
+        """
         return self._res1
 
     @property
     def ch(self):
+        """
+        C/H bit.
+
+        In repeater call-signs, this is the H bit, and indicative of a frame
+        that "has been repeated" by that digipeater (AX.25 2.0 doc § 2.2.13.3).
+
+        In source/destination call-signs, this is the C bit, and indicative
+        of a "command" (AX.25 2.0 doc § 2.4.1.2).
+        """
         return self._ch
 
     @ch.setter
