@@ -172,9 +172,11 @@ Other optional parameters:
  * `aprs_path` specifies the digipeater path to use when sending APRS traffic.
  * `listen_destinations` is a list of AX.25 destinations.  Behind the scenes,
    these are values passed to `Router.bind`, and thus are given as `dict`s of
-   the form: `{callsign: "CALL", regex: True/False, ssid: None/int}`.
+   the form: `{callsign: "CALL", regex: True/False, ssid: None/int}`.  **Setting
+   this may break reception of MICe packets!**
  * `listen_altnets` is an additional list of AX.25 destinations, given using
-   the same scheme as `listen_destinations`.
+   the same scheme as `listen_destinations`.  **Setting this may break
+   reception of MICe packets!**
  * `msgid_modulo` sets the modulo value used when generating a message ID.
    The default value (1000) results in a message ID that starts at 1 and wraps
    around at 999.
