@@ -150,6 +150,13 @@ class AX25Frame(object):
         """
         return b''
 
+    @property
+    def tnc2(self):
+        """
+        Return the frame in "TNC2" format.
+        """
+        return self.header.tnc2
+
     def copy(self, header=None):
         """
         Make a copy of this frame with a new header for digipeating.
@@ -322,6 +329,22 @@ class AX25UnnumberedInformationFrame(AX25UnnumberedFrame):
                 pf=self.pf,
                 pid=self.pid,
                 payload=self.payload
+        )
+
+    @property
+    def tnc2(self):
+        """
+        Return the frame in "TNC2" format (default charset).
+        """
+        return self.get_tnc2()
+
+    def get_tnc2(self, charset='latin1', errors='strict'):
+        """
+        Return the frame in "TNC2" format with given charset.
+        """
+        return '%s:%s' % (
+                self.header.tnc2,
+                self.payload.decode(charset, errors)
         )
 
 
@@ -576,6 +599,23 @@ class AX25FrameHeader(object):
             return not self.cr
         else:
             return self._src_cr
+
+    @property
+    def tnc2(self):
+        """
+        Return the frame header in "TNC2" format.
+
+        Largely the same as the format given by str(), but we ignore
+        the C bits on the source and destination call-signs.
+        """
+        # XXX "TNC2 format" is largely undefined… unless someone feels like
+        # deciphering the TAPR TNC2's firmware source code. (hello Z80 assembly!)
+        return '%s>%s%s' % (
+                self._source.copy(ch=False),
+                self._destination.copy(ch=False),
+                (',%s' % self._repeaters) \
+                        if self._repeaters else ''
+        )
 
 
 class AX25Path(Sequence):

@@ -492,3 +492,16 @@ def test_ui_str():
             payload=b'This is a test'
     )
     eq_(str(frame), "VK4MSL>VK4BWI: PID=0xf0 Payload=b'This is a test'")
+
+def test_ui_tnc2():
+    """
+    Test we can get a TNC2 string representation of a UI frame.
+    """
+    frame = AX25UnnumberedInformationFrame(
+            destination='VK4BWI*',
+            source='VK4MSL',
+            cr=True,
+            pid=0xf0,
+            payload=b'This is a test'
+    )
+    eq_(frame.tnc2, "VK4MSL>VK4BWI:This is a test")
