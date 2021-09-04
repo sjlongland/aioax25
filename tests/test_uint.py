@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from aioax25.uint import encode, decode
-from nose.tools import eq_
+from .nosecompat import eq_
 from .hex import from_hex, hex_cmp
 
 def test_encode_zero():

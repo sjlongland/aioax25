@@ -5,7 +5,7 @@ from aioax25.frame import AX25Frame, \
         AX25UnnumberedFrame, AX25DisconnectModeFrame, \
         AX25SetAsyncBalancedModeFrame, AX25TestFrame
 
-from nose.tools import eq_
+from ..nosecompat import eq_
 from ..hex import from_hex, hex_cmp
 
 def test_decode_uframe():

@@ -4,7 +4,7 @@
 Tests for AX25PeerTestHandler
 """
 
-from nose.tools import eq_, assert_almost_equal
+from ..nosecompat import eq_, assert_almost_equal
 
 from aioax25.peer import AX25PeerTestHandler
 from aioax25.frame import AX25Address, AX25TestFrame

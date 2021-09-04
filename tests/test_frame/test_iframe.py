@@ -3,7 +3,7 @@
 from aioax25.frame import AX25Frame, AX258BitInformationFrame, \
         AX2516BitInformationFrame
 
-from nose.tools import eq_
+from ..nosecompat import eq_
 from ..hex import from_hex, hex_cmp
 
 

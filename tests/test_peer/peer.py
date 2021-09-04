@@ -4,7 +4,7 @@
 Fixture for initialising an AX25 Peer
 """
 
-from nose.tools import eq_, assert_almost_equal, assert_is, \
+from ..nosecompat import eq_, assert_almost_equal, assert_is, \
         assert_is_not_none, assert_is_none
 
 from aioax25.peer import AX25Peer

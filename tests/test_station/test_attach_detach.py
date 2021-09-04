@@ -2,7 +2,7 @@
 
 from aioax25.station import AX25Station
 
-from nose.tools import eq_
+from ..nosecompat import eq_
 from ..mocks import DummyInterface
 
 
