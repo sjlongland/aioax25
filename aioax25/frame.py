@@ -60,6 +60,7 @@ class AX25Frame(object):
                     source=header.source,
                     repeaters=header.repeaters,
                     cr=header.cr,
+                    src_cr=header.src_cr,
                     control=control,
                     payload=data
             )
@@ -71,6 +72,7 @@ class AX25Frame(object):
                     source=header.source,
                     repeaters=header.repeaters,
                     cr=header.cr,
+                    src_cr=header.src_cr,
                     control=control,
                     payload=data
             )
@@ -83,8 +85,9 @@ class AX25Frame(object):
             assert False, 'How did we get here?'
 
     def __init__(self, destination, source, repeaters=None,
-            cr=False, timestamp=None, deadline=None):
-        self._header = AX25FrameHeader(destination, source, repeaters, cr)
+            cr=False, src_cr=None, timestamp=None, deadline=None):
+        self._header = AX25FrameHeader(destination, source, repeaters, \
+                cr, src_cr)
         self._timestamp = timestamp or time.time()
         self._deadline = deadline
 
@@ -163,10 +166,11 @@ class AX25RawFrame(AX25Frame):
     """
 
     def __init__(self, destination, source, control, repeaters=None,
-            cr=False, payload=None):
-        self._header = AX25FrameHeader(destination, source, repeaters, cr)
+            cr=False, src_cr=None, payload=None):
+        self._header = AX25FrameHeader(destination, source, repeaters, \
+                cr, src_cr)
         self._control = control
-        self._payload = payload or b''
+        self._payload = payload or b""
 
     @property
     def frame_payload(self):
@@ -179,6 +183,7 @@ class AX25RawFrame(AX25Frame):
                 control=self.control,
                 repeaters=self.header.repeaters,
                 cr=self.header.cr,
+                src_cr=self.header.src_cr,
                 payload=self.frame_payload
         )
 
@@ -210,15 +215,16 @@ class AX25UnnumberedFrame(AX25Frame):
                 source=header.source,
                 repeaters=header.repeaters,
                 cr=header.cr,
+                src_cr=header.src_cr,
                 modifier=modifier,
                 pf=bool(control & cls.POLL_FINAL)
         )
 
     def __init__(self, destination, source, modifier,
-            repeaters=None, pf=False, cr=False):
+            repeaters=None, pf=False, cr=False, src_cr=None):
         super(AX25UnnumberedFrame, self).__init__(
                 destination=destination, source=source,
-                repeaters=repeaters, cr=cr)
+                repeaters=repeaters, cr=cr, src_cr=src_cr)
         self._pf = bool(pf)
         self._modifier = int(modifier) & self.MODIFIER_MASK
 
@@ -253,6 +259,7 @@ class AX25UnnumberedFrame(AX25Frame):
                 repeaters=self.header.repeaters,
                 modifier=self.modifier,
                 cr=self.header.cr,
+                src_cr=self.header.src_cr,
                 pf=self.pf
         )
 
@@ -272,16 +279,17 @@ class AX25UnnumberedInformationFrame(AX25UnnumberedFrame):
                 source=header.source,
                 repeaters=header.repeaters,
                 cr=header.cr,
+                src_cr=header.src_cr,
                 pf=bool(control & cls.POLL_FINAL),
                 pid=data[0],
                 payload=data[1:]
         )
 
     def __init__(self, destination, source, pid, payload,
-            repeaters=None, pf=False, cr=False):
+            repeaters=None, pf=False, cr=False, src_cr=None):
         super(AX25UnnumberedInformationFrame, self).__init__(
                 destination=destination, source=source,
-                repeaters=repeaters, cr=cr, pf=pf,
+                repeaters=repeaters, cr=cr, src_cr=src_cr, pf=pf,
                 modifier=self.MODIFIER)
         self._pid = int(pid) & 0xff
         self._payload = bytes(payload)
@@ -310,6 +318,7 @@ class AX25UnnumberedInformationFrame(AX25UnnumberedFrame):
                 source=self.header.source,
                 repeaters=self.header.repeaters,
                 cr=self.header.cr,
+                src_cr=self.header.src_cr,
                 pf=self.pf,
                 pid=self.pid,
                 payload=self.payload
@@ -359,6 +368,7 @@ class AX25FrameRejectFrame(AX25UnnumberedFrame):
                 source=header.source,
                 repeaters=header.repeaters,
                 cr=header.cr,
+                src_cr=header.src_cr,
                 pf=bool(control & cls.POLL_FINAL),
                 w=w, x=x, y=y, z=z,
                 vr=vr, frmr_cr=cr, vs=vs,
@@ -367,10 +377,10 @@ class AX25FrameRejectFrame(AX25UnnumberedFrame):
 
     def __init__(self, destination, source, w, x, y, z,
             vr, frmr_cr, vs, frmr_control,
-            repeaters=None, pf=False, cr=False):
+            repeaters=None, pf=False, cr=False, src_cr=None):
         super(AX25FrameRejectFrame, self).__init__(
                 destination=destination, source=source,
-                repeaters=repeaters, cr=cr, pf=pf,
+                repeaters=repeaters, cr=cr, src_cr=src_cr, pf=pf,
                 modifier=self.MODIFIER)
 
         self._w = bool(w)
@@ -447,7 +457,9 @@ class AX25FrameRejectFrame(AX25UnnumberedFrame):
                 w=self.w, x=self.x, y=self.y, z=self.z,
                 frmr_cr=self.frmr_cr, vr=self.vr, vs=self.vs,
                 frmr_control=self.frmr_control,
-                cr=self.header.cr, pf=self.pf
+                cr=self.header.cr,
+                src_cr=self.header.src_cr,
+                pf=self.pf
         )
 
 
