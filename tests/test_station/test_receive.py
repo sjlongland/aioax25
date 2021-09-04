@@ -7,7 +7,6 @@ from aioax25.frame import (
     AX25UnnumberedInformationFrame,
 )
 
-from nose.tools import eq_
 from ..mocks import DummyInterface, DummyPeer
 
 
@@ -29,25 +28,25 @@ def test_testframe_cmd_echo():
     )
 
     # There should be no peers
-    eq_(station._peers, {})
+    assert station._peers == {}
 
     # There should be a reply queued up
-    eq_(interface.bind_calls, [])
-    eq_(interface.unbind_calls, [])
-    eq_(len(interface.transmit_calls), 1)
+    assert interface.bind_calls == []
+    assert interface.unbind_calls == []
+    assert len(interface.transmit_calls) == 1
 
     (tx_call_args, tx_call_kwargs) = interface.transmit_calls.pop()
-    eq_(tx_call_kwargs, {})
-    eq_(len(tx_call_args), 1)
+    assert tx_call_kwargs == {}
+    assert len(tx_call_args) == 1
     frame = tx_call_args[0]
 
     # The reply should have the source/destination swapped and the
     # CR bit cleared.
     assert isinstance(frame, AX25TestFrame), "Not a test frame"
-    eq_(frame.header.cr, False)
-    eq_(frame.header.destination, AX25Address("VK4MSL", ssid=7))
-    eq_(frame.header.source, AX25Address("VK4MSL", ssid=5))
-    eq_(frame.payload, b"This is a test frame")
+    assert frame.header.cr == False
+    assert frame.header.destination == AX25Address("VK4MSL", ssid=7)
+    assert frame.header.source == AX25Address("VK4MSL", ssid=5)
+    assert frame.payload == b"This is a test frame"
 
 
 def test_route_testframe_reply():
@@ -79,16 +78,16 @@ def test_route_testframe_reply():
     station._on_receive(frame=txframe)
 
     # There should be no replies queued
-    eq_(interface.bind_calls, [])
-    eq_(interface.unbind_calls, [])
-    eq_(interface.transmit_calls, [])
+    assert interface.bind_calls == []
+    assert interface.unbind_calls == []
+    assert interface.transmit_calls == []
 
     # This should have gone to peer1, not peer2
-    eq_(peer2.on_receive_calls, [])
-    eq_(len(peer1.on_receive_calls), 1)
+    assert peer2.on_receive_calls == []
+    assert len(peer1.on_receive_calls) == 1
     (rx_call_args, rx_call_kwargs) = peer1.on_receive_calls.pop()
-    eq_(rx_call_kwargs, {})
-    eq_(len(rx_call_args), 1)
+    assert rx_call_kwargs == {}
+    assert len(rx_call_args) == 1
     assert rx_call_args[0] is txframe
 
 
@@ -122,14 +121,14 @@ def test_route_incoming_msg():
     station._on_receive(frame=txframe)
 
     # There should be no replies queued
-    eq_(interface.bind_calls, [])
-    eq_(interface.unbind_calls, [])
-    eq_(interface.transmit_calls, [])
+    assert interface.bind_calls == []
+    assert interface.unbind_calls == []
+    assert interface.transmit_calls == []
 
     # This should have gone to peer2, not peer1
-    eq_(peer1.on_receive_calls, [])
-    eq_(len(peer2.on_receive_calls), 1)
+    assert peer1.on_receive_calls == []
+    assert len(peer2.on_receive_calls) == 1
     (rx_call_args, rx_call_kwargs) = peer2.on_receive_calls.pop()
-    eq_(rx_call_kwargs, {})
-    eq_(len(rx_call_args), 1)
+    assert rx_call_kwargs == {}
+    assert len(rx_call_args) == 1
     assert rx_call_args[0] is txframe

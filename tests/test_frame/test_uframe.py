@@ -10,7 +10,6 @@ from aioax25.frame import (
     AX25TestFrame,
 )
 
-from nose.tools import eq_
 from ..hex import from_hex, hex_cmp
 
 
@@ -28,7 +27,7 @@ def test_decode_uframe():
     assert isinstance(
         frame, AX25UnnumberedFrame
     ), "Did not decode to unnumbered frame"
-    eq_(frame.modifier, 0xC3)
+    assert frame.modifier == 0xC3
 
     # We should see the control byte as our payload
     hex_cmp(frame.frame_payload, "c3")
@@ -65,7 +64,7 @@ def test_decode_sabm_payload():
         )
         assert False, "This should not have worked"
     except ValueError as e:
-        eq_(str(e), "Frame does not support payload")
+        assert str(e) == "Frame does not support payload"
 
 
 def test_decode_uframe_payload():
@@ -82,10 +81,9 @@ def test_decode_uframe_payload():
         )
         assert False, "Should not have worked"
     except ValueError as e:
-        eq_(
-            str(e),
+        assert str(e) == (
             "Unnumbered frames (other than UI and "
-            "FRMR) do not have payloads",
+            "FRMR) do not have payloads"
         )
 
 
@@ -104,14 +102,14 @@ def test_decode_frmr():
     assert isinstance(
         frame, AX25FrameRejectFrame
     ), "Did not decode to FRMR frame"
-    eq_(frame.modifier, 0x87)
-    eq_(frame.w, True)
-    eq_(frame.x, False)
-    eq_(frame.y, False)
-    eq_(frame.z, False)
-    eq_(frame.vr, 1)
-    eq_(frame.frmr_cr, False)
-    eq_(frame.vs, 1)
+    assert frame.modifier == 0x87
+    assert frame.w == True
+    assert frame.x == False
+    assert frame.y == False
+    assert frame.z == False
+    assert frame.vr == 1
+    assert frame.frmr_cr == False
+    assert frame.vs == 1
 
 
 def test_decode_frmr_len():
@@ -129,7 +127,7 @@ def test_decode_frmr_len():
         )
         assert False, "Should not have worked"
     except ValueError as e:
-        eq_(str(e), "Payload of FRMR must be 3 bytes")
+        assert str(e) == "Payload of FRMR must be 3 bytes"
 
 
 def test_decode_ui():
@@ -146,7 +144,7 @@ def test_decode_ui():
     assert isinstance(
         frame, AX25UnnumberedInformationFrame
     ), "Did not decode to UI frame"
-    eq_(frame.pid, 0x11)
+    assert frame.pid == 0x11
     hex_cmp(frame.payload, "22 33")
 
 
@@ -164,7 +162,7 @@ def test_decode_ui_len():
         )
         assert False, "Should not have worked"
     except ValueError as e:
-        eq_(str(e), "Payload of UI must be at least one byte")
+        assert str(e) == "Payload of UI must be at least one byte"
 
 
 def test_encode_uframe():
@@ -263,7 +261,7 @@ def test_decode_test():
         )
     )
     assert isinstance(frame, AX25TestFrame)
-    eq_(frame.payload, b"123456789...")
+    assert frame.payload == b"123456789..."
 
 
 def test_copy_test():
@@ -307,7 +305,7 @@ def test_encode_pf():
         "f0"  # PID
         "54 68 69 73 20 69 73 20 61 20 74 65 73 74",  # Payload
     )
-    eq_(frame.control, 0x13)
+    assert frame.control == 0x13
 
 
 def test_encode_frmr_w():
@@ -626,4 +624,4 @@ def test_ui_str():
         pid=0xF0,
         payload=b"This is a test",
     )
-    eq_(str(frame), "VK4MSL>VK4BWI: PID=0xf0 Payload=b'This is a test'")
+    assert str(frame) == "VK4MSL>VK4BWI: PID=0xf0 Payload=b'This is a test'"

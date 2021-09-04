@@ -8,7 +8,6 @@ from aioax25.frame import (
     AX2516BitRejectFrame,
 )
 
-from nose.tools import eq_
 from ..hex import from_hex, hex_cmp
 
 
@@ -28,7 +27,7 @@ def test_sframe_payload_reject():
         )
         assert False, "Should not have worked"
     except ValueError as e:
-        eq_(str(e), "Supervisory frames do not support payloads.")
+        assert str(e) == "Supervisory frames do not support payloads."
 
 
 def test_16bs_truncated_reject():
@@ -46,7 +45,7 @@ def test_16bs_truncated_reject():
         )
         assert False, "Should not have worked"
     except ValueError as e:
-        eq_(str(e), "Insufficient packet data")
+        assert str(e) == "Insufficient packet data"
 
 
 def test_8bs_rr_frame():
@@ -62,7 +61,7 @@ def test_8bs_rr_frame():
         modulo128=False,
     )
     assert isinstance(frame, AX258BitReceiveReadyFrame)
-    eq_(frame.nr, 2)
+    assert frame.nr == 2
 
 
 def test_16bs_rr_frame():
@@ -78,7 +77,7 @@ def test_16bs_rr_frame():
         modulo128=True,
     )
     assert isinstance(frame, AX2516BitReceiveReadyFrame)
-    eq_(frame.nr, 46)
+    assert frame.nr == 46
 
 
 def test_16bs_rr_encode():
@@ -94,7 +93,7 @@ def test_16bs_rr_encode():
         "ac 96 68 9a a6 98 e1"  # Source
         "01 5d",  # Control
     )
-    eq_(frame.control, 0x5D01)
+    assert frame.control == 0x5D01
 
 
 def test_8bs_rej_decode_frame():
@@ -112,8 +111,8 @@ def test_8bs_rej_decode_frame():
     assert isinstance(
         frame, AX258BitRejectFrame
     ), "Did not decode to REJ frame"
-    eq_(frame.nr, 0)
-    eq_(frame.pf, False)
+    assert frame.nr == 0
+    assert frame.pf == False
 
 
 def test_16bs_rej_decode_frame():
@@ -131,8 +130,8 @@ def test_16bs_rej_decode_frame():
     assert isinstance(
         frame, AX2516BitRejectFrame
     ), "Did not decode to REJ frame"
-    eq_(frame.nr, 0)
-    eq_(frame.pf, False)
+    assert frame.nr == 0
+    assert frame.pf == False
 
 
 def test_rr_frame_str():
@@ -143,8 +142,7 @@ def test_rr_frame_str():
         destination="VK4BWI", source="VK4MSL", nr=6
     )
 
-    eq_(
-        str(frame),
+    assert str(frame) == (
         "VK4MSL>VK4BWI: N(R)=6 P/F=False AX258BitReceiveReadyFrame",
     )
 

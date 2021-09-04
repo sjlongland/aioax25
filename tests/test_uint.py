@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 from aioax25.uint import encode, decode
-from nose.tools import eq_
 from .hex import from_hex, hex_cmp
 
 
@@ -49,11 +48,11 @@ def test_decode_be():
     """
     Test we can decode big-endian integers.
     """
-    eq_(decode(from_hex("11 22 33"), big_endian=True), 0x112233)
+    assert decode(from_hex("11 22 33"), big_endian=True) == 0x112233
 
 
 def test_decode_le():
     """
     Test we can decode little-endian integers.
     """
-    eq_(decode(from_hex("11 22 33"), big_endian=False), 0x332211)
+    assert decode(from_hex("11 22 33"), big_endian=False) == 0x332211

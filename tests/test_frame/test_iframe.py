@@ -6,7 +6,6 @@ from aioax25.frame import (
     AX2516BitInformationFrame,
 )
 
-from nose.tools import eq_
 from ..hex import from_hex, hex_cmp
 
 
@@ -28,10 +27,10 @@ def test_8bit_iframe_decode():
     assert isinstance(
         frame, AX258BitInformationFrame
     ), "Did not decode to 8-bit I-Frame"
-    eq_(frame.nr, 6)
-    eq_(frame.ns, 2)
-    eq_(frame.pid, 0xFF)
-    eq_(frame.payload, b"This is a test")
+    assert frame.nr == 6
+    assert frame.ns == 2
+    assert frame.pid == 0xFF
+    assert frame.payload == b"This is a test"
 
 
 def test_16bit_iframe_decode():
@@ -52,10 +51,10 @@ def test_16bit_iframe_decode():
     assert isinstance(
         frame, AX2516BitInformationFrame
     ), "Did not decode to 16-bit I-Frame"
-    eq_(frame.nr, 6)
-    eq_(frame.ns, 2)
-    eq_(frame.pid, 0xFF)
-    eq_(frame.payload, b"This is a test")
+    assert frame.nr == 6
+    assert frame.ns == 2
+    assert frame.pid == 0xFF
+    assert frame.payload == b"This is a test"
 
 
 def test_iframe_str():
@@ -72,10 +71,9 @@ def test_iframe_str():
         payload=b"Testing 1 2 3",
     )
 
-    eq_(
-        str(frame),
+    assert str(frame) == (
         "VK4MSL>VK4BWI: N(R)=6 P/F=True N(S)=2 PID=0xff "
-        "Payload=b'Testing 1 2 3'",
+        "Payload=b'Testing 1 2 3'"
     )
 
 

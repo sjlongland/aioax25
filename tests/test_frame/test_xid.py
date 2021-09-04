@@ -11,7 +11,6 @@ from aioax25.frame import (
     AX25XIDRetriesParameter,
 )
 
-from nose.tools import eq_
 from ..hex import from_hex, hex_cmp
 
 
@@ -85,24 +84,24 @@ def test_decode_xid():
         )
     )
     assert isinstance(frame, AX25ExchangeIdentificationFrame)
-    eq_(frame.fi, 0x82)
-    eq_(frame.gi, 0x80)
-    eq_(len(frame.parameters), 4)
+    assert frame.fi == 0x82
+    assert frame.gi == 0x80
+    assert len(frame.parameters) == 4
 
     param = frame.parameters[0]
-    eq_(param.pi, 0x11)
-    eq_(param.pv, b"\xaa")
+    assert param.pi == 0x11
+    assert param.pv == b"\xaa"
 
     param = frame.parameters[1]
-    eq_(param.pi, 0x12)
-    eq_(param.pv, b"\xbb")
+    assert param.pi == 0x12
+    assert param.pv == b"\xbb"
 
     param = frame.parameters[2]
-    eq_(param.pi, 0x13)
-    eq_(param.pv, b"\x11\x22")
+    assert param.pi == 0x13
+    assert param.pv == b"\x11\x22"
 
     param = frame.parameters[3]
-    eq_(param.pi, 0x14)
+    assert param.pi == 0x14
     assert param.pv is None
 
 
@@ -126,31 +125,31 @@ def test_decode_xid_fig46():
             "0a 01 03"
         )
     )
-    eq_(len(frame.parameters), 6)
+    assert len(frame.parameters) == 6
 
     param = frame.parameters[0]
-    eq_(param.pi, AX25XIDParameterIdentifier.ClassesOfProcedure)
-    eq_(param.pv, b"\x00\x20")
+    assert param.pi == AX25XIDParameterIdentifier.ClassesOfProcedure
+    assert param.pv == b"\x00\x20"
 
     param = frame.parameters[1]
-    eq_(param.pi, AX25XIDParameterIdentifier.HDLCOptionalFunctions)
-    eq_(param.pv, b"\x86\xa8\x02")
+    assert param.pi == AX25XIDParameterIdentifier.HDLCOptionalFunctions
+    assert param.pv == b"\x86\xa8\x02"
 
     param = frame.parameters[2]
-    eq_(param.pi, AX25XIDParameterIdentifier.IFieldLengthReceive)
-    eq_(param.pv, b"\x04\x00")
+    assert param.pi == AX25XIDParameterIdentifier.IFieldLengthReceive
+    assert param.pv == b"\x04\x00"
 
     param = frame.parameters[3]
-    eq_(param.pi, AX25XIDParameterIdentifier.WindowSizeReceive)
-    eq_(param.pv, b"\x02")
+    assert param.pi == AX25XIDParameterIdentifier.WindowSizeReceive
+    assert param.pv == b"\x02"
 
     param = frame.parameters[4]
-    eq_(param.pi, AX25XIDParameterIdentifier.AcknowledgeTimer)
-    eq_(param.pv, b"\x10\x00")
+    assert param.pi == AX25XIDParameterIdentifier.AcknowledgeTimer
+    assert param.pv == b"\x10\x00"
 
     param = frame.parameters[5]
-    eq_(param.pi, AX25XIDParameterIdentifier.Retries)
-    eq_(param.pv, b"\x03")
+    assert param.pi == AX25XIDParameterIdentifier.Retries
+    assert param.pv == b"\x03"
 
 
 def test_decode_xid_truncated_header():
@@ -170,7 +169,7 @@ def test_decode_xid_truncated_header():
         )
         assert False, "This should not have worked"
     except ValueError as e:
-        eq_(str(e), "Truncated XID header")
+        assert str(e) == "Truncated XID header"
 
 
 def test_decode_xid_truncated_payload():
@@ -191,7 +190,7 @@ def test_decode_xid_truncated_payload():
         )
         assert False, "This should not have worked"
     except ValueError as e:
-        eq_(str(e), "Truncated XID data")
+        assert str(e) == "Truncated XID data"
 
 
 def test_decode_xid_truncated_param_header():
@@ -212,7 +211,7 @@ def test_decode_xid_truncated_param_header():
         )
         assert False, "This should not have worked"
     except ValueError as e:
-        eq_(str(e), "Insufficient data for parameter")
+        assert str(e) == "Insufficient data for parameter"
 
 
 def test_decode_xid_truncated_param_value():
@@ -233,7 +232,7 @@ def test_decode_xid_truncated_param_value():
         )
         assert False, "This should not have worked"
     except ValueError as e:
-        eq_(str(e), "Parameter is truncated")
+        assert str(e) == "Parameter is truncated"
 
 
 def test_copy_xid():
@@ -276,13 +275,13 @@ def test_decode_cop_param():
     Test we can decode a Class Of Procedures parameter.
     """
     param = AX25XIDClassOfProceduresParameter.decode(from_hex("80 20"))
-    eq_(param.half_duplex, True)
-    eq_(param.full_duplex, False)
-    eq_(param.unbalanced_nrm_pri, False)
-    eq_(param.unbalanced_nrm_sec, False)
-    eq_(param.unbalanced_arm_pri, False)
-    eq_(param.unbalanced_arm_sec, False)
-    eq_(param.reserved, 256)
+    assert param.half_duplex == True
+    assert param.full_duplex == False
+    assert param.unbalanced_nrm_pri == False
+    assert param.unbalanced_nrm_sec == False
+    assert param.unbalanced_arm_pri == False
+    assert param.unbalanced_arm_sec == False
+    assert param.reserved == 256
 
 
 def test_copy_cop_param():
@@ -298,14 +297,14 @@ def test_copy_cop_param():
     assert param is not copyparam
 
     # Ensure all parameters match
-    eq_(param.full_duplex, copyparam.full_duplex)
-    eq_(param.half_duplex, copyparam.half_duplex)
-    eq_(param.unbalanced_nrm_pri, copyparam.unbalanced_nrm_pri)
-    eq_(param.unbalanced_nrm_sec, copyparam.unbalanced_nrm_sec)
-    eq_(param.unbalanced_arm_pri, copyparam.unbalanced_arm_pri)
-    eq_(param.unbalanced_arm_sec, copyparam.unbalanced_arm_sec)
-    eq_(param.balanced_abm, copyparam.balanced_abm)
-    eq_(param.reserved, copyparam.reserved)
+    assert param.full_duplex == copyparam.full_duplex
+    assert param.half_duplex == copyparam.half_duplex
+    assert param.unbalanced_nrm_pri == copyparam.unbalanced_nrm_pri
+    assert param.unbalanced_nrm_sec == copyparam.unbalanced_nrm_sec
+    assert param.unbalanced_arm_pri == copyparam.unbalanced_arm_pri
+    assert param.unbalanced_arm_sec == copyparam.unbalanced_arm_sec
+    assert param.balanced_abm == copyparam.balanced_abm
+    assert param.reserved == copyparam.reserved
 
 
 def test_encode_cop_param():
@@ -331,32 +330,32 @@ def test_decode_hdlcfunc_param():
     """
     param = AX25XIDHDLCOptionalFunctionsParameter.decode(from_hex("86 a8 82"))
     # Specifically called out in the example (AX.25 2.2 spec Figure 4.6)
-    eq_(param.srej, True)
-    eq_(param.rej, True)
-    eq_(param.extd_addr, True)
-    eq_(param.fcs16, True)
-    eq_(param.modulo128, True)
-    eq_(param.sync_tx, True)
+    assert param.srej == True
+    assert param.rej == True
+    assert param.extd_addr == True
+    assert param.fcs16 == True
+    assert param.modulo128 == True
+    assert param.sync_tx == True
     # Changed by us to test round-tripping
-    eq_(param.reserved2, 2)
+    assert param.reserved2 == 2
     # Modulo128 is on, so we expect this off
-    eq_(param.modulo8, False)
+    assert param.modulo8 == False
     # Expected defaults
-    eq_(param.srej_multiframe, False)
-    eq_(param.start_stop_transp, False)
-    eq_(param.start_stop_flow_ctl, False)
-    eq_(param.sync_tx, True)
-    eq_(param.fcs32, False)
-    eq_(param.rd, False)
-    eq_(param.test, True)
-    eq_(param.rset, False)
-    eq_(param.delete_i_cmd, False)
-    eq_(param.delete_i_resp, False)
-    eq_(param.basic_addr, False)
-    eq_(param.up, False)
-    eq_(param.sim_rim, False)
-    eq_(param.ui, False)
-    eq_(param.reserved1, False)
+    assert param.srej_multiframe == False
+    assert param.start_stop_transp == False
+    assert param.start_stop_flow_ctl == False
+    assert param.sync_tx == True
+    assert param.fcs32 == False
+    assert param.rd == False
+    assert param.test == True
+    assert param.rset == False
+    assert param.delete_i_cmd == False
+    assert param.delete_i_resp == False
+    assert param.basic_addr == False
+    assert param.up == False
+    assert param.sim_rim == False
+    assert param.ui == False
+    assert param.reserved1 == False
 
 
 def test_copy_hdlcfunc_param():
@@ -378,29 +377,29 @@ def test_copy_hdlcfunc_param():
     assert param is not copyparam
 
     # Ensure all parameters match
-    eq_(param.modulo128, copyparam.modulo128)
-    eq_(param.modulo8, copyparam.modulo8)
-    eq_(param.srej, copyparam.srej)
-    eq_(param.rej, copyparam.rej)
-    eq_(param.srej_multiframe, copyparam.srej_multiframe)
-    eq_(param.start_stop_transp, copyparam.start_stop_transp)
-    eq_(param.start_stop_flow_ctl, copyparam.start_stop_flow_ctl)
-    eq_(param.start_stop_tx, copyparam.start_stop_tx)
-    eq_(param.sync_tx, copyparam.sync_tx)
-    eq_(param.fcs32, copyparam.fcs32)
-    eq_(param.fcs16, copyparam.fcs16)
-    eq_(param.rd, copyparam.rd)
-    eq_(param.test, copyparam.test)
-    eq_(param.rset, copyparam.rset)
-    eq_(param.delete_i_cmd, copyparam.delete_i_cmd)
-    eq_(param.delete_i_resp, copyparam.delete_i_resp)
-    eq_(param.extd_addr, copyparam.extd_addr)
-    eq_(param.basic_addr, copyparam.basic_addr)
-    eq_(param.up, copyparam.up)
-    eq_(param.sim_rim, copyparam.sim_rim)
-    eq_(param.ui, copyparam.ui)
-    eq_(param.reserved2, copyparam.reserved2)
-    eq_(param.reserved1, copyparam.reserved1)
+    assert param.modulo128 == copyparam.modulo128
+    assert param.modulo8 == copyparam.modulo8
+    assert param.srej == copyparam.srej
+    assert param.rej == copyparam.rej
+    assert param.srej_multiframe == copyparam.srej_multiframe
+    assert param.start_stop_transp == copyparam.start_stop_transp
+    assert param.start_stop_flow_ctl == copyparam.start_stop_flow_ctl
+    assert param.start_stop_tx == copyparam.start_stop_tx
+    assert param.sync_tx == copyparam.sync_tx
+    assert param.fcs32 == copyparam.fcs32
+    assert param.fcs16 == copyparam.fcs16
+    assert param.rd == copyparam.rd
+    assert param.test == copyparam.test
+    assert param.rset == copyparam.rset
+    assert param.delete_i_cmd == copyparam.delete_i_cmd
+    assert param.delete_i_resp == copyparam.delete_i_resp
+    assert param.extd_addr == copyparam.extd_addr
+    assert param.basic_addr == copyparam.basic_addr
+    assert param.up == copyparam.up
+    assert param.sim_rim == copyparam.sim_rim
+    assert param.ui == copyparam.ui
+    assert param.reserved2 == copyparam.reserved2
+    assert param.reserved1 == copyparam.reserved1
 
 
 def test_encode_hdlcfunc_param():
@@ -435,7 +434,7 @@ def test_decode_retries_param():
     Test we can decode a Retries parameter.
     """
     param = AX25XIDRetriesParameter.decode(from_hex("10"))
-    eq_(param.value, 16)
+    assert param.value == 16
 
 
 def test_copy_retries_param():
@@ -447,4 +446,4 @@ def test_copy_retries_param():
     assert param is not copyparam
 
     # Ensure all parameters match
-    eq_(param.value, copyparam.value)
+    assert param.value == copyparam.value

@@ -3,7 +3,6 @@
 from aioax25.station import AX25Station
 from aioax25.version import AX25Version
 
-from nose.tools import eq_
 from ..mocks import DummyInterface
 
 
@@ -52,4 +51,4 @@ def test_constructor_protocol():
         )
         assert False, "Should not have worked"
     except ValueError as e:
-        eq_(str(e), "'1.x' not a supported AX.25 protocol version")
+        assert str(e) == "'1.x' not a supported AX.25 protocol version"

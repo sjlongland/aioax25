@@ -4,17 +4,9 @@
 Tests for AX25PeerConnectionHandler
 """
 
-from nose.tools import (
-    eq_,
-    assert_almost_equal,
-    assert_is,
-    assert_is_not_none,
-    assert_is_none,
-)
-
 from aioax25.version import AX25Version
 from aioax25.peer import AX25PeerConnectionHandler
-from aioax25.frame import AX25Address, AX25TestFrame
+from aioax25.frame import AX25Address
 from ..mocks import DummyPeer, DummyStation
 
 
@@ -27,20 +19,20 @@ def test_peerconn_go():
     helper = AX25PeerConnectionHandler(peer)
 
     # Nothing should be set up
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
     assert not helper._done
 
     # Start it off
     helper._go()
 
     # We should hand off to the negotiation handler, so no timeout started yet:
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
 
     # There should be a call to negotiate, with a call-back pointing here.
-    eq_(peer._negotiate_calls, [helper._on_negotiated])
+    assert peer._negotiate_calls == [helper._on_negotiated]
 
 
-def test_peerconn_go_peer_ax20():
+def test_peerconn_go_peer_ax20_stn():
     """
     Test _go skips negotiation for AX.25 2.0 stations.
     """
@@ -50,31 +42,31 @@ def test_peerconn_go_peer_ax20():
     helper = AX25PeerConnectionHandler(peer)
 
     # Nothing should be set up
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
     assert not helper._done
 
     # Start it off
     helper._go()
 
     # Check the time-out timer is started
-    assert_is_not_none(helper._timeout_handle)
-    eq_(helper._timeout_handle.delay, 0.1)
+    assert helper._timeout_handle is not None
+    assert helper._timeout_handle.delay == 0.1
 
     # Helper should have hooked the handler events
-    eq_(peer._uaframe_handler, helper._on_receive_ua)
-    eq_(peer._frmrframe_handler, helper._on_receive_frmr)
-    eq_(peer._dmframe_handler, helper._on_receive_dm)
+    assert peer._uaframe_handler == helper._on_receive_ua
+    assert peer._frmrframe_handler == helper._on_receive_frmr
+    assert peer._dmframe_handler == helper._on_receive_dm
 
     # Station should have been asked to send a SABM
-    eq_(len(peer.transmit_calls), 1)
+    assert len(peer.transmit_calls) == 1
     (frame, callback) = peer.transmit_calls.pop(0)
 
     # Frame should be a SABM frame
-    eq_(frame, "sabm")
-    assert_is_none(callback)
+    assert frame == "sabm"
+    assert callback is None
 
 
-def test_peerconn_go_peer_ax20():
+def test_peerconn_go_peer_ax20_peer():
     """
     Test _go skips negotiation for AX.25 2.0 peers.
     """
@@ -84,28 +76,28 @@ def test_peerconn_go_peer_ax20():
     helper = AX25PeerConnectionHandler(peer)
 
     # Nothing should be set up
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
     assert not helper._done
 
     # Start it off
     helper._go()
 
     # Check the time-out timer is started
-    assert_is_not_none(helper._timeout_handle)
-    eq_(helper._timeout_handle.delay, 0.1)
+    assert helper._timeout_handle is not None
+    assert helper._timeout_handle.delay == 0.1
 
     # Helper should have hooked the handler events
-    eq_(peer._uaframe_handler, helper._on_receive_ua)
-    eq_(peer._frmrframe_handler, helper._on_receive_frmr)
-    eq_(peer._dmframe_handler, helper._on_receive_dm)
+    assert peer._uaframe_handler == helper._on_receive_ua
+    assert peer._frmrframe_handler == helper._on_receive_frmr
+    assert peer._dmframe_handler == helper._on_receive_dm
 
     # Station should have been asked to send a SABM
-    eq_(len(peer.transmit_calls), 1)
+    assert len(peer.transmit_calls) == 1
     (frame, callback) = peer.transmit_calls.pop(0)
 
     # Frame should be a SABM frame
-    eq_(frame, "sabm")
-    assert_is_none(callback)
+    assert frame == "sabm"
+    assert callback is None
 
 
 def test_peerconn_go_prenegotiated():
@@ -120,28 +112,28 @@ def test_peerconn_go_prenegotiated():
     peer._negotiated = True
 
     # Nothing should be set up
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
     assert not helper._done
 
     # Start it off
     helper._go()
 
     # Check the time-out timer is started
-    assert_is_not_none(helper._timeout_handle)
-    eq_(helper._timeout_handle.delay, 0.1)
+    assert helper._timeout_handle is not None
+    assert helper._timeout_handle.delay == 0.1
 
     # Helper should have hooked the handler events
-    eq_(peer._uaframe_handler, helper._on_receive_ua)
-    eq_(peer._frmrframe_handler, helper._on_receive_frmr)
-    eq_(peer._dmframe_handler, helper._on_receive_dm)
+    assert peer._uaframe_handler == helper._on_receive_ua
+    assert peer._frmrframe_handler == helper._on_receive_frmr
+    assert peer._dmframe_handler == helper._on_receive_dm
 
     # Station should have been asked to send a SABM
-    eq_(len(peer.transmit_calls), 1)
+    assert len(peer.transmit_calls) == 1
     (frame, callback) = peer.transmit_calls.pop(0)
 
     # Frame should be a SABM frame
-    eq_(frame, "sabm")
-    assert_is_none(callback)
+    assert frame == "sabm"
+    assert callback is None
 
 
 def test_peerconn_on_negotiated_failed():
@@ -153,9 +145,9 @@ def test_peerconn_on_negotiated_failed():
     helper = AX25PeerConnectionHandler(peer)
 
     # Nothing should be set up
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
     assert not helper._done
-    eq_(peer.transmit_calls, [])
+    assert peer.transmit_calls == []
 
     # Hook the done signal
     done_evts = []
@@ -163,7 +155,7 @@ def test_peerconn_on_negotiated_failed():
 
     # Try to connect
     helper._on_negotiated("whoopsie")
-    eq_(done_evts, [{"response": "whoopsie"}])
+    assert done_evts == [{"response": "whoopsie"}]
 
 
 def test_peerconn_on_negotiated_xidframe_handler():
@@ -175,9 +167,9 @@ def test_peerconn_on_negotiated_xidframe_handler():
     helper = AX25PeerConnectionHandler(peer)
 
     # Nothing should be set up
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
     assert not helper._done
-    eq_(peer.transmit_calls, [])
+    assert peer.transmit_calls == []
 
     # Hook the UA handler
     peer._uaframe_handler = lambda *a, **kwa: None
@@ -188,7 +180,7 @@ def test_peerconn_on_negotiated_xidframe_handler():
 
     # Try to connect
     helper._on_negotiated("xid")
-    eq_(done_evts, [{"response": "station_busy"}])
+    assert done_evts == [{"response": "station_busy"}]
 
 
 def test_peerconn_on_negotiated_frmrframe_handler():
@@ -200,9 +192,9 @@ def test_peerconn_on_negotiated_frmrframe_handler():
     helper = AX25PeerConnectionHandler(peer)
 
     # Nothing should be set up
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
     assert not helper._done
-    eq_(peer.transmit_calls, [])
+    assert peer.transmit_calls == []
 
     # Hook the FRMR handler
     peer._frmrframe_handler = lambda *a, **kwa: None
@@ -213,7 +205,7 @@ def test_peerconn_on_negotiated_frmrframe_handler():
 
     # Try to connect
     helper._on_negotiated("xid")
-    eq_(done_evts, [{"response": "station_busy"}])
+    assert done_evts == [{"response": "station_busy"}]
 
 
 def test_peerconn_on_negotiated_dmframe_handler():
@@ -225,9 +217,9 @@ def test_peerconn_on_negotiated_dmframe_handler():
     helper = AX25PeerConnectionHandler(peer)
 
     # Nothing should be set up
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
     assert not helper._done
-    eq_(peer.transmit_calls, [])
+    assert peer.transmit_calls == []
 
     # Hook the DM handler
     peer._dmframe_handler = lambda *a, **kwa: None
@@ -238,7 +230,7 @@ def test_peerconn_on_negotiated_dmframe_handler():
 
     # Try to connect
     helper._on_negotiated("xid")
-    eq_(done_evts, [{"response": "station_busy"}])
+    assert done_evts == [{"response": "station_busy"}]
 
 
 def test_peerconn_on_negotiated_xid():
@@ -256,17 +248,17 @@ def test_peerconn_on_negotiated_xid():
     assert not helper._done
 
     # Helper should be hooked
-    eq_(peer._uaframe_handler, helper._on_receive_ua)
-    eq_(peer._frmrframe_handler, helper._on_receive_frmr)
-    eq_(peer._dmframe_handler, helper._on_receive_dm)
+    assert peer._uaframe_handler == helper._on_receive_ua
+    assert peer._frmrframe_handler == helper._on_receive_frmr
+    assert peer._dmframe_handler == helper._on_receive_dm
 
     # Station should have been asked to send a SABM
-    eq_(len(peer.transmit_calls), 1)
+    assert len(peer.transmit_calls) == 1
     (frame, callback) = peer.transmit_calls.pop(0)
 
     # Frame should be a SABM frame
-    eq_(frame, "sabm")
-    assert_is_none(callback)
+    assert frame == "sabm"
+    assert callback is None
 
 
 def test_peerconn_receive_ua():
@@ -278,7 +270,7 @@ def test_peerconn_receive_ua():
     helper = AX25PeerConnectionHandler(peer)
 
     # Nothing should be set up
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
     assert not helper._done
 
     # Hook the done signal
@@ -289,8 +281,8 @@ def test_peerconn_receive_ua():
     helper._on_receive_ua()
 
     # See that the helper finished
-    assert_is(helper._done, True)
-    eq_(done_evts, [{"response": "ack"}])
+    assert helper._done is True
+    assert done_evts == [{"response": "ack"}]
 
 
 def test_peerconn_receive_frmr():
@@ -302,7 +294,7 @@ def test_peerconn_receive_frmr():
     helper = AX25PeerConnectionHandler(peer)
 
     # Nothing should be set up
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
     assert not helper._done
 
     # Hook the done signal
@@ -313,16 +305,16 @@ def test_peerconn_receive_frmr():
     helper._on_receive_frmr()
 
     # See that the helper finished
-    assert_is(helper._done, True)
-    eq_(done_evts, [{"response": "frmr"}])
+    assert helper._done is True
+    assert done_evts == [{"response": "frmr"}]
 
     # Station should have been asked to send a DM
-    eq_(len(peer.transmit_calls), 1)
+    assert len(peer.transmit_calls) == 1
     (frame, callback) = peer.transmit_calls.pop(0)
 
     # Frame should be a DM frame
-    eq_(frame, "dm")
-    assert_is_none(callback)
+    assert frame == "dm"
+    assert callback is None
 
 
 def test_peerconn_receive_dm():
@@ -334,7 +326,7 @@ def test_peerconn_receive_dm():
     helper = AX25PeerConnectionHandler(peer)
 
     # Nothing should be set up
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
     assert not helper._done
 
     # Hook the done signal
@@ -345,8 +337,8 @@ def test_peerconn_receive_dm():
     helper._on_receive_dm()
 
     # See that the helper finished
-    assert_is(helper._done, True)
-    eq_(done_evts, [{"response": "dm"}])
+    assert helper._done is True
+    assert done_evts == [{"response": "dm"}]
 
 
 def test_peerconn_on_timeout_first():
@@ -358,35 +350,35 @@ def test_peerconn_on_timeout_first():
     helper = AX25PeerConnectionHandler(peer)
 
     # Nothing should be set up
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
     assert not helper._done
-    eq_(peer.transmit_calls, [])
+    assert peer.transmit_calls == []
 
     # We should have retries left
-    eq_(helper._retries, 2)
+    assert helper._retries == 2
 
     # Call the time-out handler
     helper._on_timeout()
 
     # Check the time-out timer is re-started
-    assert_is_not_none(helper._timeout_handle)
-    eq_(helper._timeout_handle.delay, 0.1)
+    assert helper._timeout_handle is not None
+    assert helper._timeout_handle.delay == 0.1
 
     # There should now be fewer retries left
-    eq_(helper._retries, 1)
+    assert helper._retries == 1
 
     # Helper should have hooked the handler events
-    eq_(peer._uaframe_handler, helper._on_receive_ua)
-    eq_(peer._frmrframe_handler, helper._on_receive_frmr)
-    eq_(peer._dmframe_handler, helper._on_receive_dm)
+    assert peer._uaframe_handler == helper._on_receive_ua
+    assert peer._frmrframe_handler == helper._on_receive_frmr
+    assert peer._dmframe_handler == helper._on_receive_dm
 
     # Station should have been asked to send an XID
-    eq_(len(peer.transmit_calls), 1)
+    assert len(peer.transmit_calls) == 1
     (frame, callback) = peer.transmit_calls.pop(0)
 
     # Frame should be a SABM frame
-    eq_(frame, "sabm")
-    assert_is_none(callback)
+    assert frame == "sabm"
+    assert callback is None
 
 
 def test_peerconn_on_timeout_last():
@@ -398,9 +390,9 @@ def test_peerconn_on_timeout_last():
     helper = AX25PeerConnectionHandler(peer)
 
     # Nothing should be set up
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
     assert not helper._done
-    eq_(peer.transmit_calls, [])
+    assert peer.transmit_calls == []
 
     # Pretend there are no more retries left
     helper._retries = 0
@@ -418,19 +410,19 @@ def test_peerconn_on_timeout_last():
     helper._on_timeout()
 
     # Check the time-out timer is not re-started
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
 
     # Helper should have hooked the handler events
-    assert_is_none(peer._uaframe_handler)
-    assert_is_none(peer._frmrframe_handler)
-    assert_is_none(peer._dmframe_handler)
+    assert peer._uaframe_handler is None
+    assert peer._frmrframe_handler is None
+    assert peer._dmframe_handler is None
 
     # Station should not have been asked to send anything
-    eq_(len(peer.transmit_calls), 0)
+    assert len(peer.transmit_calls) == 0
 
     # See that the helper finished
-    assert_is(helper._done, True)
-    eq_(done_evts, [{"response": "timeout"}])
+    assert helper._done is True
+    assert done_evts == [{"response": "timeout"}]
 
 
 def test_peerconn_finish_disconnect_ua():
@@ -451,9 +443,9 @@ def test_peerconn_finish_disconnect_ua():
     helper._finish()
 
     # All except UA (which is not ours) should be disconnected
-    eq_(peer._uaframe_handler, dummy_uaframe_handler)
-    assert_is_none(peer._frmrframe_handler)
-    assert_is_none(peer._dmframe_handler)
+    assert peer._uaframe_handler == dummy_uaframe_handler
+    assert peer._frmrframe_handler is None
+    assert peer._dmframe_handler is None
 
 
 def test_peerconn_finish_disconnect_frmr():
@@ -474,9 +466,9 @@ def test_peerconn_finish_disconnect_frmr():
     helper._finish()
 
     # All except FRMR (which is not ours) should be disconnected
-    assert_is_none(peer._uaframe_handler)
-    eq_(peer._frmrframe_handler, dummy_frmrframe_handler)
-    assert_is_none(peer._dmframe_handler)
+    assert peer._uaframe_handler is None
+    assert peer._frmrframe_handler == dummy_frmrframe_handler
+    assert peer._dmframe_handler is None
 
 
 def test_peerconn_finish_disconnect_dm():
@@ -497,6 +489,6 @@ def test_peerconn_finish_disconnect_dm():
     helper._finish()
 
     # All except DM (which is not ours) should be disconnected
-    assert_is_none(peer._uaframe_handler)
-    assert_is_none(peer._frmrframe_handler)
-    eq_(peer._dmframe_handler, dummy_dmframe_handler)
+    assert peer._uaframe_handler is None
+    assert peer._frmrframe_handler is None
+    assert peer._dmframe_handler == dummy_dmframe_handler

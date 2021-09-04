@@ -4,7 +4,6 @@ from aioax25.station import AX25Station
 from aioax25.peer import AX25Peer
 from aioax25.frame import AX25Address
 
-from nose.tools import eq_
 from ..mocks import DummyInterface, DummyPeer
 
 
@@ -17,10 +16,9 @@ def test_unknown_peer_nocreate_keyerror():
         station.getpeer("VK4BWI", create=False)
         assert False, "Should not have worked"
     except KeyError as e:
-        eq_(
-            str(e),
+        assert str(e) == (
             "AX25Address(callsign=VK4BWI, ssid=0, "
-            "ch=False, res0=True, res1=True, extension=False)",
+            "ch=False, res0=True, res1=True, extension=False)"
         )
 
 

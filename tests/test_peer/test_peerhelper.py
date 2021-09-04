@@ -4,8 +4,6 @@
 Tests for AX25PeerHelper
 """
 
-from nose.tools import eq_
-
 from aioax25.peer import AX25PeerHelper
 from aioax25.frame import AX25Address
 from ..mocks import DummyPeer, DummyStation
@@ -27,14 +25,14 @@ def test_peerhelper_start_timer():
     assert helper._timeout_handle is None
 
     helper._start_timer()
-    eq_(len(peer._loop.call_later_list), 1)
+    assert len(peer._loop.call_later_list) == 1
     timeout = peer._loop.call_later_list.pop(0)
 
     assert timeout is helper._timeout_handle
-    eq_(timeout.delay, 0.1)
-    eq_(timeout.callback, helper._on_timeout)
-    eq_(timeout.args, ())
-    eq_(timeout.kwargs, {})
+    assert timeout.delay == 0.1
+    assert timeout.callback == helper._on_timeout
+    assert timeout.args == ()
+    assert timeout.kwargs == {}
 
 
 def test_peerhelper_stop_timer():
@@ -112,7 +110,7 @@ def test_finish():
     assert helper._done
 
     # Signal should have fired
-    eq_(done_events, [{"arg1": "abc", "arg2": 123}])
+    assert done_events == [{"arg1": "abc", "arg2": 123}]
 
     # Timeout should have been cancelled
     assert timeout.cancelled
@@ -141,7 +139,7 @@ def test_finish_repeat():
     helper._finish(arg1="abc", arg2=123)
 
     # Signal should not have fired
-    eq_(done_events, [])
+    assert done_events == []
 
     # Timeout should not have been cancelled
     assert not timeout.cancelled

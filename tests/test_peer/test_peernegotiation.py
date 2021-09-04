@@ -4,16 +4,8 @@
 Tests for AX25PeerNegotiationHandler
 """
 
-from nose.tools import (
-    eq_,
-    assert_almost_equal,
-    assert_is,
-    assert_is_not_none,
-    assert_is_none,
-)
-
 from aioax25.peer import AX25PeerNegotiationHandler
-from aioax25.frame import AX25Address, AX25TestFrame
+from aioax25.frame import AX25Address
 from ..mocks import DummyPeer, DummyStation
 
 
@@ -26,27 +18,27 @@ def test_peerneg_go():
     helper = AX25PeerNegotiationHandler(peer)
 
     # Nothing should be set up
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
     assert not helper._done
-    eq_(peer.transmit_calls, [])
+    assert peer.transmit_calls == []
 
     # Start it off
     helper._go()
-    assert_is_not_none(helper._timeout_handle)
-    eq_(helper._timeout_handle.delay, 0.1)
+    assert helper._timeout_handle is not None
+    assert helper._timeout_handle.delay == 0.1
 
     # Helper should have hooked the handler events
-    eq_(peer._xidframe_handler, helper._on_receive_xid)
-    eq_(peer._frmrframe_handler, helper._on_receive_frmr)
-    eq_(peer._dmframe_handler, helper._on_receive_dm)
+    assert peer._xidframe_handler == helper._on_receive_xid
+    assert peer._frmrframe_handler == helper._on_receive_frmr
+    assert peer._dmframe_handler == helper._on_receive_dm
 
     # Station should have been asked to send an XID
-    eq_(len(peer.transmit_calls), 1)
+    assert len(peer.transmit_calls) == 1
     (frame, callback) = peer.transmit_calls.pop(0)
 
     # Frame should be a test frame, with CR=True
-    eq_(frame, "xid:cr=True")
-    assert_is_none(callback)
+    assert frame == "xid:cr=True"
+    assert callback is None
 
 
 def test_peerneg_go_xidframe_handler():
@@ -58,9 +50,9 @@ def test_peerneg_go_xidframe_handler():
     helper = AX25PeerNegotiationHandler(peer)
 
     # Nothing should be set up
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
     assert not helper._done
-    eq_(peer.transmit_calls, [])
+    assert peer.transmit_calls == []
 
     # Hook the XID handler
     peer._xidframe_handler = lambda *a, **kwa: None
@@ -83,9 +75,9 @@ def test_peerneg_go_frmrframe_handler():
     helper = AX25PeerNegotiationHandler(peer)
 
     # Nothing should be set up
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
     assert not helper._done
-    eq_(peer.transmit_calls, [])
+    assert peer.transmit_calls == []
 
     # Hook the FRMR handler
     peer._frmrframe_handler = lambda *a, **kwa: None
@@ -108,9 +100,9 @@ def test_peerneg_go_dmframe_handler():
     helper = AX25PeerNegotiationHandler(peer)
 
     # Nothing should be set up
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
     assert not helper._done
-    eq_(peer.transmit_calls, [])
+    assert peer.transmit_calls == []
 
     # Hook the DM handler
     peer._dmframe_handler = lambda *a, **kwa: None
@@ -133,7 +125,7 @@ def test_peerneg_receive_xid():
     helper = AX25PeerNegotiationHandler(peer)
 
     # Nothing should be set up
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
     assert not helper._done
 
     # Hook the done signal
@@ -144,8 +136,8 @@ def test_peerneg_receive_xid():
     helper._on_receive_xid()
 
     # See that the helper finished
-    assert_is(helper._done, True)
-    eq_(done_evts, [{"response": "xid"}])
+    assert helper._done is True
+    assert done_evts == [{"response": "xid"}]
 
 
 def test_peerneg_receive_frmr():
@@ -157,7 +149,7 @@ def test_peerneg_receive_frmr():
     helper = AX25PeerNegotiationHandler(peer)
 
     # Nothing should be set up
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
     assert not helper._done
 
     # Hook the done signal
@@ -168,8 +160,8 @@ def test_peerneg_receive_frmr():
     helper._on_receive_frmr()
 
     # See that the helper finished
-    assert_is(helper._done, True)
-    eq_(done_evts, [{"response": "frmr"}])
+    assert helper._done is True
+    assert done_evts == [{"response": "frmr"}]
 
 
 def test_peerneg_receive_dm():
@@ -181,7 +173,7 @@ def test_peerneg_receive_dm():
     helper = AX25PeerNegotiationHandler(peer)
 
     # Nothing should be set up
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
     assert not helper._done
 
     # Hook the done signal
@@ -192,8 +184,8 @@ def test_peerneg_receive_dm():
     helper._on_receive_dm()
 
     # See that the helper finished
-    assert_is(helper._done, True)
-    eq_(done_evts, [{"response": "dm"}])
+    assert helper._done is True
+    assert done_evts == [{"response": "dm"}]
 
 
 def test_peerneg_on_timeout_first():
@@ -205,35 +197,35 @@ def test_peerneg_on_timeout_first():
     helper = AX25PeerNegotiationHandler(peer)
 
     # Nothing should be set up
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
     assert not helper._done
-    eq_(peer.transmit_calls, [])
+    assert peer.transmit_calls == []
 
     # We should have retries left
-    eq_(helper._retries, 2)
+    assert helper._retries == 2
 
     # Call the time-out handler
     helper._on_timeout()
 
     # Check the time-out timer is re-started
-    assert_is_not_none(helper._timeout_handle)
-    eq_(helper._timeout_handle.delay, 0.1)
+    assert helper._timeout_handle is not None
+    assert helper._timeout_handle.delay == 0.1
 
     # There should now be fewer retries left
-    eq_(helper._retries, 1)
+    assert helper._retries == 1
 
     # Helper should have hooked the handler events
-    eq_(peer._xidframe_handler, helper._on_receive_xid)
-    eq_(peer._frmrframe_handler, helper._on_receive_frmr)
-    eq_(peer._dmframe_handler, helper._on_receive_dm)
+    assert peer._xidframe_handler == helper._on_receive_xid
+    assert peer._frmrframe_handler == helper._on_receive_frmr
+    assert peer._dmframe_handler == helper._on_receive_dm
 
     # Station should have been asked to send an XID
-    eq_(len(peer.transmit_calls), 1)
+    assert len(peer.transmit_calls) == 1
     (frame, callback) = peer.transmit_calls.pop(0)
 
     # Frame should be a test frame, with CR=True
-    eq_(frame, "xid:cr=True")
-    assert_is_none(callback)
+    assert frame == "xid:cr=True"
+    assert callback is None
 
 
 def test_peerneg_on_timeout_last():
@@ -245,9 +237,9 @@ def test_peerneg_on_timeout_last():
     helper = AX25PeerNegotiationHandler(peer)
 
     # Nothing should be set up
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
     assert not helper._done
-    eq_(peer.transmit_calls, [])
+    assert peer.transmit_calls == []
 
     # Pretend there are no more retries left
     helper._retries = 0
@@ -265,19 +257,19 @@ def test_peerneg_on_timeout_last():
     helper._on_timeout()
 
     # Check the time-out timer is not re-started
-    assert_is_none(helper._timeout_handle)
+    assert helper._timeout_handle is None
 
     # Helper should have hooked the handler events
-    assert_is_none(peer._xidframe_handler)
-    assert_is_none(peer._frmrframe_handler)
-    assert_is_none(peer._dmframe_handler)
+    assert peer._xidframe_handler is None
+    assert peer._frmrframe_handler is None
+    assert peer._dmframe_handler is None
 
     # Station should not have been asked to send anything
-    eq_(len(peer.transmit_calls), 0)
+    assert len(peer.transmit_calls) == 0
 
     # See that the helper finished
-    assert_is(helper._done, True)
-    eq_(done_evts, [{"response": "timeout"}])
+    assert helper._done is True
+    assert done_evts == [{"response": "timeout"}]
 
 
 def test_peerneg_finish_disconnect_xid():
@@ -298,9 +290,9 @@ def test_peerneg_finish_disconnect_xid():
     helper._finish()
 
     # All except XID (which is not ours) should be disconnected
-    eq_(peer._xidframe_handler, dummy_xidframe_handler)
-    assert_is_none(peer._frmrframe_handler)
-    assert_is_none(peer._dmframe_handler)
+    assert peer._xidframe_handler == dummy_xidframe_handler
+    assert peer._frmrframe_handler is None
+    assert peer._dmframe_handler is None
 
 
 def test_peerneg_finish_disconnect_frmr():
@@ -321,9 +313,9 @@ def test_peerneg_finish_disconnect_frmr():
     helper._finish()
 
     # All except XID (which is not ours) should be disconnected
-    assert_is_none(peer._xidframe_handler)
-    eq_(peer._frmrframe_handler, dummy_frmrframe_handler)
-    assert_is_none(peer._dmframe_handler)
+    assert peer._xidframe_handler is None
+    assert peer._frmrframe_handler == dummy_frmrframe_handler
+    assert peer._dmframe_handler is None
 
 
 def test_peerneg_finish_disconnect_dm():
@@ -344,6 +336,6 @@ def test_peerneg_finish_disconnect_dm():
     helper._finish()
 
     # All except XID (which is not ours) should be disconnected
-    assert_is_none(peer._xidframe_handler)
-    assert_is_none(peer._frmrframe_handler)
-    eq_(peer._dmframe_handler, dummy_dmframe_handler)
+    assert peer._xidframe_handler is None
+    assert peer._frmrframe_handler is None
+    assert peer._dmframe_handler == dummy_dmframe_handler
