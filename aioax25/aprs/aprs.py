@@ -27,6 +27,42 @@ class APRSInterface(APRSRouter):
             aprs_destination='APZAIO',
             # Path to use when sending APRS messages
             aprs_path=['WIDE1-1','WIDE2-1'],
+            # AX.25 destination SSIDs to listen for.  *NOTE* Setting this will
+            # break reception of MIC-e traffic!  The format here used is a `list`
+            # of `dict` objects:
+            # listen_destinations=[
+            #     # APRS 1.0.1 protocol specification page 13
+            #     dict(callsign='^AIR',   regex=True,     ssid=None), # Legacy
+            #     dict(callsign='^ALL',   regex=True,     ssid=None),
+            #     dict(callsign='^AP',    regex=True,     ssid=None),
+            #     dict(callsign='BEACON', regex=False,    ssid=None),
+            #     dict(callsign='^CQ',    regex=True,     ssid=None),
+            #     dict(callsign='^GPS',   regex=True,     ssid=None),
+            #     dict(callsign='^DF',    regex=True,     ssid=None),
+            #     dict(callsign='^DGPS',  regex=True,     ssid=None),
+            #     dict(callsign='^DRILL', regex=True,     ssid=None),
+            #     dict(callsign='^ID',    regex=True,     ssid=None),
+            #     dict(callsign='^JAVA',  regex=True,     ssid=None),
+            #     dict(callsign='^MAIL',  regex=True,     ssid=None),
+            #     dict(callsign='^MICE',  regex=True,     ssid=None),
+            #     dict(callsign='^QST',   regex=True,     ssid=None),
+            #     dict(callsign='^QTH',   regex=True,     ssid=None),
+            #     dict(callsign='^RTCM',  regex=True,     ssid=None),
+            #     dict(callsign='^SKY',   regex=True,     ssid=None),
+            #     dict(callsign='^SPACE', regex=True,     ssid=None),
+            #     dict(callsign='^SPC',   regex=True,     ssid=None),
+            #     dict(callsign='^SYM',   regex=True,     ssid=None),
+            #     dict(callsign='^TEL',   regex=True,     ssid=None),
+            #     dict(callsign='^TEST',  regex=True,     ssid=None),
+            #     dict(callsign='^TLM',   regex=True,     ssid=None),
+            #     dict(callsign='^WX',    regex=True,     ssid=None),
+            #     dict(callsign='^ZIP',   regex=True,     ssid=None)  # Legacy
+            # ],
+            listen_destinations=None,
+            # listen_altnets uses the same format as listen_destinations
+            # and adds *additional* altnets using the same specification.
+            # *NOTE* Setting this will break reception of MIC-e traffic!
+            listen_altnets=None,
             # Maximum message ID modulo function
             msgid_modulo=1000,
             # Length of time in seconds before duplicates expire
@@ -53,11 +89,21 @@ class APRSInterface(APRSRouter):
         self._ax25int = ax25int
         self._mycall = AX25Address.decode(mycall).normalised
 
-        # Bind to receive all traffic.
-        # Whilst there's a list of destination calls for conventional APRS,
-        # MIC-e derives the destination from the latitude of the station, thus
-        # it could be *ANYTHING*.
-        self._ax25int.received_msg.connect(self._on_receive)
+        if not (listen_destinations or listen_altnets):
+            # Bind to receive all traffic.
+            # Whilst there's a list of destination calls for conventional APRS,
+            # MIC-e derives the destination from the latitude of the station, thus
+            # it could be *ANYTHING*.
+            self._ax25int.received_msg.connect(self._on_receive)
+        else:
+            # Bind to receive traffic (direct, standard APRS destinations, and
+            # user-defined alt-nets):
+            for spec in [
+                    dict(callsign=self._mycall.callsign,
+                        ssid=self._mycall.ssid, regex=False)
+                    ] + listen_destinations + (listen_altnets or []):
+                self._ax25int.bind(self._on_receive, **spec)
+
 
         # Message ID counter
         self._msgid = 0
