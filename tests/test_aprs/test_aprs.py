@@ -5,6 +5,7 @@ from nose.tools import eq_, assert_set_equal, assert_is, assert_greater, \
 
 import logging
 from functools import partial
+from signalslot import Signal
 
 from aioax25.aprs import APRSInterface
 from aioax25.frame import AX25UnnumberedInformationFrame
@@ -18,6 +19,7 @@ class DummyAX25Interface(object):
         self._loop = DummyLoop()
         self.bind_calls = []
         self.transmitted = []
+        self.received_msg = Signal()
 
     def bind(self, callback, callsign, ssid=0, regex=False):
         self.bind_calls.append((callback, callsign, ssid, regex))
@@ -42,10 +44,38 @@ def test_constructor_log():
 
 def test_constructor_bind():
     """
-    Test the constructor binds to the usual destination addresses.
+    Test the constructor binds to given destination addresses.
     """
     ax25int = DummyAX25Interface()
-    aprsint = APRSInterface(ax25int, 'VK4MSL-10')
+    aprsint = APRSInterface(ax25int, 'VK4MSL-10',
+            listen_destinations=[
+                dict(callsign='^AIR',   regex=True,     ssid=None), # Legacy
+                dict(callsign='^ALL',   regex=True,     ssid=None),
+                dict(callsign='^AP',    regex=True,     ssid=None),
+                dict(callsign='BEACON', regex=False,    ssid=None),
+                dict(callsign='^CQ',    regex=True,     ssid=None),
+                dict(callsign='^GPS',   regex=True,     ssid=None),
+                dict(callsign='^DF',    regex=True,     ssid=None),
+                dict(callsign='^DGPS',  regex=True,     ssid=None),
+                dict(callsign='^DRILL', regex=True,     ssid=None),
+                dict(callsign='^ID',    regex=True,     ssid=None),
+                dict(callsign='^JAVA',  regex=True,     ssid=None),
+                dict(callsign='^MAIL',  regex=True,     ssid=None),
+                dict(callsign='^MICE',  regex=True,     ssid=None),
+                dict(callsign='^QST',   regex=True,     ssid=None),
+                dict(callsign='^QTH',   regex=True,     ssid=None),
+                dict(callsign='^RTCM',  regex=True,     ssid=None),
+                dict(callsign='^SKY',   regex=True,     ssid=None),
+                dict(callsign='^SPACE', regex=True,     ssid=None),
+                dict(callsign='^SPC',   regex=True,     ssid=None),
+                dict(callsign='^SYM',   regex=True,     ssid=None),
+                dict(callsign='^TEL',   regex=True,     ssid=None),
+                dict(callsign='^TEST',  regex=True,     ssid=None),
+                dict(callsign='^TLM',   regex=True,     ssid=None),
+                dict(callsign='^WX',    regex=True,     ssid=None),
+                dict(callsign='^ZIP',   regex=True,     ssid=None)  # Legacy
+            ]
+    )
     eq_(len(ax25int.bind_calls), 26)
 
     assert_set_equal(
@@ -86,13 +116,40 @@ def test_constructor_bind():
             ])
     )
 
-def test_constructor_bind_altnets():
+def test_constructor_bind_destinations_and_altnets():
     """
-    Test the constructor binds to "alt-nets".
+    Test the constructor binds to both given destinations and alt-nets
     """
     ax25int = DummyAX25Interface()
     aprsint = APRSInterface(
             ax25int, 'VK4MSL-10',
+            listen_destinations=[
+                dict(callsign='^AIR',   regex=True,     ssid=None), # Legacy
+                dict(callsign='^ALL',   regex=True,     ssid=None),
+                dict(callsign='^AP',    regex=True,     ssid=None),
+                dict(callsign='BEACON', regex=False,    ssid=None),
+                dict(callsign='^CQ',    regex=True,     ssid=None),
+                dict(callsign='^GPS',   regex=True,     ssid=None),
+                dict(callsign='^DF',    regex=True,     ssid=None),
+                dict(callsign='^DGPS',  regex=True,     ssid=None),
+                dict(callsign='^DRILL', regex=True,     ssid=None),
+                dict(callsign='^ID',    regex=True,     ssid=None),
+                dict(callsign='^JAVA',  regex=True,     ssid=None),
+                dict(callsign='^MAIL',  regex=True,     ssid=None),
+                dict(callsign='^MICE',  regex=True,     ssid=None),
+                dict(callsign='^QST',   regex=True,     ssid=None),
+                dict(callsign='^QTH',   regex=True,     ssid=None),
+                dict(callsign='^RTCM',  regex=True,     ssid=None),
+                dict(callsign='^SKY',   regex=True,     ssid=None),
+                dict(callsign='^SPACE', regex=True,     ssid=None),
+                dict(callsign='^SPC',   regex=True,     ssid=None),
+                dict(callsign='^SYM',   regex=True,     ssid=None),
+                dict(callsign='^TEL',   regex=True,     ssid=None),
+                dict(callsign='^TEST',  regex=True,     ssid=None),
+                dict(callsign='^TLM',   regex=True,     ssid=None),
+                dict(callsign='^WX',    regex=True,     ssid=None),
+                dict(callsign='^ZIP',   regex=True,     ssid=None)  # Legacy
+            ],
             listen_altnets=[
                 dict(callsign='VK4BWI', regex=False, ssid=None)
             ])
@@ -133,6 +190,33 @@ def test_constructor_bind_altnets():
                 ('^TLM',    True,   None),
                 ('^WX',     True,   None),
                 ('^ZIP',    True,   None),
+                # Now should be the "alt-nets"
+                ('VK4BWI',  False,  None)
+            ])
+    )
+
+
+def test_constructor_bind_altnets():
+    """
+    Test the constructor binds to "alt-nets" only.
+    """
+    ax25int = DummyAX25Interface()
+    aprsint = APRSInterface(
+            ax25int, 'VK4MSL-10',
+            listen_altnets=[
+                dict(callsign='VK4BWI', regex=False, ssid=None)
+            ])
+    eq_(len(ax25int.bind_calls), 2)
+
+    assert_set_equal(
+            set([
+                (call, regex, ssid)
+                for (cb, call, ssid, regex)
+                in ax25int.bind_calls
+            ]),
+            set([
+                # The first bind call should be for the station SSID
+                ('VK4MSL',  False,  10),
                 # Now should be the "alt-nets"
                 ('VK4BWI',  False,  None)
             ])
