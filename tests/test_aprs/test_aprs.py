@@ -8,7 +8,7 @@ from functools import partial
 from signalslot import Signal
 
 from aioax25.aprs import APRSInterface
-from aioax25.frame import AX25UnnumberedInformationFrame
+from aioax25.frame import AX25UnnumberedInformationFrame, AX25Address
 from aioax25.aprs.message import APRSMessageFrame, APRSMessageHandler
 
 from ..loop import DummyLoop
