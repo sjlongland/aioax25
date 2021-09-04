@@ -191,7 +191,9 @@ class APRSMessageFrame(APRSFrame):
                     addressee=addressee,
                     msgid=msgid,
                     repeaters=uiframe.header.repeaters,
-                    pf=uiframe.pf, cr=uiframe.header.cr
+                    pf=uiframe.pf,
+                    cr=uiframe.header.cr,
+                    src_cr=uiframe.header.src_cr
                 )
             else:
                 # Must be a rejection then
@@ -201,7 +203,9 @@ class APRSMessageFrame(APRSFrame):
                     addressee=addressee,
                     msgid=msgid,
                     repeaters=uiframe.header.repeaters,
-                    pf=uiframe.pf, cr=uiframe.header.cr
+                    pf=uiframe.pf,
+                    cr=uiframe.header.cr,
+                    src_cr=uiframe.header.src_cr
                 )
 
         match = cls.MSGID_RE.search(message)
@@ -227,11 +231,14 @@ class APRSMessageFrame(APRSFrame):
                 msgid=msgid,
                 replyack=replyack,
                 repeaters=uiframe.header.repeaters,
-                pf=uiframe.pf, cr=uiframe.header.cr
+                pf=uiframe.pf,
+                cr=uiframe.header.cr,
+                src_cr=uiframe.header.src_cr
         )
 
     def __init__(self, destination, source, addressee, message,
-            msgid=None, replyack=False, repeaters=None, pf=False, cr=False):
+            msgid=None, replyack=False, repeaters=None, pf=False,
+            cr=True, src_cr=None):
 
         self._addressee = AX25Address.decode(addressee).normalised
         self._msgid = msgid
@@ -266,7 +273,7 @@ class APRSMessageFrame(APRSFrame):
                 destination=destination,
                 source=source,
                 payload=payload.encode('US-ASCII'),
-                repeaters=repeaters, pf=pf, cr=cr)
+                repeaters=repeaters, pf=pf, cr=cr, src_cr=src_cr)
 
     @property
     def addressee(self):
@@ -290,6 +297,7 @@ class APRSMessageFrame(APRSFrame):
                 source=self.header.source,
                 repeaters=self.header.repeaters,
                 cr=self.header.cr,
+                src_cr=self.header.src_cr,
                 pf=self.pf,
                 addressee=self.addressee,
                 msgid=self.msgid,
@@ -302,14 +310,14 @@ APRSFrame.DATA_TYPE_HANDLERS[APRSDataType.MESSAGE] = APRSMessageFrame
 
 class APRSMessageAckFrame(APRSMessageFrame):
     def __init__(self, destination, source, addressee, msgid,
-            repeaters=None, pf=False, cr=False):
+            repeaters=None, pf=False, cr=True, src_cr=None):
         super(APRSMessageAckFrame, self).__init__(
             destination=destination,
             source=source,
             addressee=addressee,
             message='ack%s' % msgid,
             msgid=None, # Don't encode the message ID a second time
-            repeaters=repeaters, pf=pf, cr=cr)
+            repeaters=repeaters, pf=pf, cr=cr, src_cr=src_cr)
 
         self._msgid = msgid
 
@@ -319,6 +327,7 @@ class APRSMessageAckFrame(APRSMessageFrame):
                 source=self.header.source,
                 repeaters=self.header.repeaters,
                 cr=self.header.cr,
+                src_cr=self.header.src_cr,
                 pf=self.pf,
                 addressee=self.addressee,
                 msgid=self.msgid
@@ -327,14 +336,14 @@ class APRSMessageAckFrame(APRSMessageFrame):
 
 class APRSMessageRejFrame(APRSMessageFrame):
     def __init__(self, destination, source, addressee, msgid,
-            repeaters=None, pf=False, cr=False):
+            repeaters=None, pf=False, cr=True, src_cr=None):
         super(APRSMessageRejFrame, self).__init__(
             destination=destination,
             source=source,
             addressee=addressee,
             message='rej%s' % msgid,
             msgid=None, # Don't encode the message ID a second time
-            repeaters=repeaters, pf=pf, cr=cr)
+            repeaters=repeaters, pf=pf, cr=cr, src_cr=src_cr)
 
         self._msgid = msgid
 
@@ -344,6 +353,7 @@ class APRSMessageRejFrame(APRSMessageFrame):
                 source=self.header.source,
                 repeaters=self.header.repeaters,
                 cr=self.header.cr,
+                src_cr=self.header.src_cr,
                 pf=self.pf,
                 addressee=self.addressee,
                 msgid=self.msgid
