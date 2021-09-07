@@ -219,6 +219,18 @@ The signal will call call-back functions with the following keyword arguments:
  * `handler`: The `APRSMessageHandler` object emitting the signal
  * `state`: The state of the `APRSMessageHandler` object.
 
+### TAPR TNC2 packet format
+
+Sometimes, you need the incoming packet in TAPR TNC2 format, notably for
+APRS-IS interaction.  This is somewhat experimental in `aioax25` as no one
+seems to have a definition of what "TNC2 format" is.
+
+All `AX25Frame` instances implement `tnc2` property, which returns the frame in
+a hopefully TNC2-compatible format.  For UI frames, which may be encoded in a
+number of different formats, there is also a `get_tnc2` method, which accepts
+arguments that are passed to `bytes.decode()`; the default is to decode the
+payload as ISO-8859-1 since this preserves the byte values losslessly.
+
 ### APRS Digipeating
 
 `aioax25` includes a module that implements basic digipeating for APRS

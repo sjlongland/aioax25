@@ -60,6 +60,7 @@ class AX25Frame(object):
                     source=header.source,
                     repeaters=header.repeaters,
                     cr=header.cr,
+                    src_cr=header.src_cr,
                     control=control,
                     payload=data
             )
@@ -71,6 +72,7 @@ class AX25Frame(object):
                     source=header.source,
                     repeaters=header.repeaters,
                     cr=header.cr,
+                    src_cr=header.src_cr,
                     control=control,
                     payload=data
             )
@@ -83,8 +85,9 @@ class AX25Frame(object):
             assert False, 'How did we get here?'
 
     def __init__(self, destination, source, repeaters=None,
-            cr=False, timestamp=None, deadline=None):
-        self._header = AX25FrameHeader(destination, source, repeaters, cr)
+            cr=False, src_cr=None, timestamp=None, deadline=None):
+        self._header = AX25FrameHeader(destination, source, repeaters, \
+                cr, src_cr)
         self._timestamp = timestamp or time.time()
         self._deadline = deadline
 
@@ -147,6 +150,13 @@ class AX25Frame(object):
         """
         return b''
 
+    @property
+    def tnc2(self):
+        """
+        Return the frame in "TNC2" format.
+        """
+        return self.header.tnc2
+
     def copy(self, header=None):
         """
         Make a copy of this frame with a new header for digipeating.
@@ -163,10 +173,11 @@ class AX25RawFrame(AX25Frame):
     """
 
     def __init__(self, destination, source, control, repeaters=None,
-            cr=False, payload=None):
-        self._header = AX25FrameHeader(destination, source, repeaters, cr)
+            cr=False, src_cr=None, payload=None):
+        self._header = AX25FrameHeader(destination, source, repeaters, \
+                cr, src_cr)
         self._control = control
-        self._payload = payload or b''
+        self._payload = payload or b""
 
     @property
     def frame_payload(self):
@@ -179,6 +190,7 @@ class AX25RawFrame(AX25Frame):
                 control=self.control,
                 repeaters=self.header.repeaters,
                 cr=self.header.cr,
+                src_cr=self.header.src_cr,
                 payload=self.frame_payload
         )
 
@@ -210,15 +222,16 @@ class AX25UnnumberedFrame(AX25Frame):
                 source=header.source,
                 repeaters=header.repeaters,
                 cr=header.cr,
+                src_cr=header.src_cr,
                 modifier=modifier,
                 pf=bool(control & cls.POLL_FINAL)
         )
 
     def __init__(self, destination, source, modifier,
-            repeaters=None, pf=False, cr=False):
+            repeaters=None, pf=False, cr=False, src_cr=None):
         super(AX25UnnumberedFrame, self).__init__(
                 destination=destination, source=source,
-                repeaters=repeaters, cr=cr)
+                repeaters=repeaters, cr=cr, src_cr=src_cr)
         self._pf = bool(pf)
         self._modifier = int(modifier) & self.MODIFIER_MASK
 
@@ -253,6 +266,7 @@ class AX25UnnumberedFrame(AX25Frame):
                 repeaters=self.header.repeaters,
                 modifier=self.modifier,
                 cr=self.header.cr,
+                src_cr=self.header.src_cr,
                 pf=self.pf
         )
 
@@ -272,16 +286,17 @@ class AX25UnnumberedInformationFrame(AX25UnnumberedFrame):
                 source=header.source,
                 repeaters=header.repeaters,
                 cr=header.cr,
+                src_cr=header.src_cr,
                 pf=bool(control & cls.POLL_FINAL),
                 pid=data[0],
                 payload=data[1:]
         )
 
     def __init__(self, destination, source, pid, payload,
-            repeaters=None, pf=False, cr=False):
+            repeaters=None, pf=False, cr=False, src_cr=None):
         super(AX25UnnumberedInformationFrame, self).__init__(
                 destination=destination, source=source,
-                repeaters=repeaters, cr=cr, pf=pf,
+                repeaters=repeaters, cr=cr, src_cr=src_cr, pf=pf,
                 modifier=self.MODIFIER)
         self._pid = int(pid) & 0xff
         self._payload = bytes(payload)
@@ -310,9 +325,26 @@ class AX25UnnumberedInformationFrame(AX25UnnumberedFrame):
                 source=self.header.source,
                 repeaters=self.header.repeaters,
                 cr=self.header.cr,
+                src_cr=self.header.src_cr,
                 pf=self.pf,
                 pid=self.pid,
                 payload=self.payload
+        )
+
+    @property
+    def tnc2(self):
+        """
+        Return the frame in "TNC2" format (default charset).
+        """
+        return self.get_tnc2()
+
+    def get_tnc2(self, charset='latin1', errors='strict'):
+        """
+        Return the frame in "TNC2" format with given charset.
+        """
+        return '%s:%s' % (
+                self.header.tnc2,
+                self.payload.decode(charset, errors)
         )
 
 
@@ -359,6 +391,7 @@ class AX25FrameRejectFrame(AX25UnnumberedFrame):
                 source=header.source,
                 repeaters=header.repeaters,
                 cr=header.cr,
+                src_cr=header.src_cr,
                 pf=bool(control & cls.POLL_FINAL),
                 w=w, x=x, y=y, z=z,
                 vr=vr, frmr_cr=cr, vs=vs,
@@ -367,10 +400,10 @@ class AX25FrameRejectFrame(AX25UnnumberedFrame):
 
     def __init__(self, destination, source, w, x, y, z,
             vr, frmr_cr, vs, frmr_control,
-            repeaters=None, pf=False, cr=False):
+            repeaters=None, pf=False, cr=False, src_cr=None):
         super(AX25FrameRejectFrame, self).__init__(
                 destination=destination, source=source,
-                repeaters=repeaters, cr=cr, pf=pf,
+                repeaters=repeaters, cr=cr, src_cr=src_cr, pf=pf,
                 modifier=self.MODIFIER)
 
         self._w = bool(w)
@@ -447,7 +480,9 @@ class AX25FrameRejectFrame(AX25UnnumberedFrame):
                 w=self.w, x=self.x, y=self.y, z=self.z,
                 frmr_cr=self.frmr_cr, vr=self.vr, vs=self.vs,
                 frmr_control=self.frmr_control,
-                cr=self.header.cr, pf=self.pf
+                cr=self.header.cr,
+                src_cr=self.header.src_cr,
+                pf=self.pf
         )
 
 
@@ -477,12 +512,14 @@ class AX25FrameHeader(object):
             destination=addresses[0],
             source=addresses[1],
             repeaters=addresses[2:],
-            cr=addresses[0].ch
+            cr=addresses[0].ch,
+            src_cr=addresses[1].ch
         ), data)
 
     def __init__(self, destination, source, repeaters=None,
-            cr=False):
+            cr=False, src_cr=None):
         self._cr = bool(cr)
+        self._src_cr = src_cr
         self._destination = AX25Address.decode(destination)
         self._source = AX25Address.decode(source)
         self._repeaters = AX25Path(*(repeaters or []))
@@ -494,14 +531,14 @@ class AX25FrameHeader(object):
         # Extension bit should be 0
         # CH bit should be 1 for command, 0 for response
         self._destination.extension = False
-        self._destination.ch = self._cr
+        self._destination.ch = self.cr
         for byte in bytes(self._destination):
             yield byte
 
         # Extension bit should be 0 if digipeaters follow, 1 otherwise
         # CH bit should be 0 for command, 1 for response
         self._source.extension = not bool(self._repeaters)
-        self._source.ch = not self._cr
+        self._source.ch = self.src_cr
         for byte in bytes(self._source):
             yield byte
 
@@ -548,7 +585,37 @@ class AX25FrameHeader(object):
 
     @property
     def cr(self):
+        """
+        Command/Response bit in the destination address.
+        """
         return self._cr
+
+    @property
+    def src_cr(self):
+        """
+        Command/Response bit in the source address.
+        """
+        if self._src_cr is None:
+            return not self.cr
+        else:
+            return self._src_cr
+
+    @property
+    def tnc2(self):
+        """
+        Return the frame header in "TNC2" format.
+
+        Largely the same as the format given by str(), but we ignore
+        the C bits on the source and destination call-signs.
+        """
+        # XXX "TNC2 format" is largely undefined… unless someone feels like
+        # deciphering the TAPR TNC2's firmware source code. (hello Z80 assembly!)
+        return '%s>%s%s' % (
+                self._source.copy(ch=False),
+                self._destination.copy(ch=False),
+                (',%s' % self._repeaters) \
+                        if self._repeaters else ''
+        )
 
 
 class AX25Path(Sequence):
