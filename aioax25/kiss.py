@@ -6,7 +6,7 @@ KISS-based TNCs, managing the byte stuffing/unstuffing.
 """
 
 from enum import Enum
-from asyncio import get_event_loop
+from asyncio import Protocol, get_event_loop
 from serial import Serial, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
 from .signal import Signal
 from binascii import b2a_hex
@@ -507,3 +507,76 @@ class KISSPort(object):
             return
 
         self.received.emit(frame=frame.payload)
+
+
+# Protocol interface adaptors for asyncio
+
+
+class KISSProtocol(Protocol):
+    """
+    KISSProtocol basically is a wrapper around asyncio's "Protocol"
+    structure.
+    """
+    def __init__(self, on_connect, on_receive, log):
+        super(KISSProtocol, self).__init__()
+
+        self._on_connect = on_connect
+        self._on_receive = on_receive
+        self._log = log
+
+    def connection_made(self, transport):
+        try:
+            self._on_connect(transport)
+        except:
+            self._log.exception('Failed to handle connection establishment')
+            transport.close()
+
+    def data_received(self, data):
+        try:
+            self._on_receive(data)
+        except:
+            self._log.exception('Failed to handle incoming data')
+
+    def connection_lost(self, exc):
+        try:
+            self._on_close(exc)
+        except:
+            self._log.exception('Failed to handle connection loss')
+
+
+class KISSSubprocessProtocol(Protocol):
+    """
+    KISSSubprocessProtocol is nearly identical to KISSProtocol but wraps
+    SubprocessProtocol instead.
+    """
+    def __init__(self, on_connect, on_receive, on_close, log):
+        super(KISSProtocol, self).__init__()
+
+        self._on_connect = on_connect
+        self._on_receive = on_receive
+        self._on_close = on_close
+        self._log = log
+
+    def connection_made(self, transport):
+        try:
+            self._on_connect(transport)
+        except:
+            self._log.exception('Failed to handle connection establishment')
+            transport.close()
+
+    def pipe_data_received(self, fd, data):
+        try:
+            if fd == 1: # stdout
+                self._on_receive(data)
+            else:
+                self._log.debug('Data received on fd=%d: %r', data)
+        except:
+            self._log.exception(
+                    'Failed to handle incoming data %r on fd=%d', data, fd
+            )
+
+    def process_exited(self):
+        try:
+            self._on_close(None)
+        except:
+            self._log.exception('Failed to handle process exit')
