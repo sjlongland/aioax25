@@ -19,6 +19,7 @@ setup(
         packages=[
             'aioax25',
             'aioax25.aprs',
+            'aioax25.aiosupport',
         ],
         requires=requirements,
         install_requires=requirements,
