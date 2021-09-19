@@ -4,6 +4,10 @@
 AsyncIO support routines, for all Python versions.
 """
 
+# pragma: no cover
+# Excluded from test coverage.  This module is deliberately
+# very simple, and there's little value in testing all possible scenarios.
+
 from sys import exc_info
 
 
