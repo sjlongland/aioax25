@@ -6,7 +6,7 @@ async/await, with Python 3.9 warning about coroutine being deprecated.
 """
 
 from asyncio import ensure_future
-from .exception import AsyncException
+from ..exception import AsyncException
 from functools import wraps
 import logging
 from sys import exit

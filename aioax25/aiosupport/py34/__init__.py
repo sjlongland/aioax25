@@ -9,7 +9,7 @@ without considerable effort (or at all).  So, let's throw them a lifeline.
 """
 
 from asyncio import ensure_future, coroutine
-from .exception import AsyncException
+from ..exception import AsyncException
 from functools import wraps
 import logging
 from sys import exit
