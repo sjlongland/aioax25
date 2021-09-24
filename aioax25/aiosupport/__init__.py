@@ -23,7 +23,7 @@ if version_info.major < 3:
 elif (version_info.major == 3) and (version_info.minor < 4):
     # Python 3.0-3.3
     raise NotImplementedError('Python 3.4 minimum is required')
-elif (version_info.major == 3) and (version_info.major == 4):
+elif (version_info.major == 3) and (version_info.minor == 4):
     # Python 3.4
     from .py34 import wrapasync
     USE_COROUTINE = True
