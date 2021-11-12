@@ -16,6 +16,7 @@ of Python.
 
 from sys import version_info
 from .exception import AsyncException
+from asyncio import ensure_future, iscoroutine, isfuture
 
 if version_info.major < 3:
     # Python 2 or earlier, not supported (how did they get here?)
@@ -36,4 +37,11 @@ assert AsyncException
 assert wrapasync
 assert USE_COROUTINE is not None
 
-__ALL__ = ['USE_COROUTINE', 'AsyncException', 'wrapasync']
+def exec_async(obj):
+    if iscoroutine(obj) or isfuture(obj):
+        return ensure_future(obj)
+    else:
+        return obj
+
+
+__ALL__ = ['USE_COROUTINE', 'AsyncException', 'wrapasync', 'exec_async']
