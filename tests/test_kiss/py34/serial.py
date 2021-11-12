@@ -26,7 +26,7 @@ def test_open():
     assert kissdev._serial is None
 
     kissdev.open()
-    yield from sleep(0.01)
+    yield from sleep(0.5)
 
     # We should have created a new port
     assert len(connections) == 1
@@ -61,7 +61,7 @@ def test_close():
 
     # Now try closing the port
     kissdev.close()
-    yield from sleep(0.01)
+    yield from sleep(0.5)
 
     # The port should have been flushed
     assert serial.flushes == 1
@@ -90,7 +90,7 @@ def test_send_raw_data():
     assert kissdev._serial is None
 
     kissdev.open()
-    yield from sleep(0.01)
+    yield from sleep(0.5)
 
     # We should have created a new port
     assert len(connections) == 1
