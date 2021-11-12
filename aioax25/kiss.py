@@ -6,11 +6,10 @@ KISS-based TNCs, managing the byte stuffing/unstuffing.
 """
 
 from enum import Enum
-from asyncio import Protocol, get_event_loop
+from asyncio import Protocol, ensure_future, get_event_loop
 from serial_asyncio import create_serial_connection
 from serial import EIGHTBITS, PARITY_NONE, STOPBITS_ONE
 from .signal import Signal
-from .aiosupport import AsyncException, wrapasync, exec_async
 from binascii import b2a_hex
 from functools import partial
 import time
@@ -387,7 +386,7 @@ class BaseKISSDevice(object):
                 'Device is not closed'
         self._log.debug('Opening device')
         self._state = KISSDeviceState.OPENING
-        exec_async(self._open())
+        self._open()
 
     def close(self):
         assert self.state == KISSDeviceState.OPEN, \
@@ -397,7 +396,7 @@ class BaseKISSDevice(object):
         if self._reset_on_close:
             self._send(KISSCmdReturn())
         else:
-            exec_async(self._close())
+            self._close()
 
 
 class SerialKISSDevice(BaseKISSDevice):
@@ -408,7 +407,7 @@ class SerialKISSDevice(BaseKISSDevice):
         self._baudrate = baudrate
 
     def _open(self):
-        return wrapasync(create_serial_connection)(
+        ensure_future(create_serial_connection(
                 self._loop,
                 partial(
                     KISSProtocol,
@@ -424,8 +423,9 @@ class SerialKISSDevice(BaseKISSDevice):
                 stopbits=STOPBITS_ONE,
                 timeout=None, xonxoff=False,
                 rtscts=False, write_timeout=None,
-                dsrdtr=False, inter_byte_timeout=None,
-                callback=lambda *a, **kwa : self._init_kiss()
+                dsrdtr=False, inter_byte_timeout=None
+        )).add_done_callback(
+                lambda *a, **kwa : self._init_kiss()
         )
 
     def _on_connect(self, transport):
@@ -433,15 +433,13 @@ class SerialKISSDevice(BaseKISSDevice):
 
     def _close(self):
         # Wait for all data to be sent.
-        wrapasync(self._serial.flush)(
-                callback=self._on_close_flushed
-        )
+        self._serial.flush()
 
-    def _on_close_flushed(self, *args, **kwargs):
         # Close the port
-        wrapasync(self._serial.close)(
-                callback=lambda *a, **kwa : self._on_close()
-        )
+        self._serial.close()
+
+        # Clean up
+        self._on_close()
 
     def _on_close(self, exc=None):
         if exc is not None:
