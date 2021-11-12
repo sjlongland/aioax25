@@ -189,6 +189,54 @@ async def test_close():
     assert kissdev._state == kiss.KISSDeviceState.CLOSED
 
 
+def test_on_close_err(logger):
+    """
+    Test errors are logged if given
+    """
+    # Yeah, kludgy… but py.test won't see the fixture if I don't
+    # do it this way.
+    @asynctest
+    async def _run():
+        loop = get_event_loop()
+        kissdev = TestDevice(
+                device='/dev/ttyS0', baudrate=9600,
+                log=logger, loop=loop, reset_on_close=False
+        )
+
+        # Force the port open
+        kissdev._state = kiss.KISSDeviceState.OPEN
+        serial = DummySerial(port='/dev/ttyS0', baudrate=9600,
+                bytesize=EIGHTBITS, parity=PARITY_NONE, stopbits=STOPBITS_ONE,
+                timeout=None, xonxoff=False, rtscts=False, write_timeout=None,
+                dsrdtr=False, inter_byte_timeout=None)
+        kissdev._transport = serial
+
+        # Define a close error
+        class CommsError(IOError):
+            pass
+        my_err = CommsError()
+
+        # Now report the closure of the port
+        kissdev._on_close(my_err)
+
+        # We should have seen a log message reported
+        assert logger.logrecords == [
+                dict(
+                    method='error',
+                    args=('Closing port due to error %r', my_err,),
+                    kwargs={},
+                    ex_type=None, ex_val=None, ex_tb=None
+                )
+        ]
+
+        # The device should not reference the port
+        assert kissdev._transport == None
+
+        # The port should now be in the closed state
+        assert kissdev._state == kiss.KISSDeviceState.CLOSED
+    _run()
+
+
 @asynctest
 async def test_send_raw_data():
     """
