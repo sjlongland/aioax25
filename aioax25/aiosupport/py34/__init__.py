@@ -40,6 +40,6 @@ def wrapasync(fn):
                 )
                 exit(1)
 
-        ensure_future(_exec_async())
+        return ensure_future(_exec_async())
 
     return _exec_sync
