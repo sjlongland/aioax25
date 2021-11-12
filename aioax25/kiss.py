@@ -422,12 +422,11 @@ class BaseTransportDevice(BaseKISSDevice):
         raise NotImplementedError('Abstract function')
 
     def _open(self):
-        ensure_future(self._open_connection()).add_done_callback(
-                lambda *a, **kwa : self._init_kiss()
-        )
+        self._loop.call_soon(ensure_future(self._open_connection()))
 
     def _on_connect(self, transport):
         self._transport = transport
+        self._init_kiss()
 
     def _close(self):
         # Wait for all data to be sent.
