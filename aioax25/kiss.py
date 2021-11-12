@@ -459,7 +459,7 @@ class SerialKISSDevice(BaseTransportDevice):
         await create_serial_connection(
                 self._loop,
                 self._make_protocol,
-                port=self._device,
+                self._device,
                 baudrate=self._baudrate,
                 bytesize=EIGHTBITS,
                 parity=PARITY_NONE,
