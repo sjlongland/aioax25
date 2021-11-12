@@ -551,7 +551,7 @@ class KISSSubprocessProtocol(Protocol):
     SubprocessProtocol instead.
     """
     def __init__(self, on_connect, on_receive, on_close, log):
-        super(KISSProtocol, self).__init__()
+        super(KISSSubprocessProtocol, self).__init__()
 
         self._on_connect = on_connect
         self._on_receive = on_receive
