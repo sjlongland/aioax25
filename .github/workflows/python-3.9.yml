@@ -23,9 +23,9 @@ jobs:
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
-        flake8 . --extend-exclude=aioax25/aiosupport/py34/,tests/test_aiosupport/py34/ --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --extend-exclude=aioax25/aiosupport/py34/,tests/test_aiosupport/py34/,tests/test_kiss/py34/ --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings.
-        flake8 . --extend-exclude=aioax25/aiosupport/py34/,tests/test_aiosupport/py34/ --count --exit-zero --max-complexity=10 --statistics
+        flake8 . --extend-exclude=aioax25/aiosupport/py34/,tests/test_aiosupport/py34/,tests/test_kiss/py34/ --count --exit-zero --max-complexity=10 --statistics
     - name: Test with py.test
       run: |
         coverage run -m pytest
