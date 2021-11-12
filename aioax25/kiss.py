@@ -11,7 +11,6 @@ from serial_asyncio import create_serial_connection
 from serial import EIGHTBITS, PARITY_NONE, STOPBITS_ONE
 from .signal import Signal
 from binascii import b2a_hex
-from functools import partial
 import time
 import logging
 import socket
@@ -399,32 +398,31 @@ class BaseKISSDevice(object):
             self._close()
 
 
-class SerialKISSDevice(BaseKISSDevice):
-    def __init__(self, device, baudrate, *args, **kwargs):
-        super(SerialKISSDevice, self).__init__(*args, **kwargs)
+class BaseTransportDevice(BaseKISSDevice):
+    def __init__(self, *args, **kwargs):
+        super(BaseTransportDevice, self).__init__(*args, **kwargs)
         self._transport = None
-        self._device = device
-        self._baudrate = baudrate
+
+    def _make_protocol(self):
+        """
+        Return a Protocol instance that will handle the KISS traffic for the
+        asyncio transport.
+        """
+        return KISSProtocol(
+            self._on_connect,
+            self._receive,
+            self._on_close,
+            self._log.getChild('protocol')
+        )
+
+    async def _open_connection(self): # pragma: no cover
+        """
+        Open a connection to the underlying transport.
+        """
+        raise NotImplementedError('Abstract function')
 
     def _open(self):
-        ensure_future(create_serial_connection(
-                self._loop,
-                partial(
-                    KISSProtocol,
-                    self._on_connect,
-                    self._receive,
-                    self._on_close,
-                    self._log.getChild('protocol')
-                ),
-                port=self._device,
-                baudrate=self._baudrate,
-                bytesize=EIGHTBITS,
-                parity=PARITY_NONE,
-                stopbits=STOPBITS_ONE,
-                timeout=None, xonxoff=False,
-                rtscts=False, write_timeout=None,
-                dsrdtr=False, inter_byte_timeout=None
-        )).add_done_callback(
+        ensure_future(self._open_connection()).add_done_callback(
                 lambda *a, **kwa : self._init_kiss()
         )
 
@@ -450,6 +448,27 @@ class SerialKISSDevice(BaseKISSDevice):
 
     def _send_raw_data(self, data):
         self._transport.write(data)
+
+
+class SerialKISSDevice(BaseTransportDevice):
+    def __init__(self, device, baudrate, *args, **kwargs):
+        super(SerialKISSDevice, self).__init__(*args, **kwargs)
+        self._device = device
+        self._baudrate = baudrate
+
+    async def _open_connection(self):
+        await create_serial_connection(
+                self._loop,
+                self._make_protocol,
+                port=self._device,
+                baudrate=self._baudrate,
+                bytesize=EIGHTBITS,
+                parity=PARITY_NONE,
+                stopbits=STOPBITS_ONE,
+                timeout=None, xonxoff=False,
+                rtscts=False, write_timeout=None,
+                dsrdtr=False, inter_byte_timeout=None
+        )
 
 
 class TCPKISSDevice(BaseKISSDevice):
