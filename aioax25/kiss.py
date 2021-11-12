@@ -402,7 +402,7 @@ class BaseKISSDevice(object):
 class SerialKISSDevice(BaseKISSDevice):
     def __init__(self, device, baudrate, *args, **kwargs):
         super(SerialKISSDevice, self).__init__(*args, **kwargs)
-        self._serial = None
+        self._transport = None
         self._device = device
         self._baudrate = baudrate
 
@@ -429,14 +429,14 @@ class SerialKISSDevice(BaseKISSDevice):
         )
 
     def _on_connect(self, transport):
-        self._serial = transport
+        self._transport = transport
 
     def _close(self):
         # Wait for all data to be sent.
-        self._serial.flush()
+        self._transport.flush()
 
         # Close the port
-        self._serial.close()
+        self._transport.close()
 
         # Clean up
         self._on_close()
@@ -445,11 +445,11 @@ class SerialKISSDevice(BaseKISSDevice):
         if exc is not None:
             self._log.error('Closing port due to error %r', exc)
 
-        self._serial = None
+        self._transport = None
         self._state = KISSDeviceState.CLOSED
 
     def _send_raw_data(self, data):
-        self._serial.write(data)
+        self._transport.write(data)
 
 
 class TCPKISSDevice(BaseKISSDevice):

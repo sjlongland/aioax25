@@ -137,7 +137,7 @@ async def test_open():
             device='/dev/ttyS0', baudrate=9600,
             loop=loop
     )
-    assert kissdev._serial is None
+    assert kissdev._transport is None
 
     kissdev.open()
     await sleep(0.01)
@@ -147,7 +147,7 @@ async def test_open():
     connection = connections.pop(0)
 
     # We should have a reference to the transport created.
-    assert kissdev._serial == connection.transport
+    assert kissdev._transport == connection.transport
 
     # The device should have been initialised
     assert kissdev.init_called
@@ -170,7 +170,7 @@ async def test_close():
             bytesize=EIGHTBITS, parity=PARITY_NONE, stopbits=STOPBITS_ONE,
             timeout=None, xonxoff=False, rtscts=False, write_timeout=None,
             dsrdtr=False, inter_byte_timeout=None)
-    kissdev._serial = serial
+    kissdev._transport = serial
 
     # Now try closing the port
     kissdev.close()
@@ -183,7 +183,7 @@ async def test_close():
     assert serial.closed == True
 
     # The device should not reference the port
-    assert kissdev._serial == None
+    assert kissdev._transport == None
 
     # The port should now be in the closed state
     assert kissdev._state == kiss.KISSDeviceState.CLOSED
@@ -199,7 +199,7 @@ async def test_send_raw_data():
             device='/dev/ttyS0', baudrate=9600,
             loop=loop
     )
-    assert kissdev._serial is None
+    assert kissdev._transport is None
 
     kissdev.open()
     await sleep(0.01)
