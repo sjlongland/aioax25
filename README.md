@@ -7,6 +7,20 @@ The aim of this project is to implement a simple-to-understand asynchronous
 AX.25 library built on `asyncio` and `pyserial`, implementing a AX.25 and APRS
 stack in pure Python.
 
+## Python 3.5+ and above is required as of 2021-11-12
+
+I did try to support 3.4, but this proved to be infeasible for the following
+reasons:
+
+* Python 3.8+ makes `asyncio.coroutine` deprecated (apparently will be removed
+  in 3.10).  This meant I needed `coroutine` and `async def` versions of some
+  API functions, and the necessary logic to "hide" the latter from Python 3.4.
+* Trying to coax generator-based coroutines to run "in the background" for unit
+  test purposes proved to be a pain in the arse.
+
+Python 3.5 support is planned to continue until it too, becomes infeasible
+(e.g. if type annotations become required).
+
 ## What works
 
 * We can put a Kantronics KPC-3 TNC into KISS mode automatically
