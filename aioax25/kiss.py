@@ -517,11 +517,12 @@ class KISSProtocol(Protocol):
     KISSProtocol basically is a wrapper around asyncio's "Protocol"
     structure.
     """
-    def __init__(self, on_connect, on_receive, log):
+    def __init__(self, on_connect, on_receive, on_close, log):
         super(KISSProtocol, self).__init__()
 
         self._on_connect = on_connect
         self._on_receive = on_receive
+        self._on_close = on_close
         self._log = log
 
     def connection_made(self, transport):
