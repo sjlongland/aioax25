@@ -81,7 +81,7 @@ create_serial_conn_log = logging.getLogger('create_serial_connection')
 connections = []
 
 # Stub the serial port connection factory
-def dummy_create_serial_connection(loop, proto_factory, *args, **kwargs):
+async def dummy_create_serial_connection(loop, proto_factory, *args, **kwargs):
     future = loop.create_future()
     create_serial_conn_log.debug(
             'Creating new serial connection: '
@@ -113,7 +113,7 @@ def dummy_create_serial_connection(loop, proto_factory, *args, **kwargs):
     loop.call_soon(_open)
 
     create_serial_conn_log.debug('Returning future')
-    return future
+    return (await future)
 
 kiss.create_serial_connection = dummy_create_serial_connection
 
@@ -125,6 +125,7 @@ class TestDevice(kiss.SerialKISSDevice):
 
     def _init_kiss(self):
         self.init_called = True
+
 
 @asynctest
 async def test_open():
