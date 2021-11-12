@@ -476,7 +476,7 @@ class TCPKISSDevice(BaseKISSDevice):
     _interface = None
     READ_BYTES = 1000
 
-    def __init__(self, host: str, port: int, *args, **kwargs):
+    def __init__(self, host, port, *args, **kwargs):
         super(TCPKISSDevice, self).__init__(*args, **kwargs)
         self.address = (host, port)
 
