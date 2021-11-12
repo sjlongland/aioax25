@@ -471,36 +471,23 @@ class SerialKISSDevice(BaseTransportDevice):
         )
 
 
-class TCPKISSDevice(BaseKISSDevice):
-
-    _interface = None
-    READ_BYTES = 1000
-
-    def __init__(self, host, port, *args, **kwargs):
+class TCPKISSDevice(BaseTransportDevice):
+    def __init__(self, host, port, *args, ssl=None, family=0, proto=0, flags=0,
+            sock=None, local_addr=None, server_hostname=None, **kwargs):
         super(TCPKISSDevice, self).__init__(*args, **kwargs)
-        self.address = (host, port)
 
-    def _open(self):
-        self._interface = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._interface.connect(self.address)
-        self._loop.add_reader(self._interface, self._on_recv_ready)
-        self._loop.call_soon(self._init_kiss)
+        # Bundle up all the connection arguments together.
+        self._conn_args = dict(
+                host=host, port=port, ssl=ssl, family=family,
+                proto=proto, flags=flags, sock=sock, local_addr=local_addr,
+                server_hostname=server_hostname
+        )
 
-    def _on_recv_ready(self):
-        try:
-            read_data = self._interface.recv(self.READ_BYTES)
-            self._receive(read_data)
-        except:
-            self._log.exception('Failed to read from socket device')
-
-    def _send_raw_data(self, data):
-        self._interface.send(data)
-
-    def _close(self):
-        self._loop.remove_reader(self._interface)
-        self._interface.close()
-        self._interface = None
-        self._state = KISSDeviceState.CLOSED
+    async def _open_connection(self):
+        await self._loop.create_connection(
+                self._make_protocol,
+                **self._conn_args
+        )
 
 
 # Port interface
