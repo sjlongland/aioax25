@@ -16,7 +16,15 @@ of Python.
 
 from sys import version_info
 from .exception import AsyncException
-from asyncio import ensure_future, iscoroutine, isfuture
+from asyncio import ensure_future, iscoroutine
+
+# Python < 3.6 does not implement isfuture
+try:
+    from asyncio import isfuture
+except ImportError:
+    from asyncio import Future
+    isfuture = lambda obj : obj and isinstance(obj, Future)
+
 
 if version_info.major < 3:
     # Python 2 or earlier, not supported (how did they get here?)
