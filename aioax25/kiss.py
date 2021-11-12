@@ -570,7 +570,7 @@ class KISSSubprocessProtocol(Protocol):
             if fd == 1: # stdout
                 self._on_receive(data)
             else:
-                self._log.debug('Data received on fd=%d: %r', data)
+                self._log.debug('Data received on fd=%d: %r', fd, data)
         except:
             self._log.exception(
                     'Failed to handle incoming data %r on fd=%d', data, fd
