@@ -6,10 +6,13 @@ KISS-based TNCs, managing the byte stuffing/unstuffing.
 """
 
 from enum import Enum
-from asyncio import Protocol, get_event_loop
-from serial import Serial, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
+from asyncio import Protocol, get_event_loop, ensure_future
+from serial_asyncio import create_serial_connection
+from serial import EIGHTBITS, PARITY_NONE, STOPBITS_ONE
 from .signal import Signal
+from .aiosupport import AsyncException, wrapasync
 from binascii import b2a_hex
+from functools import partial
 import time
 import logging
 import socket
@@ -405,30 +408,47 @@ class SerialKISSDevice(BaseKISSDevice):
         self._baudrate = baudrate
 
     def _open(self):
-        self._serial = Serial(port=self._device, baudrate=self._baudrate,
-                bytesize=EIGHTBITS, parity=PARITY_NONE, stopbits=STOPBITS_ONE,
-                timeout=None, xonxoff=False, rtscts=False, write_timeout=None,
-                dsrdtr=False, inter_byte_timeout=None)
-        self._loop.add_reader(self._serial.fileno(), self._on_recv_ready)
-        self._loop.call_soon(self._init_kiss)
+        return wrapasync(create_serial_connection)(
+                self._loop,
+                partial(
+                    KISSProtocol,
+                    self._on_connect,
+                    self._receive,
+                    self._on_close,
+                    self._log.getChild('protocol')
+                ),
+                port=self._device,
+                baudrate=self._baudrate,
+                bytesize=EIGHTBITS,
+                parity=PARITY_NONE,
+                stopbits=STOPBITS_ONE,
+                timeout=None, xonxoff=False,
+                rtscts=False, write_timeout=None,
+                dsrdtr=False, inter_byte_timeout=None,
+                callback=lambda *a, **kwa : self._init_kiss()
+        )
+
+    def _on_connect(self, transport):
+        self._serial = transport
 
     def _close(self):
-        # Remove handlers
-        self._loop.remove_reader(self._serial.fileno())
-
         # Wait for all data to be sent.
-        self._serial.flush()
+        wrapasync(self._serial.flush)(
+                callback=self._on_close_flushed
+        )
 
+    def _on_close_flushed(self, *args, **kwargs):
         # Close the port
-        self._serial.close()
+        wrapasync(self._serial.close)(
+                callback=lambda *a, **kwa : self._on_close()
+        )
+
+    def _on_close(self, exc=None):
+        if exc is not None:
+            self._log.error('Closing port due to error %r', exc)
+
         self._serial = None
         self._state = KISSDeviceState.CLOSED
-
-    def _on_recv_ready(self):
-        try:
-            self._receive(self._serial.read(self._serial.in_waiting))
-        except:
-            self._log.exception('Failed to read from serial device')
 
     def _send_raw_data(self, data):
         self._serial.write(data)
