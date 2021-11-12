@@ -10,8 +10,8 @@ if aiosupport.USE_COROUTINE:
     # Python 3.4
     from .py34.serial import test_open, test_close, test_send_raw_data
 else:
-    # Python 3.7+
-    from .py37.serial import test_open, test_close, test_send_raw_data
+    # Python 3.5+
+    from .py35.serial import test_open, test_close, test_send_raw_data
 
 assert test_open
 assert test_close

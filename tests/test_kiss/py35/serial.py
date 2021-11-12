@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Serial KISS interface unit tests. (Python 3.7+)
+Serial KISS interface unit tests. (Python 3.5+)
 """
 
 from ..serial_common import kiss, connections, DummySerial, TestDevice
