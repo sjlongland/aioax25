@@ -6,11 +6,11 @@ KISS-based TNCs, managing the byte stuffing/unstuffing.
 """
 
 from enum import Enum
-from asyncio import Protocol, get_event_loop, ensure_future
+from asyncio import Protocol, get_event_loop
 from serial_asyncio import create_serial_connection
 from serial import EIGHTBITS, PARITY_NONE, STOPBITS_ONE
 from .signal import Signal
-from .aiosupport import AsyncException, wrapasync
+from .aiosupport import AsyncException, wrapasync, exec_async
 from binascii import b2a_hex
 from functools import partial
 import time
@@ -387,7 +387,7 @@ class BaseKISSDevice(object):
                 'Device is not closed'
         self._log.debug('Opening device')
         self._state = KISSDeviceState.OPENING
-        self._open()
+        exec_async(self._open())
 
     def close(self):
         assert self.state == KISSDeviceState.OPEN, \
@@ -397,7 +397,7 @@ class BaseKISSDevice(object):
         if self._reset_on_close:
             self._send(KISSCmdReturn())
         else:
-            self._close()
+            exec_async(self._close())
 
 
 class SerialKISSDevice(BaseKISSDevice):
