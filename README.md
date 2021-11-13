@@ -93,6 +93,14 @@ Or for a TCP-connected KISS interface:
 routing via a VPN or supplying a `ssl.SSLContext` via the `ssl` parameter so
 that your client is authenticated with the server.)
 
+Or for a subprocess:
+```
+    kissdev = make_device(
+        type='subproc', command=['/path/to/your/command', 'arg1', 'arg2'],
+        log=logging.getLogger('your.kiss.log')
+    )
+```
+
 Some optional parameters:
  * `reset_on_close`: When asked to close the device, try to issue a `c0 ff c0`
    reset sequence to the TNC to put it back into CMD mode.
