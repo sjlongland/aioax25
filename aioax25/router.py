@@ -4,9 +4,6 @@
 AX.25 Interface handler
 """
 
-import logging
-import asyncio
-import random
 from functools import partial
 from .signal import Signal
 import re
