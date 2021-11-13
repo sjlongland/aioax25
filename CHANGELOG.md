@@ -10,8 +10,10 @@ this time.  Notable changes will be mentioned here.
 
 - Use of `serial_asyncio` for asynchronous serial access.
 - Re-implemented `TCPKISSDevice` to use `asyncio` transports, TLS now possible.
+- Implemented `SubprocKISSDevice` using the same underlying infrastructure as
+  `SerialKISSDevice` and `TCPKISSDevice`.
 - Added `make_device` factory for implementation-agnostic creation of KISS
-  devices from a configuration file.
+  devices from a configuration file.  Supports `serial`, `tcp` and `subproc`.
 - Python 3.4 support has been dropped, the library now requires Python 3.5 or
   later.
 
