@@ -743,6 +743,12 @@ def make_device(type, **kwargs):
     |                | * ``baudrate`` (``int``):                       |
     |                |   Serial port baud rate, e.g. 9600 baud         |
     +----------------+-------------------------------------------------+
+    | ``subproc``    | Sub-process KISS device (``SubprocKISSDevice``).|
+    |                | * ``command`` (``list[str]``):                  |
+    |                |   Command and arguments to execute.             |
+    |                | * ``shell`` (``bool``):                         |
+    |                |   If set to ``True``, run in a sub-shell.       |
+    +----------------+-------------------------------------------------+
     | ``tcp``        | TCP KISS device (``TCPKISSDevice``).            |
     |                | * ``host`` (``str``):                           |
     |                |   IP address or host name of the remote host.   |
@@ -753,6 +759,8 @@ def make_device(type, **kwargs):
 
     if type == 'serial':
         return SerialKISSDevice(**kwargs)
+    elif type == 'subproc':
+        return SubprocKISSDevice(**kwargs)
     elif type == 'tcp':
         return TCPKISSDevice(**kwargs)
     else:
