@@ -540,6 +540,52 @@ class TCPKISSDevice(BaseTransportDevice):
         )
 
 
+class SubprocKISSDevice(BaseTransportDevice):
+    """
+    A KISS device that calls a subprocess to communicate with the KISS TNC.
+    The subprocess is assumed to accept KISS data on ``stdin`` and emit KISS
+    data on ``stdout``.  ``stderr`` traffic is logged but otherwise ignored.
+
+    :param command: Specifies the subprocess command to execute along with any
+                    arguments.
+    :type command: ``list[str]``
+    :param shell: Use a shell to execute the command given.  The command will
+                  be concatenated together with spaces to form a single
+                  string.  By default, this is ``False``.
+    :type shell: ``bool``
+    :Keyword Arguments: These are passed (via ``BaseTransportDevice``) through
+                        to ``BaseKISSDevice`` unchanged.
+    """
+    def __init__(self, command, *args, shell=False, **kwargs):
+        super(SubprocKISSDevice, self).__init__(*args, **kwargs)
+        self._command = command
+        self._shell = shell
+
+    def _make_protocol(self):
+        """
+        Return a SubprocessProtocol instance that will handle the KISS traffic for the
+        asyncio transport.
+        """
+        return KISSSubprocessProtocol(
+            self._on_connect,
+            self._receive,
+            self._on_close,
+            self._log.getChild('protocol')
+        )
+
+    async def _open_connection(self):
+        if self._shell:
+            await self._loop.subprocess_shell(
+                    self._make_protocol,
+                    ' '.join(self._command)
+            )
+        else:
+            await self._loop.subprocess_exec(
+                    self._make_protocol,
+                    *self._command
+            )
+
+
 # Port interface
 
 
