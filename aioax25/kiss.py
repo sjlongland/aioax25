@@ -13,7 +13,6 @@ from .signal import Signal
 from binascii import b2a_hex
 import time
 import logging
-import socket
 
 
 # Constants
