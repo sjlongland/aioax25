@@ -4,7 +4,11 @@
 KISS device factory unit tests.
 """
 
-from aioax25.kiss import SerialKISSDevice, TCPKISSDevice, make_device
+from aioax25.kiss import \
+        SerialKISSDevice, \
+        SubprocKISSDevice, \
+        TCPKISSDevice, \
+        make_device
 
 def test_serial_kiss():
     """
@@ -14,6 +18,16 @@ def test_serial_kiss():
     assert isinstance(dev, SerialKISSDevice)
     assert dev._device == '/dev/ttyS0'
     assert dev._baudrate == 9600
+
+
+def test_subproc_kiss():
+    """
+    Test we can create a ``SubprocKISSDevice``.
+    """
+    dev = make_device(type='subproc', command=['somecmd', 'a', 'b', 'c'])
+    assert isinstance(dev, SubprocKISSDevice)
+    assert dev._command == ['somecmd', 'a', 'b', 'c']
+    assert dev._shell is False
 
 
 def test_tcp_kiss():
