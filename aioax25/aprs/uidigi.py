@@ -5,7 +5,6 @@ APRS Digipeating module
 """
 
 import logging
-import weakref
 import re
 import time
 from ..frame import AX25FrameHeader, AX25Address
