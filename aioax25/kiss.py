@@ -183,7 +183,7 @@ class BaseKISSDevice(object):
     def __init__(self, reset_on_close=True,
             send_block_size=128, send_block_delay=0.1,
             kiss_commands=['INT KISS', 'RESET'],
-            prompt='cmd:', log=None, loop=None):
+            log=None, loop=None, **kwargs):
         if log is None:
             log = logging.getLogger(self.__class__.__module__)
         if loop is None:
