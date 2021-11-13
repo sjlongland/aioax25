@@ -4,7 +4,6 @@
 APRS messaging handler.
 """
 
-import asyncio
 import logging
 from functools import partial
 
