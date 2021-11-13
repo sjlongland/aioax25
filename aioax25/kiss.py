@@ -656,3 +656,59 @@ class KISSSubprocessProtocol(Protocol):
             self._on_close(None)
         except:
             self._log.exception('Failed to handle process exit')
+
+
+# KISS device factory
+
+def make_device(type, **kwargs):
+    """
+    Create a KISS device of the specified type.  This is a convenience for
+    applications that load their configuration via a `dict`-like configuration
+    file format such as JSON, YAML or TOML.
+
+    :param type: Type of KISS device to make (see below)
+    :type type: ``str``
+    :Keyword Arguments: These will be passed to the relevant device class
+                        as-is.  Some common arguments for all class types:
+      * ``reset_on_close`` (``bool`` = ``True``): Whether or not a "return
+        from KISS" command (``C0 FF C0``) should be sent to the TNC on
+        closing.
+      * ``send_block_size`` (``int`` = ``128``): The number of bytes to send
+        in a single write request at a time.  Some KISS TNCs have very small
+        serial buffers, and so this, along with ``send_block_delay``, allow
+        the outgoing traffic to be "dribbled out" at a rate that avoids
+        overflow issues.
+      * ``send_block_delay`` (``float`` = ``0.1``): The time to wait between
+        consecutive blocks so that the TNC can "catch up".
+      * ``kiss_commands`` (``list[str]`` = ``["INT KISS", "RESET"]``):
+        The TNC-2 commands to transmit to the TNC after opening to put the
+        TNC into KISS mode.  The default value suits Kantronics KPC3 TNCs.
+      * ``log`` (``logging.Logger``): A logger interface to log debugging
+        traffic.  If not supplied, a default one is created.
+      * ``loop`` (``asyncio.AbstractEventLoop``): Asynchronous I/O event loop
+        that will schedule the operations for the KISS device.  By default,
+        the current event loop (``asyncio.get_event_loop()``) is used.
+
+    +----------------+-------------------------------------------------+
+    | ``type`` value | Device type and required arguments              |
+    +----------------+-------------------------------------------------+
+    | ``serial``     | Serial port KISS device (``SerialKISSDevice``). |
+    |                | * ``device`` (``str``):                         |
+    |                |   Device name, e.g. `/dev/ttyS0`, `COM3:`       |
+    |                | * ``baudrate`` (``int``):                       |
+    |                |   Serial port baud rate, e.g. 9600 baud         |
+    +----------------+-------------------------------------------------+
+    | ``tcp``        | TCP KISS device (``TCPKISSDevice``).            |
+    |                | * ``host`` (``str``):                           |
+    |                |   IP address or host name of the remote host.   |
+    |                | * ``port`` (``int``):                           |
+    |                |   TCP port number for the KISS interface.       |
+    +----------------+-------------------------------------------------+
+    """
+
+    if type == 'serial':
+        return SerialKISSDevice(**kwargs)
+    elif type == 'tcp':
+        return TCPKISSDevice(**kwargs)
+    else:
+        raise ValueError('Unrecognised type=%r' % (type,))
