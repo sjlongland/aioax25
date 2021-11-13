@@ -16,6 +16,9 @@ from asyncio import get_event_loop, sleep
 
 @asynctest
 async def test_open_connection():
+    """
+    Test we can open a subprocess without using a shell.
+    """
     # This will receive the arguments passed to subprocess_exec
     connection_args = []
 
@@ -48,6 +51,9 @@ async def test_open_connection():
 
 @asynctest
 async def test_open_connection_shell():
+    """
+    Test we can open a subprocess using a shell.
+    """
     # This will receive the arguments passed to subprocess_shell
     connection_args = []
 
@@ -77,3 +83,41 @@ async def test_open_connection_shell():
     finally:
         # Restore mock
         loop.subprocess_shell = orig_subprocess_shell
+
+
+def test_send_raw_data():
+    """
+    Test data written to the device gets written to the subprocess ``stdin``.
+    """
+    # This will receive the arguments passed to subprocess_shell
+    connection_args = []
+
+    # Mock transport
+    class DummyStream(object):
+        def __init__(self):
+            self.written = b''
+
+        def write(self, data):
+            self.written += bytes(data)
+
+
+    class DummyTransport(object):
+        def __init__(self):
+            self.stdin = DummyStream()
+
+        def get_pipe_transport(self, fd):
+            assert fd == 0
+            return self.stdin
+
+
+    loop = get_event_loop()
+
+    device = kiss.SubprocKISSDevice(
+            command=['kisspipecmd', 'arg1', 'arg2'],
+            loop=loop, log=logging.getLogger(__name__)
+    )
+    device._transport = DummyTransport()
+
+    device._send_raw_data(b'testing')
+
+    assert device._transport.stdin.written == b'testing'
