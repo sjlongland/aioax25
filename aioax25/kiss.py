@@ -450,6 +450,23 @@ class BaseTransportDevice(BaseKISSDevice):
 
 
 class SerialKISSDevice(BaseTransportDevice):
+    """
+    A KISS device attached to a serial port.  The serial port may be a
+    pseudo-TTY, USB-connected serial port or platform-attached serial port.
+    The ``baudrate`` parameter specifies the baud rate used to communicate
+    with the TNC, not the speed of the AX.25 network which may be a different
+    speed.
+
+    The serial port link is assumed to use 8-bit wide frames, no parity bits
+    and one stop bit with no flow control.
+
+    :param device: Device node name to connect to (e.g. `/dev/ttyS0`, `COM3:`)
+    :type device: ``str``
+    :param baudrate: Baud rate to connect to the serial port at.
+    :type baudrate: ``int``
+    :Keyword Arguments: These are passed (via ``BaseTransportDevice``) through
+                        to ``BaseKISSDevice`` unchanged.
+    """
     def __init__(self, device, baudrate, *args, **kwargs):
         super(SerialKISSDevice, self).__init__(*args, **kwargs)
         self._device = device
@@ -471,6 +488,41 @@ class SerialKISSDevice(BaseTransportDevice):
 
 
 class TCPKISSDevice(BaseTransportDevice):
+    """
+    A KISS device exposed via a TCP serial server.  This may be a real TNC
+    attached to a serial-to-Ethernet gateway, or a soft-TNC.
+
+    :param host: Host name or IP address of the remote TCP server.
+    :type device: ``str``
+    :param port: Port number on the remote TCP server where the KISS TNC is
+                 listening.
+    :type port: ``int``
+    :param ssl: Whether or not to use Transport Layer Security to connect to
+                the remote TCP server.
+    :type ssl: ``None``, ``ssl.SSLContext`` or ``True``
+    :param family: Socket address family to use when connecting, e.g.
+                   ``socket.AF_INET`` for IPv4, ``socket.AF_INET6`` for IPv6,
+                   or ``0`` for any.
+    :type family: ``int``
+    :param proto: Specifies the address protocol.  Exposed for completeness.
+                  See the ``socket`` module for further details.
+    :type proto: ``int``
+    :param flags: Specifies special socket flags used for the connection.  See
+                  the ``socket`` module for possible flags.
+    :type flags: ``int``
+    :param sock: Specifies an optional existing socket object to use for the
+                 connection.
+    :type sock: ``None`` or ``socket.socket``
+    :param local_addr: Local interface address to bind to when connecting.
+    :type local_addr: ``None`` or ``str``
+    :param server_hostname: Remote server name if needed for Server Name
+                            Identification.  In most cases, ``host`` should
+                            be a host name and this argument will not be
+                            required.  Not used if TLS is disabled.
+    :type server_hostname: ``None`` or ``str``
+    :Keyword Arguments: These are passed (via ``BaseTransportDevice``) through
+                        to ``BaseKISSDevice`` unchanged.
+    """
     def __init__(self, host, port, *args, ssl=None, family=0, proto=0, flags=0,
             sock=None, local_addr=None, server_hostname=None, **kwargs):
         super(TCPKISSDevice, self).__init__(*args, **kwargs)
