@@ -71,15 +71,27 @@ This is a rough guide regarding how to use `aioax25` in your programs.
 ### Create a KISS device interface and ports
 
 Right now we only support serial KISS interfaces (patches for TCP-based
-interfaces are welcome).  Import `SerialKISSDevice` from `aioax25.kiss`, then
+interfaces are welcome).  Import `make_device` from `aioax25.kiss`, then
 create an instance as shown:
 
 ```python
-    kissdev = SerialKISSDevice(
-        device='/dev/ttyS4', baudrate=9600,
+    kissdev = make_device(
+        type='serial', device='/dev/ttyS4', baudrate=9600,
         log=logging.getLogger('your.kiss.log')
     )
 ```
+
+Or for a TCP-connected KISS interface:
+```python
+    kissdev = make_device(
+        type='tcp', host='kissdevice.example.com', port=12345,
+        log=logging.getLogger('your.kiss.log')
+    )
+```
+
+(Note: if `kissdevice.example.com` is going over the Internet, I suggest either
+routing via a VPN or supplying a `ssl.SSLContext` via the `ssl` parameter so
+that your client is authenticated with the server.)
 
 Some optional parameters:
  * `reset_on_close`: When asked to close the device, try to issue a `c0 ff c0`
