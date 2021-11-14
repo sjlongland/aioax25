@@ -4,6 +4,8 @@
 Tests for AX25PeerTestHandler
 """
 
+from pytest import approx
+
 from aioax25.peer import AX25PeerTestHandler
 from aioax25.frame import AX25Address, AX25TestFrame
 from ..mocks import DummyPeer, DummyStation
@@ -81,9 +83,7 @@ def test_peertest_transmit_done():
     helper._transmit_done()
     assert helper.tx_time is not None
 
-    assert int((peer._loop.time()) * (10**2)) == int(
-        (helper.tx_time) * (10**2)
-    )
+    assert approx(peer._loop.time()) == helper.tx_time
 
 
 def test_peertest_on_receive():
@@ -102,9 +102,7 @@ def test_peertest_on_receive():
     helper._on_receive(frame="Make believe TEST frame")
     assert helper.rx_time is not None
 
-    assert int((peer._loop.time()) * (10**2)) == int(
-        (helper.rx_time) * (10**2)
-    )
+    assert approx(peer._loop.time()) == helper.rx_time
     assert helper.rx_frame == "Make believe TEST frame"
 
     # We should be done now
