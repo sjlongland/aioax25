@@ -4,9 +4,6 @@
 Tests for AX25Peer XID handling
 """
 
-from ..nosecompat import eq_, assert_almost_equal, assert_is, \
-        assert_is_not_none, assert_is_none
-
 from aioax25.frame import AX25Address, AX25XIDClassOfProceduresParameter, \
         AX25XIDHDLCOptionalFunctionsParameter, \
         AX25XIDIFieldLengthTransmitParameter, \
@@ -170,7 +167,7 @@ def test_peer_process_xid_hdlcoptfunc_stnssr_peerssr():
     ))
 
     # Selective Reject-Reject should be chosen.
-    eq_(peer._reject_mode, TestingAX25Peer.AX25RejectMode.SELECTIVE_RR)
+    assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.SELECTIVE_RR
 
 
 def test_peer_process_xid_hdlcoptfunc_stnsr_peerssr():
@@ -191,7 +188,7 @@ def test_peer_process_xid_hdlcoptfunc_stnsr_peerssr():
     ))
 
     # Selective Reject should be chosen.
-    eq_(peer._reject_mode, TestingAX25Peer.AX25RejectMode.SELECTIVE)
+    assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.SELECTIVE
 
 
 def test_peer_process_xid_hdlcoptfunc_stnssr_peersr():
@@ -212,7 +209,7 @@ def test_peer_process_xid_hdlcoptfunc_stnssr_peersr():
     ))
 
     # Selective Reject should be chosen.
-    eq_(peer._reject_mode, TestingAX25Peer.AX25RejectMode.SELECTIVE)
+    assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.SELECTIVE
 
 
 def test_peer_process_xid_hdlcoptfunc_stnsr_peersr():
@@ -233,7 +230,7 @@ def test_peer_process_xid_hdlcoptfunc_stnsr_peersr():
     ))
 
     # Selective Reject should be chosen.
-    eq_(peer._reject_mode, TestingAX25Peer.AX25RejectMode.SELECTIVE)
+    assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.SELECTIVE
 
 
 def test_peer_process_xid_hdlcoptfunc_stnir_peersr():
@@ -254,7 +251,7 @@ def test_peer_process_xid_hdlcoptfunc_stnir_peersr():
     ))
 
     # Implicit Reject should be chosen.
-    eq_(peer._reject_mode, TestingAX25Peer.AX25RejectMode.IMPLICIT)
+    assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.IMPLICIT
 
 
 def test_peer_process_xid_hdlcoptfunc_stnsr_peerir():
@@ -275,7 +272,7 @@ def test_peer_process_xid_hdlcoptfunc_stnsr_peerir():
     ))
 
     # Implicit Reject should be chosen.
-    eq_(peer._reject_mode, TestingAX25Peer.AX25RejectMode.IMPLICIT)
+    assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.IMPLICIT
 
 
 def test_peer_process_xid_hdlcoptfunc_stnir_peerssr():
@@ -296,7 +293,7 @@ def test_peer_process_xid_hdlcoptfunc_stnir_peerssr():
     ))
 
     # Implicit Reject should be chosen.
-    eq_(peer._reject_mode, TestingAX25Peer.AX25RejectMode.IMPLICIT)
+    assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.IMPLICIT
 
 
 def test_peer_process_xid_hdlcoptfunc_stnssr_peerir():
@@ -317,7 +314,7 @@ def test_peer_process_xid_hdlcoptfunc_stnssr_peerir():
     ))
 
     # Implicit Reject should be chosen.
-    eq_(peer._reject_mode, TestingAX25Peer.AX25RejectMode.IMPLICIT)
+    assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.IMPLICIT
 
 
 def test_peer_process_xid_hdlcoptfunc_malformed_rej_srej():
@@ -338,7 +335,7 @@ def test_peer_process_xid_hdlcoptfunc_malformed_rej_srej():
     ))
 
     # Implicit Reject should be chosen.
-    eq_(peer._reject_mode, TestingAX25Peer.AX25RejectMode.IMPLICIT)
+    assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.IMPLICIT
 
 
 def test_peer_process_xid_hdlcoptfunc_default_rej_srej():
@@ -360,7 +357,7 @@ def test_peer_process_xid_hdlcoptfunc_default_rej_srej():
     ))
 
     # Selective Reject should be chosen.
-    eq_(peer._reject_mode, TestingAX25Peer.AX25RejectMode.SELECTIVE)
+    assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.SELECTIVE
 
 
 def test_peer_process_xid_hdlcoptfunc_s128_p128():
@@ -505,7 +502,7 @@ def test_peer_process_xid_ifieldlenrx_station_smaller():
     peer._process_xid_ifieldlenrx(AX25XIDIFieldLengthReceiveParameter(2048))
 
     # 128 bytes should be set
-    eq_(peer._max_ifield, 128)
+    assert peer._max_ifield == 128
 
 
 def test_peer_process_xid_ifieldlenrx_peer_smaller():
@@ -524,7 +521,7 @@ def test_peer_process_xid_ifieldlenrx_peer_smaller():
     peer._process_xid_ifieldlenrx(AX25XIDIFieldLengthReceiveParameter(1024))
 
     # 128 bytes should be set
-    eq_(peer._max_ifield, 128)
+    assert peer._max_ifield == 128
 
 
 def test_peer_process_xid_ifieldlenrx_default():
@@ -546,7 +543,7 @@ def test_peer_process_xid_ifieldlenrx_default():
     ))
 
     # 256 bytes should be set
-    eq_(peer._max_ifield, 256)
+    assert peer._max_ifield == 256
 
 
 def test_peer_process_xid_winszrx_station_smaller():
@@ -566,7 +563,7 @@ def test_peer_process_xid_winszrx_station_smaller():
     peer._process_xid_winszrx(AX25XIDWindowSizeReceiveParameter(127))
 
     # 63 frames should be set
-    eq_(peer._max_outstanding, 63)
+    assert peer._max_outstanding == 63
 
 
 def test_peer_process_xid_winszrx_peer_smaller():
@@ -586,7 +583,7 @@ def test_peer_process_xid_winszrx_peer_smaller():
     peer._process_xid_winszrx(AX25XIDWindowSizeReceiveParameter(63))
 
     # 63 frames should be set
-    eq_(peer._max_outstanding, 63)
+    assert peer._max_outstanding == 63
 
 
 def test_peer_process_xid_winszrx_default():
@@ -609,7 +606,7 @@ def test_peer_process_xid_winszrx_default():
     ))
 
     # 7 frames should be set
-    eq_(peer._max_outstanding, 7)
+    assert peer._max_outstanding == 7
 
 
 def test_peer_process_xid_acktimer_station_larger():
@@ -628,7 +625,7 @@ def test_peer_process_xid_acktimer_station_larger():
     peer._process_xid_acktimer(AX25XIDAcknowledgeTimerParameter(5000))
 
     # 10 seconds should be set
-    eq_(peer._ack_timeout, 10.0)
+    assert peer._ack_timeout == 10.0
 
 
 def test_peer_process_xid_acktimer_peer_larger():
@@ -647,7 +644,7 @@ def test_peer_process_xid_acktimer_peer_larger():
     peer._process_xid_acktimer(AX25XIDAcknowledgeTimerParameter(10000))
 
     # 10 seconds should be set
-    eq_(peer._ack_timeout, 10.0)
+    assert peer._ack_timeout == 10.0
 
 
 def test_peer_process_xid_acktimer_default():
@@ -669,7 +666,7 @@ def test_peer_process_xid_acktimer_default():
     ))
 
     # 3 seconds should be set
-    eq_(peer._ack_timeout, 3.0)
+    assert peer._ack_timeout == 3.0
 
 
 def test_peer_process_xid_retrycounter_station_larger():
@@ -688,7 +685,7 @@ def test_peer_process_xid_retrycounter_station_larger():
     peer._process_xid_retrycounter(AX25XIDRetriesParameter(2))
 
     # 6 retries should be set
-    eq_(peer._max_retries, 6)
+    assert peer._max_retries == 6
 
 
 def test_peer_process_xid_retrycounter_peer_larger():
@@ -707,7 +704,7 @@ def test_peer_process_xid_retrycounter_peer_larger():
     peer._process_xid_retrycounter(AX25XIDRetriesParameter(6))
 
     # 6 retries should be set
-    eq_(peer._max_retries, 6)
+    assert peer._max_retries == 6
 
 
 def test_peer_process_xid_retrycounter_default():
@@ -729,7 +726,7 @@ def test_peer_process_xid_retrycounter_default():
     ))
 
     # 10 retries should be set
-    eq_(peer._max_retries, 10)
+    assert peer._max_retries == 10
 
 
 def test_peer_on_receive_xid_ax20_mode():
@@ -746,7 +743,7 @@ def test_peer_on_receive_xid_ax20_mode():
     )
 
     # Nothing yet sent
-    eq_(interface.transmit_calls, [])
+    assert interface.transmit_calls == []
 
     # Pass in the XID frame to our AX.25 2.0 station.
     peer._on_receive_xid(
@@ -759,12 +756,12 @@ def test_peer_on_receive_xid_ax20_mode():
     )
 
     # One frame sent
-    eq_(len(interface.transmit_calls), 1)
+    assert len(interface.transmit_calls) == 1
     (tx_args, tx_kwargs) = interface.transmit_calls.pop(0)
 
     # This should be a FRMR
-    eq_(tx_kwargs, {'callback': None})
-    eq_(len(tx_args), 1)
+    assert tx_kwargs == {'callback': None}
+    assert len(tx_args) == 1
     (frame,) = tx_args
     assert isinstance(frame, AX25FrameRejectFrame)
 
@@ -772,7 +769,7 @@ def test_peer_on_receive_xid_ax20_mode():
     assert frame.w
 
     # We should now be in the FRMR state
-    eq_(peer._state, peer.AX25PeerState.FRMR)
+    assert peer._state == peer.AX25PeerState.FRMR
 
 
 def test_peer_on_receive_xid_connecting():
@@ -788,7 +785,7 @@ def test_peer_on_receive_xid_connecting():
     )
 
     # Nothing yet sent
-    eq_(interface.transmit_calls, [])
+    assert interface.transmit_calls == []
 
     # Set state
     peer._state = TestingAX25Peer.AX25PeerState.CONNECTING
@@ -805,7 +802,7 @@ def test_peer_on_receive_xid_connecting():
     )
 
     # Still nothing yet sent
-    eq_(interface.transmit_calls, [])
+    assert interface.transmit_calls == []
 
 
 def test_peer_on_receive_xid_disconnecting():
@@ -821,7 +818,7 @@ def test_peer_on_receive_xid_disconnecting():
     )
 
     # Nothing yet sent
-    eq_(interface.transmit_calls, [])
+    assert interface.transmit_calls == []
 
     # Set state
     peer._state = TestingAX25Peer.AX25PeerState.DISCONNECTING
@@ -838,7 +835,7 @@ def test_peer_on_receive_xid_disconnecting():
     )
 
     # Still nothing yet sent
-    eq_(interface.transmit_calls, [])
+    assert interface.transmit_calls == []
 
 
 def test_peer_on_receive_xid_sets_proto_version():
@@ -854,7 +851,7 @@ def test_peer_on_receive_xid_sets_proto_version():
     )
 
     # Version should be unknown
-    eq_(peer._protocol, AX25Version.UNKNOWN)
+    assert peer._protocol == AX25Version.UNKNOWN
 
     # Pass in the XID frame to our AX.25 2.2 station.
     peer._on_receive_xid(
@@ -867,7 +864,7 @@ def test_peer_on_receive_xid_sets_proto_version():
     )
 
     # We now should consider the other station as AX.25 2.2 or better
-    eq_(peer._protocol, AX25Version.AX25_22)
+    assert peer._protocol == AX25Version.AX25_22
 
 
 def test_peer_on_receive_xid_keeps_known_proto_version():
@@ -894,7 +891,7 @@ def test_peer_on_receive_xid_keeps_known_proto_version():
     )
 
     # We should still consider the other station as AX.25 2.2 or better
-    eq_(peer._protocol, AX25Version.AX25_22)
+    assert peer._protocol == AX25Version.AX25_22
 
 
 def test_peer_on_receive_xid_ignores_bad_fi():
@@ -991,7 +988,7 @@ def test_peer_on_receive_xid_processes_parameters():
     )
 
     # Should be negotiated to 64 bytes
-    eq_(peer._max_ifield, 64)
+    assert peer._max_ifield == 64
 
 
 def test_peer_on_receive_xid_reply():
@@ -1007,7 +1004,7 @@ def test_peer_on_receive_xid_reply():
     )
 
     # Nothing yet sent
-    eq_(interface.transmit_calls, [])
+    assert interface.transmit_calls == []
 
     # Pass in the XID frame to our AX.25 2.2 station.
     peer._on_receive_xid(
@@ -1021,12 +1018,12 @@ def test_peer_on_receive_xid_reply():
     )
 
     # This was a request, so there should be a reply waiting
-    eq_(len(interface.transmit_calls), 1)
+    assert len(interface.transmit_calls) == 1
     (tx_args, tx_kwargs) = interface.transmit_calls.pop(0)
 
     # This should be a XID
-    eq_(tx_kwargs, {'callback': None})
-    eq_(len(tx_args), 1)
+    assert tx_kwargs == {'callback': None}
+    assert len(tx_args) == 1
     (frame,) = tx_args
     assert isinstance(frame, AX25ExchangeIdentificationFrame)
 
@@ -1034,7 +1031,7 @@ def test_peer_on_receive_xid_reply():
     assert not frame.header.cr
 
     # Frame should reflect the settings of the station
-    eq_(len(frame.parameters), 8)
+    assert len(frame.parameters) == 8
 
     param = frame.parameters[0]
     assert isinstance(param, AX25XIDClassOfProceduresParameter)
@@ -1050,27 +1047,27 @@ def test_peer_on_receive_xid_reply():
 
     param = frame.parameters[2]
     assert isinstance(param, AX25XIDIFieldLengthTransmitParameter)
-    eq_(param.value, 2048)
+    assert param.value == 2048
 
     param = frame.parameters[3]
     assert isinstance(param, AX25XIDIFieldLengthReceiveParameter)
-    eq_(param.value, 2048)
+    assert param.value == 2048
 
     param = frame.parameters[4]
     assert isinstance(param, AX25XIDWindowSizeTransmitParameter)
-    eq_(param.value, 7)
+    assert param.value == 7
 
     param = frame.parameters[5]
     assert isinstance(param, AX25XIDWindowSizeReceiveParameter)
-    eq_(param.value, 7)
+    assert param.value == 7
 
     param = frame.parameters[6]
     assert isinstance(param, AX25XIDAcknowledgeTimerParameter)
-    eq_(param.value, 3000)
+    assert param.value == 3000
 
     param = frame.parameters[7]
     assert isinstance(param, AX25XIDRetriesParameter)
-    eq_(param.value, 10)
+    assert param.value == 10
 
 
 def test_peer_on_receive_xid_relay():
@@ -1086,7 +1083,7 @@ def test_peer_on_receive_xid_relay():
     )
 
     # Nothing yet sent
-    eq_(interface.transmit_calls, [])
+    assert interface.transmit_calls == []
 
     # Hook the XID handler
     xid_events = []
@@ -1103,7 +1100,7 @@ def test_peer_on_receive_xid_relay():
     peer._on_receive_xid(frame)
 
     # There should have been a XID event
-    eq_(len(xid_events), 1)
+    assert len(xid_events) == 1
 
     # It should be passed our handler
     (xid_args, xid_kwargs) = xid_events.pop(0)

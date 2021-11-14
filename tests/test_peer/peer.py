@@ -4,9 +4,6 @@
 Fixture for initialising an AX25 Peer
 """
 
-from ..nosecompat import eq_, assert_almost_equal, assert_is, \
-        assert_is_not_none, assert_is_none
-
 from aioax25.peer import AX25Peer
 from aioax25.version import AX25Version
 from ..mocks import DummyIOLoop, DummyLogger

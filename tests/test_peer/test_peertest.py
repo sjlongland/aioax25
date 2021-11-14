@@ -4,7 +4,7 @@
 Tests for AX25PeerTestHandler
 """
 
-from ..nosecompat import eq_, assert_almost_equal
+from pytest import approx
 
 from aioax25.peer import AX25PeerTestHandler
 from aioax25.frame import AX25Address, AX25TestFrame
@@ -22,14 +22,14 @@ def test_peertest_go():
     # Nothing should be set up
     assert helper._timeout_handle is None
     assert not helper._done
-    eq_(peer.transmit_calls, [])
+    assert peer.transmit_calls == []
 
     # Start it off
     helper._go()
     assert helper._timeout_handle is not None
-    eq_(helper._timeout_handle.delay, 0.1)
+    assert helper._timeout_handle.delay == 0.1
 
-    eq_(len(peer.transmit_calls), 1)
+    assert len(peer.transmit_calls) == 1
     (frame, callback) = peer.transmit_calls.pop(0)
 
     # Frame should be a test frame, with CR=True
@@ -38,7 +38,7 @@ def test_peertest_go():
     assert frame.header.cr
 
     # Callback should be the _transmit_done method
-    eq_(callback, helper._transmit_done)
+    assert callback == helper._transmit_done
 
     # We should be registered to receive the reply
     assert peer._testframe_handler is helper
@@ -59,7 +59,7 @@ def test_peertest_go_pending():
     # Nothing should be set up
     assert helper._timeout_handle is None
     assert not helper._done
-    eq_(peer.transmit_calls, [])
+    assert peer.transmit_calls == []
 
     # Start it off
     try:
@@ -82,7 +82,7 @@ def test_peertest_transmit_done():
     helper._transmit_done()
     assert helper.tx_time is not None
 
-    assert_almost_equal(peer._loop.time(), helper.tx_time, places=2)
+    assert approx(peer._loop.time()) == helper.tx_time
 
 
 def test_peertest_on_receive():
@@ -101,13 +101,13 @@ def test_peertest_on_receive():
     helper._on_receive(frame='Make believe TEST frame')
     assert helper.rx_time is not None
 
-    assert_almost_equal(peer._loop.time(), helper.rx_time, places=2)
-    eq_(helper.rx_frame, 'Make believe TEST frame')
+    assert approx(peer._loop.time()) == helper.rx_time
+    assert helper.rx_frame == 'Make believe TEST frame'
 
     # We should be done now
-    eq_(len(done_events), 1)
+    assert len(done_events) == 1
     done_evt = done_events.pop()
-    eq_(list(done_evt.keys()), ['handler'])
+    assert list(done_evt.keys()) == ['handler']
     assert done_evt['handler'] is helper
 
 
@@ -131,7 +131,7 @@ def test_peertest_on_receive_done():
 
     assert helper.rx_time is None
     assert helper.rx_frame is None
-    eq_(len(done_events), 0)
+    assert len(done_events) == 0
 
 
 def test_peertest_on_timeout():
@@ -149,7 +149,7 @@ def test_peertest_on_timeout():
     helper._on_timeout()
 
     # We should be done now
-    eq_(len(done_events), 1)
+    assert len(done_events) == 1
     done_evt = done_events.pop()
-    eq_(list(done_evt.keys()), ['handler'])
+    assert list(done_evt.keys()) == ['handler']
     assert done_evt['handler'] is helper
