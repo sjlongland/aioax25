@@ -244,10 +244,10 @@ class AX25Peer(object):
             ]
 
             if all_paths:
-                all_paths.sort(key=lambda p: p[0])
+                all_paths.sort(key=lambda p: p[1])
                 best_path = all_paths[-1][0]
             else:
-                # If no paths exist, use whatver default path is set
+                # If no paths exist, use whatever default path is set
                 best_path = self._repeaters
 
             # Use this until we have reason to change
