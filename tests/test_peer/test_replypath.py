@@ -17,14 +17,14 @@ def test_peer_reply_path_locked():
     peer = TestingAX25Peer(
         station=station,
         address=AX25Address("VK4MSL"),
-        repeaters=AX25Path(AX25Address("VK4RZB")),
+        repeaters=AX25Path("VK4RZB"),
         locked_path=True,
     )
 
     # Ensure not pre-determined path is set
     peer._reply_path = None
 
-    assert list(peer.reply_path) == [AX25Address("VK4RZB")]
+    assert str(peer.reply_path) == "VK4RZB"
 
 
 def test_peer_reply_path_predetermined():
@@ -40,9 +40,9 @@ def test_peer_reply_path_predetermined():
     )
 
     # Inject pre-determined path
-    peer._reply_path = AX25Path(AX25Address("VK4RZB"))
+    peer._reply_path = AX25Path("VK4RZB")
 
-    assert list(peer.reply_path) == [AX25Address("VK4RZB")]
+    assert str(peer.reply_path) == "VK4RZB"
 
 
 def test_peer_reply_path_weight_score():
@@ -61,15 +61,12 @@ def test_peer_reply_path_weight_score():
     peer._reply_path = None
 
     # Inject path scores
-    peer._tx_path_score = {
-        AX25Path(AX25Address("VK4RZB")): 2,
-        AX25Path(AX25Address("VK4RZA")): 1,
-    }
+    peer._tx_path_score = {AX25Path("VK4RZB"): 2, AX25Path("VK4RZA"): 1}
 
-    assert list(peer.reply_path) == [AX25Address("VK4RZB")]
+    assert str(peer.reply_path) == "VK4RZB"
 
     # We should also use this from now on:
-    assert list(peer._reply_path) == [AX25Address("VK4RZB")]
+    assert str(peer._reply_path) == "VK4RZB"
 
 
 def test_peer_reply_path_rx_count():
@@ -91,12 +88,9 @@ def test_peer_reply_path_rx_count():
     peer._tx_path_score = {}
 
     # Inject path counts
-    peer._rx_path_count = {
-        AX25Path(AX25Address("VK4RZB")): 2,
-        AX25Path(AX25Address("VK4RZA")): 1,
-    }
+    peer._rx_path_count = {AX25Path("VK4RZB"): 2, AX25Path("VK4RZA"): 1}
 
-    assert list(peer.reply_path) == [AX25Address("VK4RZB")]
+    assert str(peer.reply_path) == "VK4RZB"
 
     # We should also use this from now on:
-    assert list(peer._reply_path) == [AX25Address("VK4RZB")]
+    assert str(peer._reply_path) == "VK4RZB"
