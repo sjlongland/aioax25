@@ -255,7 +255,7 @@ class AX25Peer(object):
         """
         Connect to the remote node.
         """
-        if self._state in self.AX25PeerState.DISCONNECTED:
+        if self._state is self.AX25PeerState.DISCONNECTED:
             handler = AX25PeerConnectionHandler(self)
             handler.done_sig.connect(self._on_connect_response)
             handler._go()
@@ -264,7 +264,7 @@ class AX25Peer(object):
         """
         Accept an incoming connection from the peer.
         """
-        if self._state in self.AX25PeerState.INCOMING_CONNECTION:
+        if self._state is self.AX25PeerState.INCOMING_CONNECTION:
             self._log.info('Accepting incoming connection')
             # Send a UA and set ourselves as connected
             self._stop_incoming_connect_timer()
@@ -275,7 +275,7 @@ class AX25Peer(object):
         """
         Reject an incoming connection from the peer.
         """
-        if self._state in self.AX25PeerState.INCOMING_CONNECTION:
+        if self._state is self.AX25PeerState.INCOMING_CONNECTION:
             self._log.info('Rejecting incoming connection')
             # Send a DM and set ourselves as disconnected
             self._stop_incoming_connect_timer()
@@ -286,7 +286,7 @@ class AX25Peer(object):
         """
         Disconnect from the remote node.
         """
-        if self._state == self.AX25PeerState.CONNECTED:
+        if self._state is self.AX25PeerState.CONNECTED:
             self._uaframe_handler = self._on_disconnect
             self._send_disc()
 
@@ -310,7 +310,7 @@ class AX25Peer(object):
         """
         Clean up the instance of this peer as the activity has expired.
         """
-        if self._state != self.AX25PeerState.DISCONNECTED:
+        if self._state is not self.AX25PeerState.DISCONNECTED:
             self._log.warning('Disconnecting peer due to inactivity')
             self._send_dm()
 
@@ -337,7 +337,7 @@ class AX25Peer(object):
         # AX.25 2.2 sect 6.3.1: "The originating TNC sending a SABM(E) command
         # ignores and discards any frames except SABM, DISC, UA and DM frames
         # from the distant TNC."
-        if (self._state == self.AX25PeerState.CONNECTING) and \
+        if (self._state is self.AX25PeerState.CONNECTING) and \
                 not isinstance(frame, ( \
                     AX25SetAsyncBalancedModeFrame,          # SABM
                     AX25SetAsyncBalancedModeExtendedFrame,  # SABME
@@ -353,7 +353,7 @@ class AX25Peer(object):
         # a DM response frame. Any other command received while the DXE is in
         # the frame reject state will cause another FRMR to be sent out with
         # the same information field as originally sent."
-        if (self._state == self.AX25PeerState.FRMR) and \
+        if (self._state is self.AX25PeerState.FRMR) and \
                 not isinstance(frame, ( \
                     AX25SetAsyncBalancedModeFrame,          # SABM
                     AX25DisconnectFrame)):                  # DISC
@@ -385,7 +385,7 @@ class AX25Peer(object):
         elif isinstance(frame, AX25RawFrame):
             # This is either an I or S frame.  We should know enough now to
             # decode it properly.
-            if self._state == self.AX25PeerState.CONNECTED:
+            if self._state is self.AX25PeerState.CONNECTED:
                 # A connection is in progress, we can decode this
                 frame = AX25Frame.decode(frame, modulo128=(self._modulo == 128))
                 if isinstance(frame, AX25InformationFrameMixin):
@@ -605,7 +605,7 @@ class AX25Peer(object):
         self._incoming_connect_timeout_handle = None
 
     def _on_incoming_connect_timeout(self):
-        if self._state == self.AX25PeerState.INCOMING_CONNECTION:
+        if self._state is self.AX25PeerState.INCOMING_CONNECTION:
             self._incoming_connect_timeout_handle = None
             self.reject()
 
@@ -711,7 +711,7 @@ class AX25Peer(object):
         self._pending_data = []
 
     def _set_conn_state(self, state):
-        if self._state == state:
+        if self._state is state:
             # Nothing to do
             return
 
@@ -1109,7 +1109,7 @@ class AX25Peer(object):
         Send a RR notification frame
         """
         self._cancel_rr_notification()
-        if self._state == self.AX25PeerState.CONNECTED:
+        if self._state is self.AX25PeerState.CONNECTED:
             self._transmit_frame(
                     self._RRFrameClass(
                         destination=self.address,
@@ -1123,7 +1123,7 @@ class AX25Peer(object):
         """
         Send a RNR notification if the RNR interval has elapsed.
         """
-        if self._state == self.AX25PeerState.CONNECTED:
+        if self._state is self.AX25PeerState.CONNECTED:
             now = self._loop.time()
             if (now - self._last_rnr_sent) > self._rnr_interval:
                 self._transmit_frame(
