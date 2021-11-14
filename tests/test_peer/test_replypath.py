@@ -94,3 +94,62 @@ def test_peer_reply_path_rx_count():
 
     # We should also use this from now on:
     assert str(peer._reply_path) == "VK4RZB"
+
+
+# Path weighting
+
+
+def test_weight_path_absolute():
+    """
+    Test we can set the score for a given path.
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = TestingAX25Peer(
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        locked_path=False,
+    )
+
+    # Ensure known weights
+    peer._tx_path_score = {
+        tuple(AX25Path("VK4RZB", "VK4RZA")): 1,
+        tuple(AX25Path("VK4RZA")): 2,
+    }
+
+    # Rate a few paths
+    peer.weight_path(AX25Path("VK4RZB*", "VK4RZA*"), 5, relative=False)
+    peer.weight_path(AX25Path("VK4RZA*"), 3, relative=False)
+
+    assert peer._tx_path_score == {
+        tuple(AX25Path("VK4RZB", "VK4RZA")): 5,
+        tuple(AX25Path("VK4RZA")): 3,
+    }
+
+
+def test_weight_path_relative():
+    """
+    Test we can increment the score for a given path.
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = TestingAX25Peer(
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        locked_path=False,
+    )
+
+    # Ensure known weights
+    peer._tx_path_score = {
+        tuple(AX25Path("VK4RZB", "VK4RZA")): 5,
+        tuple(AX25Path("VK4RZA")): 3,
+    }
+
+    # Rate a few paths
+    peer.weight_path(AX25Path("VK4RZB*", "VK4RZA*"), 2, relative=True)
+    peer.weight_path(AX25Path("VK4RZA*"), 1, relative=True)
+
+    assert peer._tx_path_score == {
+        tuple(AX25Path("VK4RZB", "VK4RZA")): 7,
+        tuple(AX25Path("VK4RZA")): 4,
+    }
