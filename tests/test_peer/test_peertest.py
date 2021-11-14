@@ -7,8 +7,9 @@ Tests for AX25PeerTestHandler
 from pytest import approx
 
 from aioax25.peer import AX25PeerTestHandler
-from aioax25.frame import AX25Address, AX25TestFrame
+from aioax25.frame import AX25Address, AX25TestFrame, AX25Path
 from ..mocks import DummyPeer, DummyStation
+from .peer import TestingAX25Peer
 
 
 def test_peertest_go():
@@ -154,3 +155,112 @@ def test_peertest_on_timeout():
     done_evt = done_events.pop()
     assert list(done_evt.keys()) == ["handler"]
     assert done_evt["handler"] is helper
+
+
+# Integration into AX25Peer
+
+
+def test_peer_ping():
+    """
+    Test that calling peer.ping() sets up a AX25PeerTestHandler
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = TestingAX25Peer(
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
+    )
+
+    # Stub the peer's _transmit_frame method
+    tx_frames = []
+
+    def _transmit_frame(frame, callback):
+        tx_frames.append(frame)
+        callback()
+
+    peer._transmit_frame = _transmit_frame
+
+    # Send a ping request
+    handler = peer.ping()
+
+    # We should have a reference to the handler
+    assert isinstance(handler, AX25PeerTestHandler)
+
+    # Handler should have sent a frame with an empty payload
+    assert len(tx_frames) == 1
+    assert isinstance(tx_frames[0], AX25TestFrame)
+    assert tx_frames[0].payload == b""
+
+
+def test_peer_ping_payload():
+    """
+    Test that we can supply a payload to the ping request
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = TestingAX25Peer(
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
+    )
+
+    # Stub the peer's _transmit_frame method
+    tx_frames = []
+
+    def _transmit_frame(frame, callback):
+        tx_frames.append(frame)
+        callback()
+
+    peer._transmit_frame = _transmit_frame
+
+    # Send a ping request
+    handler = peer.ping(payload=b"testing")
+
+    # We should have a reference to the handler
+    assert isinstance(handler, AX25PeerTestHandler)
+
+    # Handler should have sent a frame with an empty payload
+    assert len(tx_frames) == 1
+    assert isinstance(tx_frames[0], AX25TestFrame)
+    assert tx_frames[0].payload == b"testing"
+
+
+def test_peer_ping_cb():
+    """
+    Test that peer.ping() attaches callback if given
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = TestingAX25Peer(
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
+    )
+
+    # Stub the peer's _transmit_frame method
+    tx_frames = []
+
+    def _transmit_frame(frame, callback):
+        tx_frames.append(frame)
+        callback()
+
+    peer._transmit_frame = _transmit_frame
+
+    # Create a callback routine
+    cb_args = []
+
+    def _callback(*args, **kwargs):
+        cb_args.append((args, kwargs))
+
+    # Send a ping request
+    handler = peer.ping(callback=_callback)
+
+    # We should have a reference to the handler
+    assert isinstance(handler, AX25PeerTestHandler)
+
+    # Pass a reply to the handler to trigger completion
+    handler._on_receive(frame=b"test")
+
+    # Our callback should have been called on completion
+    assert cb_args == [((), {"handler": handler})]
