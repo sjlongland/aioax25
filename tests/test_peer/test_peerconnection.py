@@ -159,7 +159,32 @@ def test_peerconn_on_negotiated_failed():
     assert done_evts == [{"response": "whoopsie"}]
 
 
-def test_peerconn_on_negotiated_xidframe_handler():
+def test_peerconn_on_negotiated_sabmframe_handler():
+    """
+    Test _on_negotiated refuses to run if another SABM frame handler is hooked.
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
+    helper = AX25PeerConnectionHandler(peer)
+
+    # Nothing should be set up
+    assert helper._timeout_handle is None
+    assert not helper._done
+    assert peer.transmit_calls == []
+
+    # Hook the SABM handler
+    peer._sabmframe_handler = lambda *a, **kwa: None
+
+    # Hook the done signal
+    done_evts = []
+    helper.done_sig.connect(lambda **kw: done_evts.append(kw))
+
+    # Try to connect
+    helper._on_negotiated("xid")
+    assert done_evts == [{"response": "station_busy"}]
+
+
+def test_peerconn_on_negotiated_uaframe_handler():
     """
     Test _on_negotiated refuses to run if another UA frame handler is hooked.
     """
@@ -340,6 +365,41 @@ def test_peerconn_receive_ua_mod128():
     assert done_evts == [{"response": "ack"}]
 
 
+def test_peerconn_receive_sabm():
+    """
+    Test _on_receive_sabm ends the helper
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
+    helper = AX25PeerConnectionHandler(peer)
+
+    # Nothing should be set up
+    assert helper._timeout_handle is None
+    assert not helper._done
+
+    # Stub peer _send_ua
+    count = dict(send_ua=0)
+
+    def _send_ua():
+        count["send_ua"] += 1
+
+    peer._send_ua = _send_ua
+
+    # Hook the done signal
+    done_evts = []
+    helper.done_sig.connect(lambda **kw: done_evts.append(kw))
+
+    # Call _on_receive_sabm
+    helper._on_receive_sabm()
+
+    # We should have ACKed the SABM
+    assert count == dict(send_ua=1)
+
+    # See that the helper finished
+    assert helper._done is True
+    assert done_evts == [{"response": "ack"}]
+
+
 def test_peerconn_receive_frmr():
     """
     Test _on_receive_frmr ends the helper
@@ -423,6 +483,7 @@ def test_peerconn_on_timeout_first():
     assert helper._retries == 1
 
     # Helper should have hooked the handler events
+    assert peer._sabmframe_handler == helper._on_receive_sabm
     assert peer._uaframe_handler == helper._on_receive_ua
     assert peer._frmrframe_handler == helper._on_receive_frmr
     assert peer._dmframe_handler == helper._on_receive_dm
@@ -453,6 +514,7 @@ def test_peerconn_on_timeout_last():
     helper._retries = 0
 
     # Pretend we're hooked up
+    peer._sabmframe_handler = helper._on_receive_sabm
     peer._uaframe_handler = helper._on_receive_ua
     peer._frmrframe_handler = helper._on_receive_frmr
     peer._dmframe_handler = helper._on_receive_dm
@@ -467,7 +529,8 @@ def test_peerconn_on_timeout_last():
     # Check the time-out timer is not re-started
     assert helper._timeout_handle is None
 
-    # Helper should have hooked the handler events
+    # Helper should have unhooked the handler events
+    assert peer._sabmframe_handler is None
     assert peer._uaframe_handler is None
     assert peer._frmrframe_handler is None
     assert peer._dmframe_handler is None
@@ -490,6 +553,7 @@ def test_peerconn_finish_disconnect_ua():
 
     # Pretend we're hooked up
     dummy_uaframe_handler = lambda *a, **kw: None
+    peer._sabmframe_handler = helper._on_receive_sabm
     peer._uaframe_handler = dummy_uaframe_handler
     peer._frmrframe_handler = helper._on_receive_frmr
     peer._dmframe_handler = helper._on_receive_dm
@@ -498,7 +562,33 @@ def test_peerconn_finish_disconnect_ua():
     helper._finish()
 
     # All except UA (which is not ours) should be disconnected
+    assert peer._sabmframe_handler is None
     assert peer._uaframe_handler == dummy_uaframe_handler
+    assert peer._frmrframe_handler is None
+    assert peer._dmframe_handler is None
+
+
+def test_peerconn_finish_disconnect_sabm():
+    """
+    Test _finish leaves other SABM hooks intact
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
+    helper = AX25PeerConnectionHandler(peer)
+
+    # Pretend we're hooked up
+    dummy_sabmframe_handler = lambda *a, **kw: None
+    peer._sabmframe_handler = dummy_sabmframe_handler
+    peer._uaframe_handler = helper._on_receive_ua
+    peer._frmrframe_handler = helper._on_receive_frmr
+    peer._dmframe_handler = helper._on_receive_dm
+
+    # Call the finish routine
+    helper._finish()
+
+    # All except SABM (which is not ours) should be disconnected
+    assert peer._sabmframe_handler == dummy_sabmframe_handler
+    assert peer._uaframe_handler is None
     assert peer._frmrframe_handler is None
     assert peer._dmframe_handler is None
 
@@ -513,6 +603,7 @@ def test_peerconn_finish_disconnect_frmr():
 
     # Pretend we're hooked up
     dummy_frmrframe_handler = lambda *a, **kw: None
+    peer._sabmframe_handler = helper._on_receive_sabm
     peer._uaframe_handler = helper._on_receive_ua
     peer._frmrframe_handler = dummy_frmrframe_handler
     peer._dmframe_handler = helper._on_receive_dm
@@ -521,6 +612,7 @@ def test_peerconn_finish_disconnect_frmr():
     helper._finish()
 
     # All except FRMR (which is not ours) should be disconnected
+    assert peer._sabmframe_handler is None
     assert peer._uaframe_handler is None
     assert peer._frmrframe_handler == dummy_frmrframe_handler
     assert peer._dmframe_handler is None
@@ -536,6 +628,7 @@ def test_peerconn_finish_disconnect_dm():
 
     # Pretend we're hooked up
     dummy_dmframe_handler = lambda *a, **kw: None
+    peer._sabmframe_handler = helper._on_receive_sabm
     peer._uaframe_handler = helper._on_receive_ua
     peer._frmrframe_handler = helper._on_receive_frmr
     peer._dmframe_handler = dummy_dmframe_handler
@@ -544,6 +637,7 @@ def test_peerconn_finish_disconnect_dm():
     helper._finish()
 
     # All except DM (which is not ours) should be disconnected
+    assert peer._sabmframe_handler is None
     assert peer._uaframe_handler is None
     assert peer._frmrframe_handler is None
     assert peer._dmframe_handler == dummy_dmframe_handler
