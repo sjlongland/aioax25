@@ -122,6 +122,7 @@ class DummyPeer(object):
         self._uaframe_handler = None
         self._frmrframe_handler = None
         self._dmframe_handler = None
+        self._sabmframe_handler = None
         self._xidframe_handler = None
 
         self._negotiated = False

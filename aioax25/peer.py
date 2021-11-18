@@ -1271,10 +1271,12 @@ class AX25PeerConnectionHandler(AX25PeerHelper):
             # required)
             if (self.peer._uaframe_handler is not None) \
                     or (self.peer._frmrframe_handler is not None) \
-                    or (self.peer._dmframe_handler is not None):
+                    or (self.peer._dmframe_handler is not None) \
+                    or (self.peer._sabmframe_handler is not None):
                 # We're handling another frame now.
                 self._finish(response='station_busy')
                 return
+            self.peer._sabmframe_handler = self._on_receive_sabm
             self.peer._uaframe_handler = self._on_receive_ua
             self.peer._frmrframe_handler = self._on_receive_frmr
             self.peer._dmframe_handler = self._on_receive_dm
@@ -1286,6 +1288,11 @@ class AX25PeerConnectionHandler(AX25PeerHelper):
     def _on_receive_ua(self):
         # Peer just acknowledged our connection
         self.peer._init_connection(self.peer._modulo128)
+        self._finish(response='ack')
+
+    def _on_receive_sabm(self):
+        # Peer was connecting to us, we'll treat this as a UA.
+        self.peer._send_ua()
         self._finish(response='ack')
 
     def _on_receive_frmr(self):
@@ -1306,6 +1313,9 @@ class AX25PeerConnectionHandler(AX25PeerHelper):
 
     def _finish(self, **kwargs):
         # Clean up hooks
+        if self.peer._sabmframe_handler == self._on_receive_sabm:
+            self.peer._sabmframe_handler = None
+
         if self.peer._uaframe_handler == self._on_receive_ua:
             self.peer._uaframe_handler = None
 
