@@ -270,9 +270,21 @@ def test_peerconn_receive_ua():
     peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerConnectionHandler(peer)
 
+    # Assume we're using modulo-8 mode
+    peer._modulo128 = False
+
     # Nothing should be set up
     assert helper._timeout_handle is None
     assert not helper._done
+
+    # Stub peer _init_connection
+    count = dict(init=0)
+
+    def _init_connection(extended):
+        assert extended is False, "Should be in Modulo-8 mode"
+        count["init"] += 1
+
+    peer._init_connection = _init_connection
 
     # Hook the done signal
     done_evts = []
@@ -280,6 +292,48 @@ def test_peerconn_receive_ua():
 
     # Call _on_receive_ua
     helper._on_receive_ua()
+
+    # We should have initialised the connection
+    assert count == dict(init=1)
+
+    # See that the helper finished
+    assert helper._done is True
+    assert done_evts == [{"response": "ack"}]
+
+
+def test_peerconn_receive_ua_mod128():
+    """
+    Test _on_receive_ua handles Mod128 mode
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
+    helper = AX25PeerConnectionHandler(peer)
+
+    # Assume we're using modulo-128 mode
+    peer._modulo128 = True
+
+    # Nothing should be set up
+    assert helper._timeout_handle is None
+    assert not helper._done
+
+    # Stub peer _init_connection
+    count = dict(init=0)
+
+    def _init_connection(extended):
+        assert extended is True, "Should be in Modulo-128 mode"
+        count["init"] += 1
+
+    peer._init_connection = _init_connection
+
+    # Hook the done signal
+    done_evts = []
+    helper.done_sig.connect(lambda **kw: done_evts.append(kw))
+
+    # Call _on_receive_ua
+    helper._on_receive_ua()
+
+    # We should have initialised the connection
+    assert count == dict(init=1)
 
     # See that the helper finished
     assert helper._done is True

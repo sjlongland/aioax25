@@ -1377,6 +1377,7 @@ class AX25PeerConnectionHandler(AX25PeerHelper):
 
     def _on_receive_ua(self):
         # Peer just acknowledged our connection
+        self.peer._init_connection(self.peer._modulo128)
         self._finish(response="ack")
 
     def _on_receive_frmr(self):
