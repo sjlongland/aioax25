@@ -418,9 +418,9 @@ def test_recv_sabme():
 # SABM(E) handling
 
 
-def test_on_receive_sabm_init():
+def test_on_receive_sabm_while_connecting():
     """
-    Test the incoming connection is initialised on receipt of SABM.
+    Test that SABM is handled safely while UA from SABM pending
     """
     station = DummyStation(AX25Address('VK4MSL', ssid=1))
     peer = TestingAX25Peer(
@@ -430,22 +430,29 @@ def test_on_receive_sabm_init():
             locked_path=True
     )
 
+    # Assume we're already connecting to the station
+    peer._state = peer.AX25PeerState.CONNECTING
+
     # Stub _init_connection
-    count = dict(init=0, start_timer=0, conn_rq=0)
+    count = dict(init=0, sabmframe_handler=0)
     def _init_connection(extended):
         assert extended is False
         count['init'] += 1
     peer._init_connection = _init_connection
 
+    # Stub _sabmframe_handler
+    def _sabmframe_handler():
+        count['sabmframe_handler'] += 1
+    peer._sabmframe_handler = _sabmframe_handler
+
     # Stub _start_incoming_connect_timer
     def _start_incoming_connect_timer():
-        count['start_timer'] += 1
+        assert False, 'Should not be starting connect timer'
     peer._start_incoming_connect_timer = _start_incoming_connect_timer
 
     # Hook connection request event
     def _on_conn_rq(**kwargs):
-        assert kwargs == dict(peer=peer)
-        count['conn_rq'] += 1
+        assert False, 'Should not be reporting connection attempt'
     station.connection_request.connect(_on_conn_rq)
 
     peer._on_receive_sabm(
@@ -455,6 +462,8 @@ def test_on_receive_sabm_init():
             repeaters=AX25Path('VK4RZB')
         )
     )
+
+    assert count == dict(init=1, sabmframe_handler=1)
 
 
 def test_on_receive_sabme_init():
@@ -479,6 +488,11 @@ def test_on_receive_sabme_init():
         count['init'] += 1
     peer._init_connection = _init_connection
 
+    # Stub _sabmframe_handler
+    def _sabmframe_handler():
+        assert False, 'We should be handling the SABM(E) ourselves'
+    peer._sabmframe_handler = _sabmframe_handler
+
     # Stub _start_incoming_connect_timer
     def _start_incoming_connect_timer():
         count['start_timer'] += 1
@@ -497,6 +511,8 @@ def test_on_receive_sabme_init():
             repeaters=AX25Path('VK4RZB')
         )
     )
+
+    assert count == dict(init=1, start_timer=1, conn_rq=1)
 
 
 def test_on_receive_sabme_init_unknown_peer_ver():
