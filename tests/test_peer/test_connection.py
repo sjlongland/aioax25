@@ -318,12 +318,12 @@ def test_recv_dm():
     peer._reset_idle_timeout = lambda : None
 
     # Stub _dmframe_handler and _on_disconnect
-    count = dict(on_disc=0)
+    count = dict(dmframe_handler=0)
     def _dmframe_handler():
-        assert False, '_dmframe_handler should not have been called'
+        count['dmframe_handler'] += 1
     peer._dmframe_handler = _dmframe_handler
     def _on_disconnect():
-        count['on_disc'] += 1
+        assert False, '_dmframe_handler should not have been called'
     peer._on_disconnect = _on_disconnect
 
     # Set the state
@@ -338,11 +338,11 @@ def test_recv_dm():
             )
     )
 
-    # Our handlers should have been called
-    assert count == dict(on_disc=1)
+    # Our handler should have been called
+    assert count == dict(dmframe_handler=1)
 
-    # We should not have removed the DM frame handler
-    assert peer._dmframe_handler is not None
+    # We should have removed the DM frame handler
+    assert peer._dmframe_handler is None
 
 
 def test_recv_sabm():
