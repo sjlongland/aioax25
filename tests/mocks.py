@@ -2,6 +2,7 @@
 
 import time
 import logging
+from signalslot import Signal
 from aioax25.version import AX25Version
 
 
@@ -95,6 +96,7 @@ class DummyStation(object):
         self.reply_path = reply_path or []
         self._full_duplex = False
         self._protocol = AX25Version.AX25_22
+        self.connection_request = Signal()
 
     def _interface(self):
         return self._interface_ref
