@@ -807,10 +807,7 @@ class AX25Peer(object):
         """
         Handle a disconnect request from this peer.
         """
-        if self._state in (
-            self.AX25PeerState.CONNECTED,
-            self.AX25PeerState.CONNECTING,
-        ):
+        if self._state is self.AX25PeerState.CONNECTED:
             # Set ourselves as disconnected
             self._log.info("Received DM from peer")
             self._on_disconnect()
