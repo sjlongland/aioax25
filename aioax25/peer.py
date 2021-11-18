@@ -205,6 +205,7 @@ class AX25Peer(object):
         # Handling of various incoming frames
         self._testframe_handler = None
         self._xidframe_handler = None
+        self._sabmframe_handler = None
         self._uaframe_handler = None
         self._dmframe_handler = None
         self._frmrframe_handler = None
@@ -634,11 +635,21 @@ class AX25Peer(object):
         # Set up the connection state
         self._init_connection(extended)
 
-        # Set the incoming connection state, and emit a signal via the
-        # station's 'connection_request' signal.
-        self._set_conn_state(self.AX25PeerState.INCOMING_CONNECTION)
-        self._start_incoming_connect_timer()
-        self._station().connection_request.emit(peer=self)
+        # Are we already connecting ourselves to this station?  If yes,
+        # we should just treat their SABM(E) as a UA, since _clearly_ both
+        # parties wish to connect.
+        if self._state == self.AX25PeerState.CONNECTING:
+            self._log.info(
+                "Auto-accepting incoming connection as we are waiting for "
+                "UA from our connection attempt."
+            )
+            self._sabmframe_handler()
+        else:
+            # Set the incoming connection state, and emit a signal via the
+            # station's 'connection_request' signal.
+            self._set_conn_state(self.AX25PeerState.INCOMING_CONNECTION)
+            self._start_incoming_connect_timer()
+            self._station().connection_request.emit(peer=self)
 
     def _start_incoming_connect_timer(self):
         self._incoming_connect_timeout_handle = self._loop.call_later(
