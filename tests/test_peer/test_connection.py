@@ -841,3 +841,72 @@ def test_reject_incoming_dm():
             'stop-connect-timer',
             'sent-dm'
     ]
+
+
+# Connection closure
+
+
+def test_disconnect_disconnected_noop():
+    """
+    Test calling .disconnect() while not connected is a no-op.
+    """
+    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    peer = TestingAX25Peer(
+            station=station,
+            address=AX25Address('VK4MSL'),
+            repeaters=AX25Path('VK4RZB'),
+            locked_path=True
+    )
+
+    # Set the state to known value
+    peer._state = peer.AX25PeerState.CONNECTING
+
+    # A dummy UA handler
+    def _dummy_ua_handler():
+        assert False, 'Should not get called'
+    peer._uaframe_handler = _dummy_ua_handler
+
+    # Stub functions that should not be called
+    def _send_disc():
+        assert False, 'Should not have sent DISC frame'
+    peer._send_disc = _send_disc
+
+    # Try disconnecting a ficticious connection
+    peer.disconnect()
+
+    assert peer._state == peer.AX25PeerState.CONNECTING
+    assert peer._uaframe_handler == _dummy_ua_handler
+
+
+def test_disconnect_connected_disc():
+    """
+    Test calling .disconnect() while connected sends a DISC.
+    """
+    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    peer = TestingAX25Peer(
+            station=station,
+            address=AX25Address('VK4MSL'),
+            repeaters=AX25Path('VK4RZB'),
+            locked_path=True
+    )
+
+    # Set the state to known value
+    peer._state = peer.AX25PeerState.CONNECTED
+
+    # A dummy UA handler
+    def _dummy_ua_handler():
+        assert False, 'Should not get called'
+    peer._uaframe_handler = _dummy_ua_handler
+
+    # Stub functions that should be called
+    actions = []
+    def _send_disc():
+        actions.append('sent-disc')
+    peer._send_disc = _send_disc
+
+    # Try disconnecting a ficticious connection
+    peer.disconnect()
+
+    assert peer._state == peer.AX25PeerState.DISCONNECTING
+    assert actions == ['sent-disc']
+    assert peer._uaframe_handler == peer._on_disconnect

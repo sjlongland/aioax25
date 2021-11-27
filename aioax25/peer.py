@@ -319,6 +319,7 @@ class AX25Peer(object):
         """
         if self._state is self.AX25PeerState.CONNECTED:
             self._uaframe_handler = self._on_disconnect
+            self._set_conn_state(self.AX25PeerState.DISCONNECTING)
             self._send_disc()
 
     def _cancel_idle_timeout(self):
