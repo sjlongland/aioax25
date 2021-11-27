@@ -344,9 +344,15 @@ class AX25Peer(object):
         """
         Clean up the instance of this peer as the activity has expired.
         """
-        if self._state is not self.AX25PeerState.DISCONNECTED:
+        if self._state not in (
+            self.AX25PeerState.DISCONNECTED,
+            self.AX25PeerState.DISCONNECTING,
+        ):
             self._log.warning("Disconnecting peer due to inactivity")
-            self._send_dm()
+            if self._state is self.AX25PeerState.CONNECTED:
+                self.disconnect()
+            else:
+                self._send_dm()
 
         # Cancel other timers
         self._cancel_rr_notification()
