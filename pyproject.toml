@@ -38,7 +38,6 @@ line-length = 78
 
 [tool.pytest.ini_options]
 log_cli = true
-addopts = "--cov=aioax25 --cov-report=html --cov-report=term"
 
 [tool.setuptools.dynamic]
 version = {attr = "aioax25.__version__"}
