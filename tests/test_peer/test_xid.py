@@ -734,7 +734,7 @@ def test_peer_process_xid_retrycounter_default():
 
 def test_peer_on_receive_xid_ax20_mode():
     """
-    Test _on_receive_xid responds with FRMR when in AX.25 2.0 mode.
+    Test _on_receive responds with FRMR when in AX.25 2.0 mode.
     """
     station = DummyStation(AX25Address("VK4MSL", ssid=1))
     station._protocol = AX25Version.AX25_20
@@ -747,7 +747,7 @@ def test_peer_on_receive_xid_ax20_mode():
     assert interface.transmit_calls == []
 
     # Pass in the XID frame to our AX.25 2.0 station.
-    peer._on_receive_xid(
+    peer._on_receive(
         AX25ExchangeIdentificationFrame(
             destination=station.address,
             source=peer.address,
@@ -775,7 +775,7 @@ def test_peer_on_receive_xid_ax20_mode():
 
 def test_peer_on_receive_xid_connecting():
     """
-    Test _on_receive_xid ignores XID when connecting.
+    Test _on_receive ignores XID when connecting.
     """
     station = DummyStation(AX25Address("VK4MSL", ssid=1))
     interface = station._interface()
@@ -790,7 +790,7 @@ def test_peer_on_receive_xid_connecting():
     peer._state = TestingAX25Peer.AX25PeerState.CONNECTING
 
     # Pass in the XID frame to our AX.25 2.2 station.
-    peer._on_receive_xid(
+    peer._on_receive(
         AX25ExchangeIdentificationFrame(
             destination=station.address,
             source=peer.address,
@@ -806,7 +806,7 @@ def test_peer_on_receive_xid_connecting():
 
 def test_peer_on_receive_xid_disconnecting():
     """
-    Test _on_receive_xid ignores XID when disconnecting.
+    Test _on_receive ignores XID when disconnecting.
     """
     station = DummyStation(AX25Address("VK4MSL", ssid=1))
     interface = station._interface()
@@ -821,7 +821,7 @@ def test_peer_on_receive_xid_disconnecting():
     peer._state = TestingAX25Peer.AX25PeerState.DISCONNECTING
 
     # Pass in the XID frame to our AX.25 2.2 station.
-    peer._on_receive_xid(
+    peer._on_receive(
         AX25ExchangeIdentificationFrame(
             destination=station.address,
             source=peer.address,
@@ -837,7 +837,7 @@ def test_peer_on_receive_xid_disconnecting():
 
 def test_peer_on_receive_xid_sets_proto_version():
     """
-    Test _on_receive_xid sets protocol version if unknown.
+    Test _on_receive sets protocol version if unknown.
     """
     station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
@@ -848,7 +848,7 @@ def test_peer_on_receive_xid_sets_proto_version():
     assert peer._protocol == AX25Version.UNKNOWN
 
     # Pass in the XID frame to our AX.25 2.2 station.
-    peer._on_receive_xid(
+    peer._on_receive(
         AX25ExchangeIdentificationFrame(
             destination=station.address,
             source=peer.address,
@@ -863,7 +863,7 @@ def test_peer_on_receive_xid_sets_proto_version():
 
 def test_peer_on_receive_xid_keeps_known_proto_version():
     """
-    Test _on_receive_xid keeps existing protocol version if known.
+    Test _on_receive keeps existing protocol version if known.
     """
     station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
@@ -874,7 +874,7 @@ def test_peer_on_receive_xid_keeps_known_proto_version():
     )
 
     # Pass in the XID frame to our AX.25 2.2 station.
-    peer._on_receive_xid(
+    peer._on_receive(
         AX25ExchangeIdentificationFrame(
             destination=station.address,
             source=peer.address,
@@ -889,7 +889,7 @@ def test_peer_on_receive_xid_keeps_known_proto_version():
 
 def test_peer_on_receive_xid_ignores_bad_fi():
     """
-    Test _on_receive_xid ignores parameters if FI is unknown
+    Test _on_receive ignores parameters if FI is unknown
     """
     station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
@@ -904,7 +904,7 @@ def test_peer_on_receive_xid_ignores_bad_fi():
 
     # Pass in the XID frame to our AX.25 2.2 station.
     # There should be no assertion triggered.
-    peer._on_receive_xid(
+    peer._on_receive(
         AX25ExchangeIdentificationFrame(
             destination=station.address,
             source=peer.address,
@@ -917,7 +917,7 @@ def test_peer_on_receive_xid_ignores_bad_fi():
 
 def test_peer_on_receive_xid_ignores_bad_gi():
     """
-    Test _on_receive_xid ignores parameters if GI is unknown
+    Test _on_receive ignores parameters if GI is unknown
     """
     station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
@@ -932,7 +932,7 @@ def test_peer_on_receive_xid_ignores_bad_gi():
 
     # Pass in the XID frame to our AX.25 2.2 station.
     # There should be no assertion triggered.
-    peer._on_receive_xid(
+    peer._on_receive(
         AX25ExchangeIdentificationFrame(
             destination=station.address,
             source=peer.address,
@@ -945,7 +945,7 @@ def test_peer_on_receive_xid_ignores_bad_gi():
 
 def test_peer_on_receive_xid_processes_parameters():
     """
-    Test _on_receive_xid processes parameters on good XID frames
+    Test _on_receive processes parameters on good XID frames
     """
     station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
@@ -954,7 +954,7 @@ def test_peer_on_receive_xid_processes_parameters():
 
     # Pass in the XID frame to our AX.25 2.2 station.
     # There should be no assertion triggered.
-    peer._on_receive_xid(
+    peer._on_receive(
         AX25ExchangeIdentificationFrame(
             destination=station.address,
             source=peer.address,
@@ -969,7 +969,7 @@ def test_peer_on_receive_xid_processes_parameters():
 
 def test_peer_on_receive_xid_reply():
     """
-    Test _on_receive_xid sends reply if incoming frame has CR=True
+    Test _on_receive sends reply if incoming frame has CR=True
     """
     station = DummyStation(AX25Address("VK4MSL", ssid=1))
     interface = station._interface()
@@ -981,7 +981,7 @@ def test_peer_on_receive_xid_reply():
     assert interface.transmit_calls == []
 
     # Pass in the XID frame to our AX.25 2.2 station.
-    peer._on_receive_xid(
+    peer._on_receive(
         AX25ExchangeIdentificationFrame(
             destination=station.address,
             source=peer.address,
@@ -1046,7 +1046,7 @@ def test_peer_on_receive_xid_reply():
 
 def test_peer_on_receive_xid_relay():
     """
-    Test _on_receive_xid sends relays to XID handler if CR=False
+    Test _on_receive sends relays to XID handler if CR=False
     """
     station = DummyStation(AX25Address("VK4MSL", ssid=1))
     interface = station._interface()
@@ -1069,7 +1069,7 @@ def test_peer_on_receive_xid_relay():
         parameters=[],
         cr=False,
     )
-    peer._on_receive_xid(frame)
+    peer._on_receive(frame)
 
     # There should have been a XID event
     assert len(xid_events) == 1
