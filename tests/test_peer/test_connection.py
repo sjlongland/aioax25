@@ -708,3 +708,136 @@ def test_on_receive_sabme_ax25_20_peer():
     )
 
     assert count == dict(send_dm=1)
+
+
+# Connection acceptance and rejection handling
+
+
+def test_accept_connected_noop():
+    """
+    Test calling .accept() while not receiving a connection is a no-op.
+    """
+    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    peer = TestingAX25Peer(
+            station=station,
+            address=AX25Address('VK4MSL'),
+            repeaters=AX25Path('VK4RZB'),
+            locked_path=True
+    )
+
+    # Set the state to known value
+    peer._state = peer.AX25PeerState.CONNECTED
+
+    # Stub functions that should not be called
+    def _stop_incoming_connect_timer():
+        assert False, 'Should not have stopped connect timer'
+    peer._stop_incoming_connect_timer = _stop_incoming_connect_timer
+
+    def _send_ua():
+        assert False, 'Should not have sent UA'
+    peer._send_ua = _send_ua
+
+    # Try accepting a ficticious connection
+    peer.accept()
+
+    assert peer._state == peer.AX25PeerState.CONNECTED
+
+
+def test_accept_incoming_ua():
+    """
+    Test calling .accept() with incoming connection sends UA.
+    """
+    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    peer = TestingAX25Peer(
+            station=station,
+            address=AX25Address('VK4MSL'),
+            repeaters=AX25Path('VK4RZB'),
+            locked_path=True
+    )
+
+    # Set the state to known value
+    peer._state = peer.AX25PeerState.INCOMING_CONNECTION
+
+    # Stub functions that should be called
+    actions = []
+    def _stop_incoming_connect_timer():
+        actions.append('stop-connect-timer')
+    peer._stop_incoming_connect_timer = _stop_incoming_connect_timer
+
+    def _send_ua():
+        actions.append('sent-ua')
+    peer._send_ua = _send_ua
+
+    # Try accepting a ficticious connection
+    peer.accept()
+
+    assert peer._state == peer.AX25PeerState.CONNECTED
+    assert actions == [
+            'stop-connect-timer',
+            'sent-ua'
+    ]
+
+
+def test_reject_connected_noop():
+    """
+    Test calling .reject() while not receiving a connection is a no-op.
+    """
+    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    peer = TestingAX25Peer(
+            station=station,
+            address=AX25Address('VK4MSL'),
+            repeaters=AX25Path('VK4RZB'),
+            locked_path=True
+    )
+
+    # Set the state to known value
+    peer._state = peer.AX25PeerState.CONNECTED
+
+    # Stub functions that should not be called
+    def _stop_incoming_connect_timer():
+        assert False, 'Should not have stopped connect timer'
+    peer._stop_incoming_connect_timer = _stop_incoming_connect_timer
+
+    def _send_dm():
+        assert False, 'Should not have sent DM'
+    peer._send_dm = _send_dm
+
+    # Try rejecting a ficticious connection
+    peer.reject()
+
+    assert peer._state == peer.AX25PeerState.CONNECTED
+
+
+def test_reject_incoming_dm():
+    """
+    Test calling .reject() with no incoming connection is a no-op.
+    """
+    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    peer = TestingAX25Peer(
+            station=station,
+            address=AX25Address('VK4MSL'),
+            repeaters=AX25Path('VK4RZB'),
+            locked_path=True
+    )
+
+    # Set the state to known value
+    peer._state = peer.AX25PeerState.INCOMING_CONNECTION
+
+    # Stub functions that should be called
+    actions = []
+    def _stop_incoming_connect_timer():
+        actions.append('stop-connect-timer')
+    peer._stop_incoming_connect_timer = _stop_incoming_connect_timer
+
+    def _send_dm():
+        actions.append('sent-dm')
+    peer._send_dm = _send_dm
+
+    # Try rejecting a ficticious connection
+    peer.reject()
+
+    assert peer._state == peer.AX25PeerState.DISCONNECTED
+    assert actions == [
+            'stop-connect-timer',
+            'sent-dm'
+    ]
