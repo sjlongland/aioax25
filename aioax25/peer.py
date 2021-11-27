@@ -181,7 +181,7 @@ class AX25Peer(object):
         self._SREJFrameClass = None
 
         # Timeouts
-        self._incoming_connect_timeout_handle = None
+        self._ack_timeout_handle = None
         self._idle_timeout_handle = None
         self._rr_notification_timeout_handle = None
 
@@ -298,7 +298,7 @@ class AX25Peer(object):
         if self._state is self.AX25PeerState.INCOMING_CONNECTION:
             self._log.info("Accepting incoming connection")
             # Send a UA and set ourselves as connected
-            self._stop_incoming_connect_timer()
+            self._stop_ack_timer()
             self._set_conn_state(self.AX25PeerState.CONNECTED)
             self._send_ua()
 
@@ -309,7 +309,7 @@ class AX25Peer(object):
         if self._state is self.AX25PeerState.INCOMING_CONNECTION:
             self._log.info("Rejecting incoming connection")
             # Send a DM and set ourselves as disconnected
-            self._stop_incoming_connect_timer()
+            self._stop_ack_timer()
             self._set_conn_state(self.AX25PeerState.DISCONNECTED)
             self._send_dm()
 
@@ -649,23 +649,26 @@ class AX25Peer(object):
             # Set the incoming connection state, and emit a signal via the
             # station's 'connection_request' signal.
             self._set_conn_state(self.AX25PeerState.INCOMING_CONNECTION)
-            self._start_incoming_connect_timer()
+            self._start_connect_ack_timer()
             self._station().connection_request.emit(peer=self)
 
-    def _start_incoming_connect_timer(self):
-        self._incoming_connect_timeout_handle = self._loop.call_later(
-            self._ack_timeout, self._on_incoming_connect_timeout
+    def _start_connect_ack_timer(self):
+        self._start_ack_timer(self._on_incoming_connect_timeout)
+
+    def _start_ack_timer(self, handler):
+        self._ack_timeout_handle = self._loop.call_later(
+            self._ack_timeout, handler
         )
 
-    def _stop_incoming_connect_timer(self):
-        if self._incoming_connect_timeout_handle is not None:
-            self._incoming_connect_timeout_handle.cancel()
+    def _stop_ack_timer(self):
+        if self._ack_timeout_handle is not None:
+            self._ack_timeout_handle.cancel()
 
-        self._incoming_connect_timeout_handle = None
+        self._ack_timeout_handle = None
 
     def _on_incoming_connect_timeout(self):
         if self._state is self.AX25PeerState.INCOMING_CONNECTION:
-            self._incoming_connect_timeout_handle = None
+            self._ack_timeout_handle = None
             self.reject()
 
     def _on_connect_response(self, response, **kwargs):

@@ -482,11 +482,11 @@ def test_on_receive_sabm_while_connecting():
 
     peer._sabmframe_handler = _sabmframe_handler
 
-    # Stub _start_incoming_connect_timer
-    def _start_incoming_connect_timer():
+    # Stub _start_connect_ack_timer
+    def _start_connect_ack_timer():
         assert False, "Should not be starting connect timer"
 
-    peer._start_incoming_connect_timer = _start_incoming_connect_timer
+    peer._start_connect_ack_timer = _start_connect_ack_timer
 
     # Hook connection request event
     def _on_conn_rq(**kwargs):
@@ -535,11 +535,11 @@ def test_on_receive_sabme_init():
 
     peer._sabmframe_handler = _sabmframe_handler
 
-    # Stub _start_incoming_connect_timer
-    def _start_incoming_connect_timer():
+    # Stub _start_connect_ack_timer
+    def _start_connect_ack_timer():
         count["start_timer"] += 1
 
-    peer._start_incoming_connect_timer = _start_incoming_connect_timer
+    peer._start_connect_ack_timer = _start_connect_ack_timer
 
     # Hook connection request event
     def _on_conn_rq(**kwargs):
@@ -583,11 +583,11 @@ def test_on_receive_sabme_init_unknown_peer_ver():
 
     peer._init_connection = _init_connection
 
-    # Stub _start_incoming_connect_timer
-    def _start_incoming_connect_timer():
+    # Stub _start_connect_ack_timer
+    def _start_connect_ack_timer():
         count["start_timer"] += 1
 
-    peer._start_incoming_connect_timer = _start_incoming_connect_timer
+    peer._start_connect_ack_timer = _start_connect_ack_timer
 
     # Hook connection request event
     def _on_conn_rq(**kwargs):
@@ -636,11 +636,11 @@ def test_on_receive_sabme_ax25_20_station():
 
     peer._init_connection = _init_connection
 
-    # Stub _start_incoming_connect_timer
-    def _start_incoming_connect_timer():
+    # Stub _start_connect_ack_timer
+    def _start_connect_ack_timer():
         assert False, "Should not have been called"
 
-    peer._start_incoming_connect_timer = _start_incoming_connect_timer
+    peer._start_connect_ack_timer = _start_connect_ack_timer
 
     # Hook connection request event
     def _on_conn_rq(**kwargs):
@@ -687,11 +687,11 @@ def test_on_receive_sabme_ax25_20_peer():
 
     peer._init_connection = _init_connection
 
-    # Stub _start_incoming_connect_timer
-    def _start_incoming_connect_timer():
+    # Stub _start_connect_ack_timer
+    def _start_connect_ack_timer():
         assert False, "Should not have been called"
 
-    peer._start_incoming_connect_timer = _start_incoming_connect_timer
+    peer._start_connect_ack_timer = _start_connect_ack_timer
 
     # Hook connection request event
     def _on_conn_rq(**kwargs):
@@ -717,24 +717,26 @@ def test_accept_connected_noop():
     """
     Test calling .accept() while not receiving a connection is a no-op.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=AX25Path('VK4RZB'),
-            locked_path=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
     )
 
     # Set the state to known value
     peer._state = peer.AX25PeerState.CONNECTED
 
     # Stub functions that should not be called
-    def _stop_incoming_connect_timer():
-        assert False, 'Should not have stopped connect timer'
-    peer._stop_incoming_connect_timer = _stop_incoming_connect_timer
+    def _stop_ack_timer():
+        assert False, "Should not have stopped connect timer"
+
+    peer._stop_ack_timer = _stop_ack_timer
 
     def _send_ua():
-        assert False, 'Should not have sent UA'
+        assert False, "Should not have sent UA"
+
     peer._send_ua = _send_ua
 
     # Try accepting a ficticious connection
@@ -747,12 +749,12 @@ def test_accept_incoming_ua():
     """
     Test calling .accept() with incoming connection sends UA.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=AX25Path('VK4RZB'),
-            locked_path=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
     )
 
     # Set the state to known value
@@ -760,46 +762,48 @@ def test_accept_incoming_ua():
 
     # Stub functions that should be called
     actions = []
-    def _stop_incoming_connect_timer():
-        actions.append('stop-connect-timer')
-    peer._stop_incoming_connect_timer = _stop_incoming_connect_timer
+
+    def _stop_ack_timer():
+        actions.append("stop-connect-timer")
+
+    peer._stop_ack_timer = _stop_ack_timer
 
     def _send_ua():
-        actions.append('sent-ua')
+        actions.append("sent-ua")
+
     peer._send_ua = _send_ua
 
     # Try accepting a ficticious connection
     peer.accept()
 
     assert peer._state == peer.AX25PeerState.CONNECTED
-    assert actions == [
-            'stop-connect-timer',
-            'sent-ua'
-    ]
+    assert actions == ["stop-connect-timer", "sent-ua"]
 
 
 def test_reject_connected_noop():
     """
     Test calling .reject() while not receiving a connection is a no-op.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=AX25Path('VK4RZB'),
-            locked_path=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
     )
 
     # Set the state to known value
     peer._state = peer.AX25PeerState.CONNECTED
 
     # Stub functions that should not be called
-    def _stop_incoming_connect_timer():
-        assert False, 'Should not have stopped connect timer'
-    peer._stop_incoming_connect_timer = _stop_incoming_connect_timer
+    def _stop_ack_timer():
+        assert False, "Should not have stopped connect timer"
+
+    peer._stop_ack_timer = _stop_ack_timer
 
     def _send_dm():
-        assert False, 'Should not have sent DM'
+        assert False, "Should not have sent DM"
+
     peer._send_dm = _send_dm
 
     # Try rejecting a ficticious connection
@@ -812,12 +816,12 @@ def test_reject_incoming_dm():
     """
     Test calling .reject() with no incoming connection is a no-op.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=AX25Path('VK4RZB'),
-            locked_path=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
     )
 
     # Set the state to known value
@@ -825,22 +829,22 @@ def test_reject_incoming_dm():
 
     # Stub functions that should be called
     actions = []
-    def _stop_incoming_connect_timer():
-        actions.append('stop-connect-timer')
-    peer._stop_incoming_connect_timer = _stop_incoming_connect_timer
+
+    def _stop_ack_timer():
+        actions.append("stop-connect-timer")
+
+    peer._stop_ack_timer = _stop_ack_timer
 
     def _send_dm():
-        actions.append('sent-dm')
+        actions.append("sent-dm")
+
     peer._send_dm = _send_dm
 
     # Try rejecting a ficticious connection
     peer.reject()
 
     assert peer._state == peer.AX25PeerState.DISCONNECTED
-    assert actions == [
-            'stop-connect-timer',
-            'sent-dm'
-    ]
+    assert actions == ["stop-connect-timer", "sent-dm"]
 
 
 # Connection closure
@@ -850,12 +854,12 @@ def test_disconnect_disconnected_noop():
     """
     Test calling .disconnect() while not connected is a no-op.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=AX25Path('VK4RZB'),
-            locked_path=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
     )
 
     # Set the state to known value
@@ -863,12 +867,14 @@ def test_disconnect_disconnected_noop():
 
     # A dummy UA handler
     def _dummy_ua_handler():
-        assert False, 'Should not get called'
+        assert False, "Should not get called"
+
     peer._uaframe_handler = _dummy_ua_handler
 
     # Stub functions that should not be called
     def _send_disc():
-        assert False, 'Should not have sent DISC frame'
+        assert False, "Should not have sent DISC frame"
+
     peer._send_disc = _send_disc
 
     # Try disconnecting a ficticious connection
@@ -882,12 +888,12 @@ def test_disconnect_connected_disc():
     """
     Test calling .disconnect() while connected sends a DISC.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=AX25Path('VK4RZB'),
-            locked_path=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
     )
 
     # Set the state to known value
@@ -895,18 +901,21 @@ def test_disconnect_connected_disc():
 
     # A dummy UA handler
     def _dummy_ua_handler():
-        assert False, 'Should not get called'
+        assert False, "Should not get called"
+
     peer._uaframe_handler = _dummy_ua_handler
 
     # Stub functions that should be called
     actions = []
+
     def _send_disc():
-        actions.append('sent-disc')
+        actions.append("sent-disc")
+
     peer._send_disc = _send_disc
 
     # Try disconnecting a ficticious connection
     peer.disconnect()
 
     assert peer._state == peer.AX25PeerState.DISCONNECTING
-    assert actions == ['sent-disc']
+    assert actions == ["sent-disc"]
     assert peer._uaframe_handler == peer._on_disconnect
