@@ -8,11 +8,8 @@ import logging
 import asyncio
 import random
 from functools import partial
-from .signal import Signal
 import time
-import re
 
-from .frame import AX25Frame
 from .router import Router
 
 

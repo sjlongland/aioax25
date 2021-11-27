@@ -1,7 +1,7 @@
 # This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: Test on Python 3.4
+name: Test on Python 3.5
 
 on: ["push", "pull_request"]
 
@@ -11,13 +11,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python 3.4
+    - name: Set up Python 3.5
       uses: actions/setup-python@v2
       with:
-        python-version: 3.4.10
+        python-version: 3.5.10
     - name: Install dependencies
       run: |
-        pip install flake8 pytest
+        pip install flake8 pytest pytest-cov
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Lint with flake8
       run: |
@@ -25,6 +25,6 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings.
         flake8 . --count --exit-zero --max-complexity=10 --statistics
-    - name: Test with py.test (no coverage)
+    - name: Test with py.test (no coveralls)
       run: |
-        python -m pytest
+        python -m pytest --cov=aioax25 --cov-report=term-missing

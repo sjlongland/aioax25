@@ -5,7 +5,7 @@ from aioax25.interface import AX25Interface
 from aioax25.frame import AX25UnnumberedInformationFrame
 
 from ..asynctest import asynctest
-from asyncio import Future, get_event_loop, sleep, coroutine
+from asyncio import Future, get_event_loop, sleep
 
 from ..nosecompat import assert_greater, assert_less, assert_is, \
         assert_greater_equal, eq_
@@ -40,7 +40,7 @@ class UnreliableDummyKISS(DummyKISS):
 
 
 @asynctest
-def test_received_msg_signal():
+async def test_received_msg_signal():
     """
     Test received messages trigger the received_msg signal.
     """
@@ -67,7 +67,7 @@ def test_received_msg_signal():
     # Pass in a message
     my_port.received.emit(frame=bytes(my_frame))
 
-    yield from receive_future
+    await receive_future
 
 
 def test_receive_bind():
@@ -88,7 +88,7 @@ def test_receive_bind():
                     'regex=True for regex)')
 
 @asynctest
-def test_receive_str_filter():
+async def test_receive_str_filter():
     """
     Test matching messages can trigger string filters (without SSID).
     """
@@ -130,12 +130,12 @@ def test_receive_str_filter():
     # Pass in a message
     my_port.received.emit(frame=bytes(my_frame))
 
-    yield from receive_future
+    await receive_future
     eq_(len(unmatched_filter_received), 0)
 
 
 @asynctest
-def test_receive_str_filter_ssid():
+async def test_receive_str_filter_ssid():
     """
     Test matching messages can trigger string filters (with SSID).
     """
@@ -177,12 +177,12 @@ def test_receive_str_filter_ssid():
     # Pass in a message
     my_port.received.emit(frame=bytes(my_frame))
 
-    yield from receive_future
+    await receive_future
     eq_(len(unmatched_filter_received), 0)
 
 
 @asynctest
-def test_receive_re_filter():
+async def test_receive_re_filter():
     """
     Test matching messages can trigger regex filters (without SSID).
     """
@@ -226,12 +226,12 @@ def test_receive_re_filter():
     # Pass in a message
     my_port.received.emit(frame=bytes(my_frame))
 
-    yield from receive_future
+    await receive_future
     eq_(len(unmatched_filter_received), 0)
 
 
 @asynctest
-def test_receive_re_filter_ssid():
+async def test_receive_re_filter_ssid():
     """
     Test matching messages can trigger regex filters (with SSID).
     """
@@ -273,7 +273,7 @@ def test_receive_re_filter_ssid():
     # Pass in a message
     my_port.received.emit(frame=bytes(my_frame))
 
-    yield from receive_future
+    await receive_future
     eq_(len(unmatched_filter_received), 0)
 
 
@@ -397,7 +397,7 @@ def test_reception_resets_cts():
     assert_greater(cts_after, time.monotonic())
 
 @asynctest
-def test_transmit_waits_cts():
+async def test_transmit_waits_cts():
     """
     Test sending a message waits for the channel to be clear.
     """
@@ -432,7 +432,7 @@ def test_transmit_waits_cts():
     # Send the message
     my_interface.transmit(my_frame, _on_transmit)
 
-    yield from transmit_future
+    await transmit_future
 
     eq_(len(my_port.sent), 1)
     (send_time, sent_frame) = my_port.sent.pop(0)
@@ -443,8 +443,7 @@ def test_transmit_waits_cts():
 
 
 @asynctest
-@coroutine
-def test_transmit_cancel():
+async def test_transmit_cancel():
     """
     Test that pending messages can be cancelled.
     """
@@ -464,14 +463,14 @@ def test_transmit_cancel():
     my_interface.cancel_transmit(my_frame)
 
     # Wait a second
-    yield from sleep(1)
+    await sleep(1)
 
     # Nothing should have been sent.
     eq_(len(my_port.sent), 0)
 
 
 @asynctest
-def test_transmit_sends_immediate_if_cts():
+async def test_transmit_sends_immediate_if_cts():
     """
     Test the interface sends immediately if last activity a long time ago.
     """
@@ -509,7 +508,7 @@ def test_transmit_sends_immediate_if_cts():
     # Send the message
     my_interface.transmit(my_frame, _on_transmit)
 
-    yield from transmit_future
+    await transmit_future
 
     eq_(len(my_port.sent), 1)
     (send_time, sent_frame) = my_port.sent.pop(0)
@@ -520,7 +519,7 @@ def test_transmit_sends_immediate_if_cts():
 
 
 @asynctest
-def test_transmit_sends_if_not_expired():
+async def test_transmit_sends_if_not_expired():
     """
     Test the interface sends frame if not expired.
     """
@@ -559,7 +558,7 @@ def test_transmit_sends_if_not_expired():
     # Send the message
     my_interface.transmit(my_frame, _on_transmit)
 
-    yield from transmit_future
+    await transmit_future
 
     eq_(len(my_port.sent), 1)
     (send_time, sent_frame) = my_port.sent.pop(0)
@@ -570,7 +569,7 @@ def test_transmit_sends_if_not_expired():
 
 
 @asynctest
-def test_transmit_drops_expired():
+async def test_transmit_drops_expired():
     """
     Test the interface drops expired messages.
     """
@@ -601,14 +600,14 @@ def test_transmit_drops_expired():
     # Send the message
     my_interface.transmit(my_frame)
 
-    yield from transmit_future
+    await transmit_future
 
     # Nothing should be sent!
     eq_(len(my_port.sent), 0)
 
 
 @asynctest
-def test_transmit_waits_if_cts_reset():
+async def test_transmit_waits_if_cts_reset():
     """
     Test the interface waits if CTS timer is reset.
     """
@@ -646,7 +645,7 @@ def test_transmit_waits_if_cts_reset():
     # Whilst that is pending, call reset_cts, this should delay transmission
     my_interface._reset_cts()
 
-    yield from transmit_future
+    await transmit_future
 
     eq_(len(my_port.sent), 1)
     (send_time, sent_frame) = my_port.sent.pop(0)
@@ -658,7 +657,7 @@ def test_transmit_waits_if_cts_reset():
 
 
 @asynctest
-def test_transmit_handles_failure():
+async def test_transmit_handles_failure():
     """
     Test transmit failures don't kill the interface handling.
     """
@@ -702,7 +701,7 @@ def test_transmit_handles_failure():
     my_interface.transmit(my_frame_1, _on_transmit) # This will fail
     my_interface.transmit(my_frame_2, _on_transmit) # This will work
 
-    yield from transmit_future
+    await transmit_future
 
     eq_(len(my_port.sent), 1)
     (send_time, sent_frame) = my_port.sent.pop(0)

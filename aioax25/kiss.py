@@ -6,13 +6,13 @@ KISS-based TNCs, managing the byte stuffing/unstuffing.
 """
 
 from enum import Enum
-from asyncio import get_event_loop
-from serial import Serial, EIGHTBITS, PARITY_NONE, STOPBITS_ONE
+from asyncio import Protocol, ensure_future, get_event_loop
+from serial_asyncio import create_serial_connection
+from serial import EIGHTBITS, PARITY_NONE, STOPBITS_ONE
 from .signal import Signal
 from binascii import b2a_hex
 import time
 import logging
-import socket
 
 
 # Constants
@@ -182,7 +182,7 @@ class BaseKISSDevice(object):
     def __init__(self, reset_on_close=True,
             send_block_size=128, send_block_delay=0.1,
             kiss_commands=['INT KISS', 'RESET'],
-            prompt='cmd:', log=None, loop=None):
+            log=None, loop=None, **kwargs):
         if log is None:
             log = logging.getLogger(self.__class__.__module__)
         if loop is None:
@@ -397,73 +397,196 @@ class BaseKISSDevice(object):
             self._close()
 
 
-class SerialKISSDevice(BaseKISSDevice):
+class BaseTransportDevice(BaseKISSDevice):
+    def __init__(self, *args, **kwargs):
+        super(BaseTransportDevice, self).__init__(*args, **kwargs)
+        self._transport = None
+
+    def _make_protocol(self):
+        """
+        Return a Protocol instance that will handle the KISS traffic for the
+        asyncio transport.
+        """
+        return KISSProtocol(
+            self._on_connect,
+            self._receive,
+            self._on_close,
+            self._log.getChild('protocol')
+        )
+
+    async def _open_connection(self): # pragma: no cover
+        """
+        Open a connection to the underlying transport.
+        """
+        raise NotImplementedError('Abstract function')
+
+    def _open(self):
+        self._loop.call_soon(ensure_future(self._open_connection()))
+
+    def _on_connect(self, transport):
+        self._transport = transport
+        self._init_kiss()
+
+    def _close(self):
+        # Wait for all data to be sent.
+        self._transport.flush()
+
+        # Close the port
+        self._transport.close()
+
+        # Clean up
+        self._on_close()
+
+    def _on_close(self, exc=None):
+        if exc is not None:
+            self._log.error('Closing port due to error %r', exc)
+
+        self._transport = None
+        self._state = KISSDeviceState.CLOSED
+
+    def _send_raw_data(self, data):
+        self._transport.write(data)
+
+
+class SerialKISSDevice(BaseTransportDevice):
+    """
+    A KISS device attached to a serial port.  The serial port may be a
+    pseudo-TTY, USB-connected serial port or platform-attached serial port.
+    The ``baudrate`` parameter specifies the baud rate used to communicate
+    with the TNC, not the speed of the AX.25 network which may be a different
+    speed.
+
+    The serial port link is assumed to use 8-bit wide frames, no parity bits
+    and one stop bit with no flow control.
+
+    :param device: Device node name to connect to (e.g. `/dev/ttyS0`, `COM3:`)
+    :type device: ``str``
+    :param baudrate: Baud rate to connect to the serial port at.
+    :type baudrate: ``int``
+    :Keyword Arguments: These are passed (via ``BaseTransportDevice``) through
+                        to ``BaseKISSDevice`` unchanged.
+    """
     def __init__(self, device, baudrate, *args, **kwargs):
         super(SerialKISSDevice, self).__init__(*args, **kwargs)
-        self._serial = None
         self._device = device
         self._baudrate = baudrate
 
-    def _open(self):
-        self._serial = Serial(port=self._device, baudrate=self._baudrate,
-                bytesize=EIGHTBITS, parity=PARITY_NONE, stopbits=STOPBITS_ONE,
-                timeout=None, xonxoff=False, rtscts=False, write_timeout=None,
-                dsrdtr=False, inter_byte_timeout=None)
-        self._loop.add_reader(self._serial.fileno(), self._on_recv_ready)
-        self._loop.call_soon(self._init_kiss)
-
-    def _close(self):
-        # Remove handlers
-        self._loop.remove_reader(self._serial.fileno())
-
-        # Wait for all data to be sent.
-        self._serial.flush()
-
-        # Close the port
-        self._serial.close()
-        self._serial = None
-        self._state = KISSDeviceState.CLOSED
-
-    def _on_recv_ready(self):
-        try:
-            self._receive(self._serial.read(self._serial.in_waiting))
-        except:
-            self._log.exception('Failed to read from serial device')
-
-    def _send_raw_data(self, data):
-        self._serial.write(data)
+    async def _open_connection(self):
+        await create_serial_connection(
+                self._loop,
+                self._make_protocol,
+                self._device,
+                baudrate=self._baudrate,
+                bytesize=EIGHTBITS,
+                parity=PARITY_NONE,
+                stopbits=STOPBITS_ONE,
+                timeout=None, xonxoff=False,
+                rtscts=False, write_timeout=None,
+                dsrdtr=False, inter_byte_timeout=None
+        )
 
 
-class TCPKISSDevice(BaseKISSDevice):
+class TCPKISSDevice(BaseTransportDevice):
+    """
+    A KISS device exposed via a TCP serial server.  This may be a real TNC
+    attached to a serial-to-Ethernet gateway, or a soft-TNC.
 
-    _interface = None
-    READ_BYTES = 1000
-
-    def __init__(self, host: str, port: int, *args, **kwargs):
+    :param host: Host name or IP address of the remote TCP server.
+    :type device: ``str``
+    :param port: Port number on the remote TCP server where the KISS TNC is
+                 listening.
+    :type port: ``int``
+    :param ssl: Whether or not to use Transport Layer Security to connect to
+                the remote TCP server.
+    :type ssl: ``None``, ``ssl.SSLContext`` or ``True``
+    :param family: Socket address family to use when connecting, e.g.
+                   ``socket.AF_INET`` for IPv4, ``socket.AF_INET6`` for IPv6,
+                   or ``0`` for any.
+    :type family: ``int``
+    :param proto: Specifies the address protocol.  Exposed for completeness.
+                  See the ``socket`` module for further details.
+    :type proto: ``int``
+    :param flags: Specifies special socket flags used for the connection.  See
+                  the ``socket`` module for possible flags.
+    :type flags: ``int``
+    :param sock: Specifies an optional existing socket object to use for the
+                 connection.
+    :type sock: ``None`` or ``socket.socket``
+    :param local_addr: Local interface address to bind to when connecting.
+    :type local_addr: ``None`` or ``str``
+    :param server_hostname: Remote server name if needed for Server Name
+                            Identification.  In most cases, ``host`` should
+                            be a host name and this argument will not be
+                            required.  Not used if TLS is disabled.
+    :type server_hostname: ``None`` or ``str``
+    :Keyword Arguments: These are passed (via ``BaseTransportDevice``) through
+                        to ``BaseKISSDevice`` unchanged.
+    """
+    def __init__(self, host, port, *args, ssl=None, family=0, proto=0, flags=0,
+            sock=None, local_addr=None, server_hostname=None, **kwargs):
         super(TCPKISSDevice, self).__init__(*args, **kwargs)
-        self.address = (host, port)
 
-    def _open(self):
-        self._interface = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._interface.connect(self.address)
-        self._loop.add_reader(self._interface, self._on_recv_ready)
-        self._loop.call_soon(self._init_kiss)
+        # Bundle up all the connection arguments together.
+        self._conn_args = dict(
+                host=host, port=port, ssl=ssl, family=family,
+                proto=proto, flags=flags, sock=sock, local_addr=local_addr,
+                server_hostname=server_hostname
+        )
 
-    def _on_recv_ready(self):
-        try:
-            read_data = self._interface.recv(self.READ_BYTES)
-            self._receive(read_data)
-        except:
-            self._log.exception('Failed to read from socket device')
+    async def _open_connection(self):
+        await self._loop.create_connection(
+                self._make_protocol,
+                **self._conn_args
+        )
+
+
+class SubprocKISSDevice(BaseTransportDevice):
+    """
+    A KISS device that calls a subprocess to communicate with the KISS TNC.
+    The subprocess is assumed to accept KISS data on ``stdin`` and emit KISS
+    data on ``stdout``.  ``stderr`` traffic is logged but otherwise ignored.
+
+    :param command: Specifies the subprocess command to execute along with any
+                    arguments.
+    :type command: ``list[str]``
+    :param shell: Use a shell to execute the command given.  The command will
+                  be concatenated together with spaces to form a single
+                  string.  By default, this is ``False``.
+    :type shell: ``bool``
+    :Keyword Arguments: These are passed (via ``BaseTransportDevice``) through
+                        to ``BaseKISSDevice`` unchanged.
+    """
+    def __init__(self, command, *args, shell=False, **kwargs):
+        super(SubprocKISSDevice, self).__init__(*args, **kwargs)
+        self._command = command
+        self._shell = shell
+
+    def _make_protocol(self):
+        """
+        Return a SubprocessProtocol instance that will handle the KISS traffic for the
+        asyncio transport.
+        """
+        return KISSSubprocessProtocol(
+            self._on_connect,
+            self._receive,
+            self._on_close,
+            self._log.getChild('protocol')
+        )
+
+    async def _open_connection(self):
+        if self._shell:
+            await self._loop.subprocess_shell(
+                    self._make_protocol,
+                    ' '.join(self._command)
+            )
+        else:
+            await self._loop.subprocess_exec(
+                    self._make_protocol,
+                    *self._command
+            )
 
     def _send_raw_data(self, data):
-        self._interface.send(data)
-
-    def _close(self):
-        self._loop.remove_reader(self._interface)
-        self._interface.close()
-        self._interface = None
-        self._state = KISSDeviceState.CLOSED
+        transport = self._transport.get_pipe_transport(0).write(data)
 
 
 # Port interface
@@ -507,3 +630,141 @@ class KISSPort(object):
             return
 
         self.received.emit(frame=frame.payload)
+
+
+# Protocol interface adaptors for asyncio
+
+
+class KISSProtocol(Protocol):
+    """
+    KISSProtocol basically is a wrapper around asyncio's "Protocol"
+    structure.
+    """
+    def __init__(self, on_connect, on_receive, on_close, log):
+        super(KISSProtocol, self).__init__()
+
+        self._on_connect = on_connect
+        self._on_receive = on_receive
+        self._on_close = on_close
+        self._log = log
+
+    def connection_made(self, transport):
+        try:
+            self._on_connect(transport)
+        except:
+            self._log.exception('Failed to handle connection establishment')
+            transport.close()
+
+    def data_received(self, data):
+        try:
+            self._on_receive(data)
+        except:
+            self._log.exception('Failed to handle incoming data')
+
+    def connection_lost(self, exc):
+        try:
+            self._on_close(exc)
+        except:
+            self._log.exception('Failed to handle connection loss')
+
+
+class KISSSubprocessProtocol(Protocol):
+    """
+    KISSSubprocessProtocol is nearly identical to KISSProtocol but wraps
+    SubprocessProtocol instead.
+    """
+    def __init__(self, on_connect, on_receive, on_close, log):
+        super(KISSSubprocessProtocol, self).__init__()
+
+        self._on_connect = on_connect
+        self._on_receive = on_receive
+        self._on_close = on_close
+        self._log = log
+
+    def connection_made(self, transport):
+        try:
+            self._on_connect(transport)
+        except:
+            self._log.exception('Failed to handle connection establishment')
+            transport.close()
+
+    def pipe_data_received(self, fd, data):
+        try:
+            if fd == 1: # stdout
+                self._on_receive(data)
+            else:
+                self._log.debug('Data received on fd=%d: %r', fd, data)
+        except:
+            self._log.exception(
+                    'Failed to handle incoming data %r on fd=%d', data, fd
+            )
+
+    def process_exited(self):
+        try:
+            self._on_close(None)
+        except:
+            self._log.exception('Failed to handle process exit')
+
+
+# KISS device factory
+
+def make_device(type, **kwargs):
+    """
+    Create a KISS device of the specified type.  This is a convenience for
+    applications that load their configuration via a `dict`-like configuration
+    file format such as JSON, YAML or TOML.
+
+    :param type: Type of KISS device to make (see below)
+    :type type: ``str``
+    :Keyword Arguments: These will be passed to the relevant device class
+                        as-is.  Some common arguments for all class types:
+      * ``reset_on_close`` (``bool`` = ``True``): Whether or not a "return
+        from KISS" command (``C0 FF C0``) should be sent to the TNC on
+        closing.
+      * ``send_block_size`` (``int`` = ``128``): The number of bytes to send
+        in a single write request at a time.  Some KISS TNCs have very small
+        serial buffers, and so this, along with ``send_block_delay``, allow
+        the outgoing traffic to be "dribbled out" at a rate that avoids
+        overflow issues.
+      * ``send_block_delay`` (``float`` = ``0.1``): The time to wait between
+        consecutive blocks so that the TNC can "catch up".
+      * ``kiss_commands`` (``list[str]`` = ``["INT KISS", "RESET"]``):
+        The TNC-2 commands to transmit to the TNC after opening to put the
+        TNC into KISS mode.  The default value suits Kantronics KPC3 TNCs.
+      * ``log`` (``logging.Logger``): A logger interface to log debugging
+        traffic.  If not supplied, a default one is created.
+      * ``loop`` (``asyncio.AbstractEventLoop``): Asynchronous I/O event loop
+        that will schedule the operations for the KISS device.  By default,
+        the current event loop (``asyncio.get_event_loop()``) is used.
+
+    +----------------+-------------------------------------------------+
+    | ``type`` value | Device type and required arguments              |
+    +----------------+-------------------------------------------------+
+    | ``serial``     | Serial port KISS device (``SerialKISSDevice``). |
+    |                | * ``device`` (``str``):                         |
+    |                |   Device name, e.g. `/dev/ttyS0`, `COM3:`       |
+    |                | * ``baudrate`` (``int``):                       |
+    |                |   Serial port baud rate, e.g. 9600 baud         |
+    +----------------+-------------------------------------------------+
+    | ``subproc``    | Sub-process KISS device (``SubprocKISSDevice``).|
+    |                | * ``command`` (``list[str]``):                  |
+    |                |   Command and arguments to execute.             |
+    |                | * ``shell`` (``bool``):                         |
+    |                |   If set to ``True``, run in a sub-shell.       |
+    +----------------+-------------------------------------------------+
+    | ``tcp``        | TCP KISS device (``TCPKISSDevice``).            |
+    |                | * ``host`` (``str``):                           |
+    |                |   IP address or host name of the remote host.   |
+    |                | * ``port`` (``int``):                           |
+    |                |   TCP port number for the KISS interface.       |
+    +----------------+-------------------------------------------------+
+    """
+
+    if type == 'serial':
+        return SerialKISSDevice(**kwargs)
+    elif type == 'subproc':
+        return SubprocKISSDevice(**kwargs)
+    elif type == 'tcp':
+        return TCPKISSDevice(**kwargs)
+    else:
+        raise ValueError('Unrecognised type=%r' % (type,))

@@ -6,6 +6,17 @@ this time.  Notable changes will be mentioned here.
 
 ---
 
+## Unreleased
+
+- Use of `serial_asyncio` for asynchronous serial access.
+- Re-implemented `TCPKISSDevice` to use `asyncio` transports, TLS now possible.
+- Implemented `SubprocKISSDevice` using the same underlying infrastructure as
+  `SerialKISSDevice` and `TCPKISSDevice`.
+- Added `make_device` factory for implementation-agnostic creation of KISS
+  devices from a configuration file.  Supports `serial`, `tcp` and `subproc`.
+- Python 3.4 support has been dropped, the library now requires Python 3.5 or
+  later.
+
 ## Release 0.0.10 (2021-05-18)
 
 [Support for TCP-based KISS sockets](https://github.com/sjlongland/aioax25/pull/7).
