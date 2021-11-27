@@ -99,7 +99,7 @@ class AX25Station(object):
         self._loop = loop
 
         # Remote station handlers
-        self._peers = {}
+        self._peers = weakref.WeakValueDictionary()
 
         # Signal emitted when a SABM(E) is received
         self.connection_request = Signal()
@@ -185,12 +185,6 @@ class AX25Station(object):
         )
         self._peers[address] = peer
         return peer
-
-    def _drop_peer(self, peer):
-        """
-        Drop a peer.  This is called by the peer when its idle timeout expires.
-        """
-        self._peers.pop(peer.address, None)
 
     def _on_receive(self, frame, **kwargs):
         """

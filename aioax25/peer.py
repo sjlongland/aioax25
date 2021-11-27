@@ -348,8 +348,6 @@ class AX25Peer(object):
             self._log.warning("Disconnecting peer due to inactivity")
             self._send_dm()
 
-        self._station()._drop_peer(self)
-
         # Cancel other timers
         self._cancel_rr_notification()
 
