@@ -877,6 +877,11 @@ def test_disconnect_disconnected_noop():
 
     peer._send_disc = _send_disc
 
+    def _start_disconnect_ack_timer():
+        assert False, "Should not have started disconnect timer"
+
+    peer._start_disconnect_ack_timer = _start_disconnect_ack_timer
+
     # Try disconnecting a ficticious connection
     peer.disconnect()
 
@@ -913,9 +918,14 @@ def test_disconnect_connected_disc():
 
     peer._send_disc = _send_disc
 
+    def _start_disconnect_ack_timer():
+        actions.append("start-ack-timer")
+
+    peer._start_disconnect_ack_timer = _start_disconnect_ack_timer
+
     # Try disconnecting a ficticious connection
     peer.disconnect()
 
     assert peer._state == peer.AX25PeerState.DISCONNECTING
-    assert actions == ["sent-disc"]
+    assert actions == ["sent-disc", "start-ack-timer"]
     assert peer._uaframe_handler == peer._on_disconnect

@@ -321,6 +321,7 @@ class AX25Peer(object):
             self._uaframe_handler = self._on_disconnect
             self._set_conn_state(self.AX25PeerState.DISCONNECTING)
             self._send_disc()
+            self._start_disconnect_ack_timer()
 
     def _cancel_idle_timeout(self):
         """
@@ -655,6 +656,9 @@ class AX25Peer(object):
     def _start_connect_ack_timer(self):
         self._start_ack_timer(self._on_incoming_connect_timeout)
 
+    def _start_disconnect_ack_timer(self):
+        self._start_ack_timer(self._on_disc_ua_timeout)
+
     def _start_ack_timer(self, handler):
         self._ack_timeout_handle = self._loop.call_later(
             self._ack_timeout, handler
@@ -787,18 +791,28 @@ class AX25Peer(object):
             station=self._station(), peer=self, state=self._state
         )
 
+    def _on_disc_ua_timeout(self):
+        if self._state is self.AX25PeerState.DISCONNECTING:
+            # Assume we are disconnected.
+            self._ack_timeout_handle = None
+            self._on_disconnect()
+
     def _on_disconnect(self):
         """
         Clean up the connection.
         """
         self._log.info("Disconnected from peer")
-        # Send a UA and set ourselves as disconnected
+
+        # Cancel disconnect timers
+        self._stop_ack_timer()
+
+        # Set ourselves as disconnected
         self._set_conn_state(self.AX25PeerState.DISCONNECTED)
 
         # Reset our state
         self._reset_connection_state()
 
-        # Data pending to be sent.
+        # Clear data pending to be sent.
         self._pending_data = []
 
     def _on_receive_disc(self):
