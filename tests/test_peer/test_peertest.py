@@ -267,3 +267,202 @@ def test_peer_ping_cb():
 
     # Our callback should have been called on completion
     assert cb_args == [((), {"handler": handler})]
+
+
+# Handling of incoming TEST frame
+#
+# The AX25Station class itself will respond to TEST frames
+# where the CR bit is set to True.  AX25Peer only handles
+# the case where CR is set to False.
+
+def test_on_receive_test_no_handler():
+    """
+    Test that a TEST frame with no handler does nothing.
+    """
+    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    peer = TestingAX25Peer(
+            station=station,
+            address=AX25Address('VK4MSL'),
+            repeaters=AX25Path('VK4RZB'),
+            locked_path=True
+    )
+
+    peer._testframe_handler = None
+
+    peer._on_receive(AX25TestFrame(
+          destination=peer.address,
+          source=station.address,
+          repeaters=AX25Path('VK4RZB*'),
+          payload=b'test 1',
+          cr=False
+    ))
+
+
+def test_on_receive_test_stale_handler():
+    """
+    Test that a TEST frame with stale handler cleans up reference.
+    """
+    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    peer = TestingAX25Peer(
+            station=station,
+            address=AX25Address('VK4MSL'),
+            repeaters=AX25Path('VK4RZB'),
+            locked_path=True
+    )
+
+    class DummyHandler():
+        pass
+
+    handler = DummyHandler()
+    peer._testframe_handler = weakref.ref(handler)
+
+    # Now destroy the new handler
+    del handler
+    assert peer._testframe_handler is not None
+    assert peer._testframe_handler() is None
+
+    # See what it does
+    peer._on_receive(AX25TestFrame(
+          destination=peer.address,
+          source=station.address,
+          repeaters=AX25Path('VK4RZB*'),
+          payload=b'test 1',
+          cr=False
+    ))
+
+    assert peer._testframe_handler is None
+
+
+def test_on_receive_test_valid_handler():
+    """
+    Test that a TEST frame with valid handler pass on frame.
+    """
+    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    peer = TestingAX25Peer(
+            station=station,
+            address=AX25Address('VK4MSL'),
+            repeaters=AX25Path('VK4RZB'),
+            locked_path=True
+    )
+
+    class DummyHandler():
+        def __init__(self):
+            self.frames = []
+
+        def _on_receive(self, frame):
+            self.frames.append(frame)
+
+
+    handler = DummyHandler()
+    peer._testframe_handler = weakref.ref(handler)
+
+    # See what it does
+    frame = AX25TestFrame(
+          destination=peer.address,
+          source=station.address,
+          repeaters=AX25Path('VK4RZB*'),
+          payload=b'test 1',
+          cr=False
+    )
+    peer._on_receive(frame)
+
+    assert handler.frames == [frame]
+
+
+def test_on_test_done_no_handler():
+    """
+    Test that a TEST frame with no handler does nothing.
+    """
+    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    peer = TestingAX25Peer(
+            station=station,
+            address=AX25Address('VK4MSL'),
+            repeaters=AX25Path('VK4RZB'),
+            locked_path=True
+    )
+
+    peer._testframe_handler = None
+
+    class DummyHandler():
+        pass
+
+    peer._on_test_done(
+            handler=DummyHandler()
+    )
+
+
+def test_on_test_done_stale_handler():
+    """
+    Test that a TEST frame with stale handler cleans up reference.
+    """
+    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    peer = TestingAX25Peer(
+            station=station,
+            address=AX25Address('VK4MSL'),
+            repeaters=AX25Path('VK4RZB'),
+            locked_path=True
+    )
+
+    class DummyHandler():
+        pass
+
+    handler = DummyHandler()
+    peer._testframe_handler = weakref.ref(handler)
+
+    # Now destroy the new handler
+    del handler
+    assert peer._testframe_handler is not None
+    assert peer._testframe_handler() is None
+
+    # See what it does
+    peer._on_test_done(handler=DummyHandler())
+
+    assert peer._testframe_handler is None
+
+
+def test_on_test_done_wrong_handler():
+    """
+    Test that a TEST frame with wrong handler ignores signal.
+    """
+    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    peer = TestingAX25Peer(
+            station=station,
+            address=AX25Address('VK4MSL'),
+            repeaters=AX25Path('VK4RZB'),
+            locked_path=True
+    )
+
+    class DummyHandler():
+        pass
+
+    handler = DummyHandler()
+    peer._testframe_handler = weakref.ref(handler)
+
+    # See what it does with the wrong handler reference
+    peer._on_test_done(handler=DummyHandler())
+
+    assert peer._testframe_handler() is handler
+
+
+def test_on_test_done_valid_handler():
+    """
+    Test that a TEST frame with valid handler pass on frame.
+    """
+    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    peer = TestingAX25Peer(
+            station=station,
+            address=AX25Address('VK4MSL'),
+            repeaters=AX25Path('VK4RZB'),
+            locked_path=True
+    )
+
+    class DummyHandler():
+        pass
+
+    handler = DummyHandler()
+    peer._testframe_handler = weakref.ref(handler)
+
+    # See what it does
+    peer._on_test_done(handler=handler)
+
+    assert peer._testframe_handler is None

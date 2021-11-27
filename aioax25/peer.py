@@ -584,15 +584,18 @@ class AX25Peer(object):
 
         handler = self._testframe_handler()
         if not handler:
+            # It's dead now.
+            self._testframe_handler = None
             return
 
-        self.handler._on_receive(frame)
+        handler._on_receive(frame)
 
     def _on_test_done(self, handler, **kwargs):
         if not self._testframe_handler:
             return
 
-        if handler is not self._testframe_handler():
+        real_handler = self._testframe_handler()
+        if (real_handler is not None) and (handler is not real_handler):
             return
 
         self._testframe_handler = None
