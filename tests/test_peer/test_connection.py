@@ -445,10 +445,10 @@ def test_on_receive_sabm_while_connecting():
         count['sabmframe_handler'] += 1
     peer._sabmframe_handler = _sabmframe_handler
 
-    # Stub _start_incoming_connect_timer
-    def _start_incoming_connect_timer():
+    # Stub _start_connect_ack_timer
+    def _start_connect_ack_timer():
         assert False, 'Should not be starting connect timer'
-    peer._start_incoming_connect_timer = _start_incoming_connect_timer
+    peer._start_connect_ack_timer = _start_connect_ack_timer
 
     # Hook connection request event
     def _on_conn_rq(**kwargs):
@@ -493,10 +493,10 @@ def test_on_receive_sabme_init():
         assert False, 'We should be handling the SABM(E) ourselves'
     peer._sabmframe_handler = _sabmframe_handler
 
-    # Stub _start_incoming_connect_timer
-    def _start_incoming_connect_timer():
+    # Stub _start_connect_ack_timer
+    def _start_connect_ack_timer():
         count['start_timer'] += 1
-    peer._start_incoming_connect_timer = _start_incoming_connect_timer
+    peer._start_connect_ack_timer = _start_connect_ack_timer
 
     # Hook connection request event
     def _on_conn_rq(**kwargs):
@@ -537,10 +537,10 @@ def test_on_receive_sabme_init_unknown_peer_ver():
         count['init'] += 1
     peer._init_connection = _init_connection
 
-    # Stub _start_incoming_connect_timer
-    def _start_incoming_connect_timer():
+    # Stub _start_connect_ack_timer
+    def _start_connect_ack_timer():
         count['start_timer'] += 1
-    peer._start_incoming_connect_timer = _start_incoming_connect_timer
+    peer._start_connect_ack_timer = _start_connect_ack_timer
 
     # Hook connection request event
     def _on_conn_rq(**kwargs):
@@ -585,10 +585,10 @@ def test_on_receive_sabme_ax25_20_station():
         assert False, 'Should not have been called'
     peer._init_connection = _init_connection
 
-    # Stub _start_incoming_connect_timer
-    def _start_incoming_connect_timer():
+    # Stub _start_connect_ack_timer
+    def _start_connect_ack_timer():
         assert False, 'Should not have been called'
-    peer._start_incoming_connect_timer = _start_incoming_connect_timer
+    peer._start_connect_ack_timer = _start_connect_ack_timer
 
     # Hook connection request event
     def _on_conn_rq(**kwargs):
@@ -631,10 +631,10 @@ def test_on_receive_sabme_ax25_20_peer():
         assert False, 'Should not have been called'
     peer._init_connection = _init_connection
 
-    # Stub _start_incoming_connect_timer
-    def _start_incoming_connect_timer():
+    # Stub _start_connect_ack_timer
+    def _start_connect_ack_timer():
         assert False, 'Should not have been called'
-    peer._start_incoming_connect_timer = _start_incoming_connect_timer
+    peer._start_connect_ack_timer = _start_connect_ack_timer
 
     # Hook connection request event
     def _on_conn_rq(**kwargs):
@@ -671,9 +671,9 @@ def test_accept_connected_noop():
     peer._state = peer.AX25PeerState.CONNECTED
 
     # Stub functions that should not be called
-    def _stop_incoming_connect_timer():
+    def _stop_ack_timer():
         assert False, 'Should not have stopped connect timer'
-    peer._stop_incoming_connect_timer = _stop_incoming_connect_timer
+    peer._stop_ack_timer = _stop_ack_timer
 
     def _send_ua():
         assert False, 'Should not have sent UA'
@@ -702,9 +702,9 @@ def test_accept_incoming_ua():
 
     # Stub functions that should be called
     actions = []
-    def _stop_incoming_connect_timer():
+    def _stop_ack_timer():
         actions.append('stop-connect-timer')
-    peer._stop_incoming_connect_timer = _stop_incoming_connect_timer
+    peer._stop_ack_timer = _stop_ack_timer
 
     def _send_ua():
         actions.append('sent-ua')
@@ -736,9 +736,9 @@ def test_reject_connected_noop():
     peer._state = peer.AX25PeerState.CONNECTED
 
     # Stub functions that should not be called
-    def _stop_incoming_connect_timer():
+    def _stop_ack_timer():
         assert False, 'Should not have stopped connect timer'
-    peer._stop_incoming_connect_timer = _stop_incoming_connect_timer
+    peer._stop_ack_timer = _stop_ack_timer
 
     def _send_dm():
         assert False, 'Should not have sent DM'
@@ -767,9 +767,9 @@ def test_reject_incoming_dm():
 
     # Stub functions that should be called
     actions = []
-    def _stop_incoming_connect_timer():
+    def _stop_ack_timer():
         actions.append('stop-connect-timer')
-    peer._stop_incoming_connect_timer = _stop_incoming_connect_timer
+    peer._stop_ack_timer = _stop_ack_timer
 
     def _send_dm():
         actions.append('sent-dm')
