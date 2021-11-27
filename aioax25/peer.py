@@ -408,7 +408,7 @@ class AX25Peer(object):
             return self._on_receive_test(frame)
         elif isinstance(frame, AX25FrameRejectFrame):
             # FRMR frame
-            return self._on_receive_frmr()
+            return self._on_receive_frmr(frame)
         elif isinstance(frame, AX25UnnumberedAcknowledgeFrame):
             # UA frame
             return self._on_receive_ua()
@@ -607,8 +607,9 @@ class AX25Peer(object):
             # Pass to handler
             self._frmrframe_handler(frame)
         else:
-            # No handler, send DM to recover
-            self._send_dm()
+            # No handler, send SABM to recover (this is clearly an AX.25 2.0
+            # station)
+            self._send_sabm()
 
     def _on_receive_sabm(self, frame):
         extended = isinstance(frame, AX25SetAsyncBalancedModeExtendedFrame)
