@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Test handling of outgoing connection logic
+Test handling of incoming and outgoing connection logic
 """
 
 from aioax25.version import AX25Version
