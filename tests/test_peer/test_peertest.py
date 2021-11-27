@@ -5,6 +5,7 @@ Tests for AX25PeerTestHandler
 """
 
 from pytest import approx
+import weakref
 
 from aioax25.peer import AX25PeerTestHandler
 from aioax25.frame import AX25Address, AX25TestFrame, AX25Path
@@ -42,7 +43,9 @@ def test_peertest_go():
     assert callback == helper._transmit_done
 
     # We should be registered to receive the reply
-    assert peer._testframe_handler is helper
+    assert peer._testframe_handler is not None
+    assert isinstance(peer._testframe_handler, weakref.ref)
+    assert peer._testframe_handler() is helper
 
 
 def test_peertest_go_pending():
