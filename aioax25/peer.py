@@ -1581,7 +1581,7 @@ class AX25PeerTestHandler(AX25PeerHelper):
         """
         if self.peer._testframe_handler is not None:
             raise RuntimeError("Test frame already pending")
-        self.peer._testframe_handler = self
+        self.peer._testframe_handler = weakref.ref(self)
         self.peer._transmit_frame(self.tx_frame, callback=self._transmit_done)
         self._start_timer()
 
