@@ -14,25 +14,7 @@ requirements = [
 packages = [
         'aioax25',
         'aioax25.aprs',
-        'aioax25.aiosupport',
 ]
-
-if version_info.major < 3:
-    # Python 2 or earlier, not supported (how did they get here?)
-    raise NotImplementedError('Python 3.4 minimum is required')
-elif (version_info.major == 3) and (version_info.minor < 4):
-    # Python 3.0-3.3
-    raise NotImplementedError('Python 3.4 minimum is required')
-elif (version_info.major == 3) and (version_info.major == 4):
-    # Python 3.4
-    packages += [
-        'aioax25.aiosupport.py34'
-    ]
-else:
-    # Python 3.5+
-    packages += [
-        'aioax25.aiosupport.py35'
-    ]
 
 setup(
         name='aioax25',
