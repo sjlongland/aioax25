@@ -50,6 +50,20 @@ def test_decode_unknown_type():
     decoded = APRSFrame.decode(frame, logging.getLogger('decoder'))
     assert_is(decoded, frame)
 
+def test_decode_position():
+    """
+    Test the decode routine can recognise a position report.
+    """
+    frame = AX25UnnumberedInformationFrame(
+            destination='APZAIO',
+            source='VK4MSL-7',
+            pid=0xf0,
+            payload=b'!3722.20N/07900.66W&000/000/A=000685Mobile'
+    )
+    decoded = APRSFrame.decode(frame, logging.getLogger('decoder'))
+    assert_is_not(decoded, frame)
+    #assert isinstance(decoded, APRSPositionFrame) -- TODO
+
 def test_decode_message():
     """
     Test the decode routine can recognise a message frame.
