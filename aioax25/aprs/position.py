@@ -54,12 +54,11 @@ class APRSSexagesimal(object):
             raise ValueError("No decimal point found in required position")
 
         # Determine the ambiguity
-        ambiguity = 0
-        for pos, c in enumerate(posstr[-6:-4] + posstr[-3:-1], start=1):
-            if c == " ":
-                ambiguity = pos
-            elif ambiguity != 0:
-                raise ValueError("Spaces may only follow digits")
+        digits = ''.join(reversed(posstr[-6:-4] + posstr[-3:-1]))
+        try:
+            ambiguity = digits.rindex(" ") + 1
+        except ValueError:
+            ambiguity = 0
         ambiguity = APRSPositionAmbiguity(ambiguity)
 
         # Decode the minutes
@@ -68,9 +67,12 @@ class APRSSexagesimal(object):
         # The rest is the degrees
         degrees = int(posstr[0:-6])
 
-        return cls(sign * degrees, minutes)
+        return cls(sign * degrees, minutes, ambiguity=ambiguity)
 
-    def __init__(self, degrees, minutes=0, seconds=0, ambiguity=0):
+    def __init__(
+            self, degrees, minutes=0, seconds=0,
+            ambiguity=APRSPositionAmbiguity.NONE
+    ):
         if degrees != int(degrees):
             # Decimal degrees given
             if minutes or seconds:
@@ -101,20 +103,32 @@ class APRSSexagesimal(object):
         self.degrees = degrees
         self.minutes = minutes
         self.seconds = seconds
+        self.ambiguity = APRSPositionAmbiguity(ambiguity)
 
     def __str__(self):
         """
         Return the APRS-formatted position string.
         """
-        sign = self.NEG_SUFFIX if self.minutes < 0 else self.POS_SUFFIX
+        sign = self.NEG_SUFFIX if self.degrees < 0 else self.POS_SUFFIX
         degrees = abs(self.degrees)
 
-        return self.STR_FORMAT % (
+        pos = self.STR_FORMAT % (
                 degrees,
                 self.minutes,
-                self.seconds / 60.0,
+                self.seconds / 0.6,
                 sign
         )
+
+        if self.ambiguity.value > 0:
+            pos = pos[0:-2] + ' ' + pos[-1:]
+        if self.ambiguity.value > 1:
+            pos = pos[0:-3] + ' ' + pos[-2:]
+        if self.ambiguity.value > 2:
+            pos = pos[0:-5] + ' ' + pos[-4:]
+        if self.ambiguity.value > 3:
+            pos = pos[0:-6] + ' ' + pos[-5:]
+
+        return pos
 
     @property
     def decimalminutes(self):
@@ -192,9 +206,9 @@ class APRSCompressionTypeGPSFix(IntEnum):
 
 class APRSCompressionTypeNMEASrc(IntEnum):
     OTHER   = 0b00000000
-    GLL     = 0b00010000
-    GGA     = 0b00100000
-    RMC     = 0b00110000
+    GLL     = 0b00001000
+    GGA     = 0b00010000
+    RMC     = 0b00011000
 
 
 class APRSCompressionTypeOrigin(IntEnum):
@@ -245,8 +259,11 @@ class APRSCompressedCoordinate(APRSSexagesimal):
 
     @classmethod
     def decode(cls, coordinate):
-        if len(coordinate) != cls.LENGTH:
-            raise ValueError("Invalid length for compressed co-ordinate")
+        if len(coordinate) < cls.LENGTH:
+            raise ValueError("Compressed co-ordinate too short")
+
+        # Throw away extra data
+        coordinate = coordinate[0:cls.LENGTH]
 
         # Decompress the compressed value
         value = decompress(coordinate)
@@ -302,9 +319,13 @@ class APRSCompressedCourseSpeedRange(object):
         if len(csvalue) < cls.LENGTH:
             raise ValueError("Course/Speed value too short")
 
+        # Discard extra data
+        csvalue = csvalue[0:cls.LENGTH]
+
         if ctype.nmeasrc == APRSCompressionTypeNMEASrc.GGA:
             # This is an altitude value
-            altitude = cls.ALTITUDE_RADIX ** decompress(csvalue)
+            altitude_exp = decompress(csvalue)
+            altitude = cls.ALTITUDE_RADIX ** altitude_exp
             speed = None
             course = None
             rng = None
@@ -312,7 +333,7 @@ class APRSCompressedCourseSpeedRange(object):
             altitude = None
             csvalue = [
                     b - BYTE_VALUE_OFFSET
-                    for b in bytes(csvalue[0:cls.LENGTH], "us-ascii")
+                    for b in bytes(csvalue, "us-ascii")
             ]
 
             if csvalue[0] == cls.RANGE_HEADER:
@@ -322,9 +343,13 @@ class APRSCompressedCourseSpeedRange(object):
                 course = None
             elif csvalue[0] <= cls.COURSE_SPEED_MAX:
                 # This is a speed/course
+                print(csvalue)
                 rng = None
                 course = cls.COURSE_SCALE * csvalue[0]
                 speed = (cls.SPEED_RADIX ** csvalue[1]) + cls.SPEED_OFFSET
+            else:
+                raise ValueError("Unknown Course/Speed/Range field: %r" \
+                        % csvalue)
 
         return cls(course, speed, rng, altitude)
 
@@ -387,7 +412,7 @@ class APRSCompressedCoordinates(object):
             + APRSCompressedLongitude.LENGTH \
             + APRSCompressionType.LENGTH \
             + APRSCompressedCourseSpeedRange.LENGTH \
-            + 3 # type + symbol table ident + symbol code
+            + 2 # symbol table ident + symbol code
 
     CST_FILL = " sT"
 
@@ -408,14 +433,14 @@ class APRSCompressedCoordinates(object):
         lng = APRSCompressedLatitude.decode(coordinate[6:])
 
         # Do we have a Course/Speed/Range or Type field?
-        if coordinate[12] == cls.CST_FILL[0]:
+        if coordinate[10] == cls.CST_FILL[0]:
             # No compression type or course/speed/range
             ctype = None
             csr = None
         else:
             # Decode the compression type byte
             ctype = APRSCompressionType.decode(coordinate[-1])
-            csr = APRSCompressedCourseSpeedRange.decode(coordinate[-2:])
+            csr = APRSCompressedCourseSpeedRange.decode(coordinate[-3:], ctype)
 
         return cls(lat, lng, symbol, ctype, csr)
 
@@ -434,8 +459,8 @@ class APRSCompressedCoordinates(object):
             self.symbol.tableident,
             str(self.lat),
             str(self.lng),
-            self.symbol.code,
-            str(self.cst) if self.cst else self.CST_FILL,
+            self.symbol.symbol,
+            str(self.csr) if self.csr else self.CST_FILL,
             str(self.ctype) if self.ctype else ""
         ])
 
@@ -454,13 +479,13 @@ class APRSPositionFrame(APRSFrame):
                 APRSDataType.POSITION_TS,
                 APRSDataType.POSITION_TS_MSGCAP
         ):
-            timestamp = decode_datetime(payload[1:8])
+            position_ts = decode_datetime(payload[1:8])
             payload = payload[8:]
         elif msgtype in (
                 APRSDataType.POSITION,
                 APRSDataType.POSITION_MSGCAP
         ):
-            timestamp = None
+            position_ts = None
             payload = payload[1:]
         else:
             raise ValueError('Not a position frame: %r' % payload)
@@ -500,7 +525,7 @@ class APRSPositionFrame(APRSFrame):
                 destination=uiframe.header.destination,
                 source=uiframe.header.source,
                 position=position,
-                timestamp=timestamp,
+                position_ts=position_ts,
                 message=message or None,
                 messaging=(msgtype in (
                     APRSDataType.POSITION_MSGCAP,
@@ -514,7 +539,7 @@ class APRSPositionFrame(APRSFrame):
 
     @classmethod
     def _encodepayload(
-            cls, position, message=None, timestamp=None, messaging=True
+            cls, position, message=None, position_ts=None, messaging=True
         ):
         """
         Encode the message payload.
@@ -522,7 +547,7 @@ class APRSPositionFrame(APRSFrame):
         parts = []
 
         # Initial message type indicator
-        if timestamp is None:
+        if position_ts is None:
             if messaging:
                 parts.append(chr(APRSDataType.POSITION_MSGCAP.value))
             else:
@@ -534,7 +559,7 @@ class APRSPositionFrame(APRSFrame):
                 parts.append(chr(APRSDataType.POSITION_TS.value))
 
             # Timestamp
-            parts.append(str(timestamp))
+            parts.append(str(position_ts))
 
         # Position
         parts.append(str(position))
@@ -545,15 +570,15 @@ class APRSPositionFrame(APRSFrame):
 
         return ''.join(parts)
 
-    def __init__(self, destination, source, position, timestamp=None,
+    def __init__(self, destination, source, position, position_ts=None,
             message=None, messaging=True, repeaters=None,
             pf=False, cr=True, src_cr=None):
         self._position = position
-        self._timestamp = timestamp
+        self._position_ts = position_ts
         self._messaging = messaging
         self._message = message
 
-        payload = self._encodepayload(position, message, timestamp, messaging)
+        payload = self._encodepayload(position, message, position_ts, messaging)
 
         super(APRSPositionFrame, self).__init__(
                 destination=destination,
@@ -566,8 +591,8 @@ class APRSPositionFrame(APRSFrame):
         return self._position
 
     @property
-    def timestamp(self):
-        return self._timestamp
+    def position_ts(self):
+        return self._position_ts
 
     @property
     def message(self):
