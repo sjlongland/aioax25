@@ -9,9 +9,9 @@ from enum import Enum
 
 PRI_SYMBOL = "/"
 SEC_SYMBOL = "\\"
-NUMOVERLAY_UNCOMPRESSED = "0123456789"
-NUMOVERLAY_COMPRESSED = "abcdefghij"
-ALPHAOVERLAY = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+NUM_UNCOMPRESSED = "0123456789"
+NUM_COMPRESSED = "abcdefghij"
+ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
 class APRSSymbolTable(Enum):
@@ -27,20 +27,20 @@ class APRSOverlayType(Enum):
     @staticmethod
     def identify(overlay):
         try:
-            index = NUMOVERLAY_UNCOMPRESSED.index(overlay)
+            index = NUM_UNCOMPRESSED.index(overlay)
             return (APRSOverlayType.NUM_UNCOMPRESSED, index)
         except ValueError:
             pass
 
         try:
-            index = NUMOVERLAY_COMPRESSED.index(overlay)
+            index = NUM_COMPRESSED.index(overlay)
             return (APRSOverlayType.NUM_COMPRESSED, index)
         except ValueError:
             pass
 
         try:
-            index = ALPHAOVERLAY.index(overlay)
-            return (APRSOverlayType.ALPHAOVERLAY, index)
+            index = ALPHA.index(overlay)
+            return (APRSOverlayType.ALPHA, index)
         except ValueError:
             pass
 
@@ -57,11 +57,13 @@ class APRSSymbol(object):
         except ValueError:
             # Okay, one of the overlay sets
             overlay = table
-            table = APRSSymbolTable.PRIMARY
+            table = APRSSymbolTable.SECONDARY
 
         # Validate the overlay if given
         if overlay is not None:
-            (overlay, overlay_type) = APRSOverlayType.identify(overlay)
+            if table != APRSSymbolTable.SECONDARY:
+                raise ValueError("Overlays only available on secondary table")
+            (overlay_type, overlay) = APRSOverlayType.identify(overlay)
         else:
             overlay_type = None
 
@@ -76,10 +78,10 @@ class APRSSymbol(object):
         Return the table identifier character
         """
         if self.overlay_type == APRSOverlayType.NUM_UNCOMPRESSED:
-            return NUMOVERLAY_UNCOMPRESSED[self.overlay]
+            return NUM_UNCOMPRESSED[self.overlay]
         elif self.overlay_type == APRSOverlayType.NUM_COMPRESSED:
-            return NUMOVERLAY_COMPRESSED[self.overlay]
+            return NUM_COMPRESSED[self.overlay]
         elif self.overlay_type == APRSOverlayType.ALPHA:
-            return ALPHAOVERLAY[self.overlay]
+            return ALPHA[self.overlay]
         else:
             return self.table.value
