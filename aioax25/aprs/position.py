@@ -4,12 +4,10 @@
 APRS position reporting handler.
 """
 
-import re
 import math
 from enum import Enum, IntEnum
 
 
-from ..frame import AX25Address
 from .frame import APRSFrame
 from .datatype import APRSDataType
 from .symbol import APRSSymbol
@@ -221,9 +219,9 @@ class APRSCompressionType(object):
     def decode(cls, typechar):
         typebyte = ord(typechar) - BYTE_VALUE_OFFSET
 
-        gpsfix = APRSCompressionTypeGPSFix(typebyte & GPSFIX_MASK)
-        nmeasrc = APRSCompressionTypeNMEASrc(typebyte & NMEASRC_MASK)
-        origin = APRSCompressionTypeOrigin(typebyte & ORIGIN_MASK)
+        gpsfix = APRSCompressionTypeGPSFix(typebyte & cls.GPSFIX_MASK)
+        nmeasrc = APRSCompressionTypeNMEASrc(typebyte & cls.NMEASRC_MASK)
+        origin = APRSCompressionTypeOrigin(typebyte & cls.ORIGIN_MASK)
 
         return cls(gpsfix, nmeasrc, origin)
 
@@ -311,6 +309,7 @@ class APRSCompressedCourseSpeedRange(object):
             course = None
             rng = None
         else:
+            altitude = None
             csvalue = [
                     b - BYTE_VALUE_OFFSET
                     for b in bytes(csvalue[0:cls.LENGTH], "us-ascii")
@@ -318,7 +317,7 @@ class APRSCompressedCourseSpeedRange(object):
 
             if csvalue[0] == cls.RANGE_HEADER:
                 # This is a range value
-                rng = RANGE_SCALE * (cls.RANGE_RADIX ** csvalue[1])
+                rng = cls.RANGE_SCALE * (cls.RANGE_RADIX ** csvalue[1])
                 speed = None
                 course = None
             elif csvalue[0] <= cls.COURSE_SPEED_MAX:
@@ -327,7 +326,7 @@ class APRSCompressedCourseSpeedRange(object):
                 course = cls.COURSE_SCALE * csvalue[0]
                 speed = (cls.SPEED_RADIX ** csvalue[1]) + cls.SPEED_OFFSET
 
-        return cls(course, speed, rng)
+        return cls(course, speed, rng, altitude)
 
     def __init__(self, course=None, speed=None, rng=None, altitude=None):
         if altitude is not None:
@@ -416,7 +415,7 @@ class APRSCompressedCoordinates(object):
         else:
             # Decode the compression type byte
             ctype = APRSCompressionType.decode(coordinate[-1])
-            csr = APRSCompressionCourseSpeedRange.decode(coordinate[-2:])
+            csr = APRSCompressedCourseSpeedRange.decode(coordinate[-2:])
 
         return cls(lat, lng, symbol, ctype, csr)
 
