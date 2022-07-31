@@ -7,12 +7,12 @@ APRS position reporting handler.
 import math
 from enum import Enum, IntEnum
 
-
 from .frame import APRSFrame
 from .datatype import APRSDataType
 from .symbol import APRSSymbol
 from .datetime import decode as decode_datetime
 from .compression import compress, decompress, BYTE_VALUE_OFFSET
+from ..unit import convertvalue, Quantity
 
 
 class APRSPositionAmbiguity(Enum):
@@ -300,18 +300,19 @@ class APRSCompressedCourseSpeedRange(object):
     COURSE_SPEED_MAX = 89
     COURSE_SCALE = 4
 
-    # TODO: this is in "knots", metric would be nice.
+    # this is in "knots".
+    SPEED_UNITS = "knots"
     SPEED_RADIX = 1.08
     SPEED_OFFSET = -1
 
-    # TODO: these values compute "miles", in 2022 we should be in
-    # metric and leave imperial behind but Americans keep dragging
-    # their "feet". ;-)
+    # these values compute "miles".
+    RANGE_UNITS = "miles"
     RANGE_HEADER = 90
     RANGE_SCALE = 2
     RANGE_RADIX = 1.08
 
-    # TODO: these values compute "feet"
+    # these values compute "feet".
+    ALTITUDE_UNITS = "feet"
     ALTITUDE_RADIX = 1.002
 
     @classmethod
@@ -354,6 +355,11 @@ class APRSCompressedCourseSpeedRange(object):
         return cls(course, speed, rng, altitude)
 
     def __init__(self, course=None, speed=None, rng=None, altitude=None):
+        # Assert value units
+        speed = convertvalue("speed", speed, self.SPEED_UNITS)
+        rng = convertvalue("rng", rng, self.RANGE_UNITS)
+        altitude = convertvalue("altitude", altitude, self.ALTITUDE_UNITS)
+
         if altitude is not None:
             for param in (course, speed, rng):
                 if param is not None:
@@ -378,6 +384,48 @@ class APRSCompressedCourseSpeedRange(object):
         self.speed = speed
         self.rng = rng
         self.altitude = altitude
+
+    @property
+    def speed_q(self):
+        """
+        Speed as a Pint quantity.
+        """
+        return Quantity(self.speed, self.SPEED_UNITS)
+
+    @speed_q.setter
+    def speed_q(self, value):
+        """
+        Set the speed from the given quantity.
+        """
+        self.speed = value.to(self.SPEED_UNITS).magnitude
+
+    @property
+    def rng_q(self):
+        """
+        Range as a Pint quantity.
+        """
+        return Quantity(self.rng, self.RANGE_UNITS)
+
+    @rng_q.setter
+    def rng_q(self, value):
+        """
+        Set the range from the given quantity.
+        """
+        self.rng = value.to(self.RANGE_UNITS).magnitude
+
+    @property
+    def altitude_q(self):
+        """
+        Altitude as a Pint quantity.
+        """
+        return Quantity(self.altitude, self.ALTITUDE_UNITS)
+
+    @altitude_q.setter
+    def altitude_q(self, value):
+        """
+        Set the altitude from the given quantity.
+        """
+        self.altitude = value.to(self.ALTITUDE_UNITS).magnitude
 
     def __str__(self):
         if self.altitude is not None:
