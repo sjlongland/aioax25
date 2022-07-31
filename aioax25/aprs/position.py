@@ -306,13 +306,13 @@ class APRSCompressedCourseSpeedRange(object):
     SPEED_OFFSET = -1
 
     # these values compute "miles".
-    RANGE_UNITS = "miles"
+    RANGE_UNITS = "mile"
     RANGE_HEADER = 90
     RANGE_SCALE = 2
     RANGE_RADIX = 1.08
 
     # these values compute "feet".
-    ALTITUDE_UNITS = "feet"
+    ALTITUDE_UNITS = "foot"
     ALTITUDE_RADIX = 1.002
 
     @classmethod

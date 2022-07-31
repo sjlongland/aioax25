@@ -3,6 +3,7 @@
 import logging
 
 from aioax25.frame import AX25UnnumberedInformationFrame
+from aioax25.unit import Quantity
 from aioax25.aprs.position import APRSSexagesimal, \
         APRSLatitude, APRSLongitude, \
         APRSCompressedLatitude, APRSCompressedLongitude, \
@@ -513,6 +514,60 @@ def test_csr_construct_speed_nocourse():
         assert str(e) == ( 
                 "Course and speed must both be specified" 
         )
+
+def test_csr_get_speed_q():
+    """
+    Test we can obtain the speed as a Quantity
+    """
+    csr = APRSCompressedCourseSpeedRange(speed=20, course=50)
+    speed = csr.speed_q
+    assert isinstance(speed, Quantity)
+    assert speed.magnitude == 20.0
+    assert str(speed.units) == "knots"
+
+def test_csr_set_speed_q():
+    """
+    Test we can update the speed as a Quantity
+    """
+    csr = APRSCompressedCourseSpeedRange(speed=20, course=50)
+    csr.speed_q = Quantity(45, "knots")
+    assert csr.speed == 45
+
+def test_csr_get_rng_q():
+    """
+    Test we can obtain the range as a Quantity
+    """
+    csr = APRSCompressedCourseSpeedRange(rng=30)
+    rng = csr.rng_q
+    assert isinstance(rng, Quantity)
+    assert rng.magnitude == 30.0
+    assert str(rng.units) == "mile"
+
+def test_csr_set_rng_q():
+    """
+    Test we can update the range as a Quantity
+    """
+    csr = APRSCompressedCourseSpeedRange(rng=30)
+    csr.rng_q = Quantity(60, "mile")
+    assert csr.rng == 60
+
+def test_csr_get_speed_q():
+    """
+    Test we can obtain the altitude as a Quantity
+    """
+    csr = APRSCompressedCourseSpeedRange(altitude=8000)
+    altitude = csr.altitude_q
+    assert isinstance(altitude, Quantity)
+    assert altitude.magnitude == 8000.0
+    assert str(altitude.units) == "foot"
+
+def test_csr_set_speed_q():
+    """
+    Test we can update the altitude as a Quantity
+    """
+    csr = APRSCompressedCourseSpeedRange(altitude=8000)
+    csr.altitude_q = Quantity(6000, "foot")
+    assert csr.altitude == 6000
 
 def test_decode_invalid_type():
     """
