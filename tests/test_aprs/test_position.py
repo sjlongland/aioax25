@@ -4,6 +4,7 @@ import logging
 
 from aioax25.frame import AX25UnnumberedInformationFrame
 from aioax25.unit import Quantity
+from aioax25.aprs.datetime import MDHMTimestamp
 from aioax25.aprs.position import APRSSexagesimal, \
         APRSLatitude, APRSLongitude, \
         APRSCompressedLatitude, APRSCompressedLongitude, \
@@ -338,6 +339,42 @@ def test_csr_too_short():
     except ValueError as e:
         assert str(e) == "Course/Speed value too short"
 
+def test_latitude_compressed_encode():
+    """
+    Test compressed latitude encoding
+    """
+    # From the APRS 1.0 protocol specs
+    assert str(APRSCompressedLatitude(49.50)) == "5L!!"
+
+def test_latitude_compressed_decode():
+    """
+    Test compressed latitude decoding
+    """
+    # From the APRS 1.0 protocol specs
+    v = APRSCompressedLatitude.decode("5L!!")
+    assert (v.degrees, v.minutes) == (49, 30)
+    assert v.seconds < 0.02
+
+def test_latitude_compressed_decode_toolong():
+    """
+    Test compressed latitude decoding rejects too short string
+    """
+    try:
+        APRSCompressedLatitude.decode("<*e")
+        assert False, "Should not have worked"
+    except ValueError as e:
+        assert str(e) == "Compressed co-ordinate too short"
+
+def test_csr_too_short():
+    """
+    Test a too-short course/speed/range/altitude is rejected
+    """
+    try:
+        APRSCompressedCourseSpeedRange.decode("X", None)
+        assert False, "Should not have worked"
+    except ValueError as e:
+        assert str(e) == "Course/Speed value too short"
+
 def test_compressed_decode_too_short():
     try:
         APRSCompressedCoordinates.decode("X")
@@ -347,12 +384,12 @@ def test_compressed_decode_too_short():
 
 def test_compressed_decode_nocst():
     coord = APRSCompressedCoordinates.decode("/5L!!<*e7> sT")
-    assert coord.lat.degrees == 175
-    assert coord.lat.minutes == 3
-    assert abs(coord.lat.seconds - 55.037) < 0.001
-    assert coord.lng.degrees == 109
-    assert coord.lng.minutes == 17
-    assert abs(coord.lng.seconds - 16.586) < 0.001
+    assert coord.lat.degrees == 49
+    assert coord.lat.minutes == 30
+    assert abs(coord.lat.seconds) < 0.001
+    assert coord.lng.degrees == -72
+    assert coord.lng.minutes == 45
+    assert abs(coord.lng.seconds) < 0.02
     assert coord.symbol.tableident == "/"
     assert coord.symbol.symbol == ">"
     assert coord.ctype is None
@@ -360,12 +397,12 @@ def test_compressed_decode_nocst():
 
 def test_compressed_decode_cs():
     coord = APRSCompressedCoordinates.decode("/5L!!<*e7>7P!")
-    assert coord.lat.degrees == 175
-    assert coord.lat.minutes == 3
-    assert abs(coord.lat.seconds - 55.037) < 0.001
-    assert coord.lng.degrees == 109
-    assert coord.lng.minutes == 17
-    assert abs(coord.lng.seconds - 16.586) < 0.001
+    assert coord.lat.degrees == 49
+    assert coord.lat.minutes == 30
+    assert abs(coord.lat.seconds) < 0.001
+    assert coord.lng.degrees == -72
+    assert coord.lng.minutes == 45
+    assert abs(coord.lng.seconds) < 0.02
     assert coord.symbol.tableident == "/"
     assert coord.symbol.symbol == ">"
     assert coord.ctype.gpsfix == APRSCompressionTypeGPSFix.OLD
@@ -378,12 +415,12 @@ def test_compressed_decode_cs():
 
 def test_compressed_decode_rng():
     coord = APRSCompressedCoordinates.decode("/5L!!<*e7>{?!")
-    assert coord.lat.degrees == 175
-    assert coord.lat.minutes == 3
-    assert abs(coord.lat.seconds - 55.037) < 0.001
-    assert coord.lng.degrees == 109
-    assert coord.lng.minutes == 17
-    assert abs(coord.lng.seconds - 16.586) < 0.001
+    assert coord.lat.degrees == 49
+    assert coord.lat.minutes == 30
+    assert abs(coord.lat.seconds) < 0.001
+    assert coord.lng.degrees == -72
+    assert coord.lng.minutes == 45
+    assert abs(coord.lng.seconds) < 0.02
     assert coord.symbol.tableident == "/"
     assert coord.symbol.symbol == ">"
     assert coord.ctype.gpsfix == APRSCompressionTypeGPSFix.OLD
@@ -396,12 +433,12 @@ def test_compressed_decode_rng():
 
 def test_compressed_decode_alt():
     coord = APRSCompressedCoordinates.decode("/5L!!<*e7>S]1")
-    assert coord.lat.degrees == 175
-    assert coord.lat.minutes == 3
-    assert abs(coord.lat.seconds - 55.037) < 0.001
-    assert coord.lng.degrees == 109
-    assert coord.lng.minutes == 17
-    assert abs(coord.lng.seconds - 16.586) < 0.001
+    assert coord.lat.degrees == 49
+    assert coord.lat.minutes == 30
+    assert abs(coord.lat.seconds) < 0.001
+    assert coord.lng.degrees == -72
+    assert coord.lng.minutes == 45
+    assert abs(coord.lng.seconds) < 0.02
     assert coord.symbol.tableident == "/"
     assert coord.symbol.symbol == ">"
     assert coord.ctype.gpsfix == APRSCompressionTypeGPSFix.OLD
@@ -411,6 +448,105 @@ def test_compressed_decode_alt():
     assert coord.csr.speed is None
     assert coord.csr.course is None
     assert coord.csr.rng is None
+
+def test_compressed_encode_nocst():
+    assert str(APRSCompressedCoordinates(
+            lat=APRSCompressedLatitude(-27.123),
+            lng=APRSCompressedLongitude(152.53),
+            symbol=APRSSymbol("/", "$"),
+            ctype=None,
+            csr=None
+    )) == "/\\3\\pu%2;$ sT"
+
+def test_compressed_encode_cs():
+    assert str(APRSCompressedCoordinates(
+            lat=APRSCompressedLatitude(-27.123),
+            lng=APRSCompressedLongitude(152.53),
+            symbol=APRSSymbol("/", "$"),
+            ctype=APRSCompressionType(
+                gpsfix=APRSCompressionTypeGPSFix.OLD,
+                nmeasrc=APRSCompressionTypeNMEASrc.OTHER,
+                origin=APRSCompressionTypeOrigin.COMPRESSED,
+            ),
+            csr=APRSCompressedCourseSpeedRange(
+                course=88, speed=36.2
+            )
+    )) == "/\\3\\pu%2;$7O!"
+
+def test_compressed_encode_gpsfix_current():
+    assert str(APRSCompressedCoordinates(
+            lat=APRSCompressedLatitude(-27.123),
+            lng=APRSCompressedLongitude(152.53),
+            symbol=APRSSymbol("/", "$"),
+            ctype=APRSCompressionType(
+                gpsfix=APRSCompressionTypeGPSFix.CURRENT,
+                nmeasrc=APRSCompressionTypeNMEASrc.OTHER,
+                origin=APRSCompressionTypeOrigin.COMPRESSED,
+            ),
+            csr=APRSCompressedCourseSpeedRange(
+                course=88, speed=36.2
+            )
+    )) == "/\\3\\pu%2;$7OA"
+
+def test_compressed_encode_nmeasrc_gga():
+    assert str(APRSCompressedCoordinates(
+            lat=APRSCompressedLatitude(-27.123),
+            lng=APRSCompressedLongitude(152.53),
+            symbol=APRSSymbol("/", "$"),
+            ctype=APRSCompressionType(
+                gpsfix=APRSCompressionTypeGPSFix.OLD,
+                nmeasrc=APRSCompressionTypeNMEASrc.GGA,
+                origin=APRSCompressionTypeOrigin.COMPRESSED,
+            ),
+            csr=APRSCompressedCourseSpeedRange(
+                course=88, speed=36.2
+            )
+    )) == "/\\3\\pu%2;$7O1"
+
+def test_compressed_encode_origin_software():
+    assert str(APRSCompressedCoordinates(
+            lat=APRSCompressedLatitude(-27.123),
+            lng=APRSCompressedLongitude(152.53),
+            symbol=APRSSymbol("/", "$"),
+            ctype=APRSCompressionType(
+                gpsfix=APRSCompressionTypeGPSFix.OLD,
+                nmeasrc=APRSCompressionTypeNMEASrc.OTHER,
+                origin=APRSCompressionTypeOrigin.SOFTWARE,
+            ),
+            csr=APRSCompressedCourseSpeedRange(
+                course=88, speed=36.2
+            )
+    )) == "/\\3\\pu%2;$7O#"
+
+def test_compressed_encode_rng():
+    assert str(APRSCompressedCoordinates(
+            lat=APRSCompressedLatitude(-27.123),
+            lng=APRSCompressedLongitude(152.53),
+            symbol=APRSSymbol("/", "$"),
+            ctype=APRSCompressionType(
+                gpsfix=APRSCompressionTypeGPSFix.OLD,
+                nmeasrc=APRSCompressionTypeNMEASrc.OTHER,
+                origin=APRSCompressionTypeOrigin.COMPRESSED,
+            ),
+            csr=APRSCompressedCourseSpeedRange(
+                rng=20.125
+            )
+    )) == "/\\3\\pu%2;${>!"
+
+def test_compressed_encode_alt():
+    assert str(APRSCompressedCoordinates(
+            lat=APRSCompressedLatitude(-27.123),
+            lng=APRSCompressedLongitude(152.53),
+            symbol=APRSSymbol("/", "$"),
+            ctype=APRSCompressionType(
+                gpsfix=APRSCompressionTypeGPSFix.OLD,
+                nmeasrc=APRSCompressionTypeNMEASrc.OTHER,
+                origin=APRSCompressionTypeOrigin.COMPRESSED,
+            ),
+            csr=APRSCompressedCourseSpeedRange(
+                altitude=10004.520
+            )
+    )) == "/\\3\\pu%2;$S\\!"
 
 def test_compressed_decode_invalid_reject():
     try:
@@ -666,7 +802,7 @@ def test_decode_uncompressed_position_nots():
 
 def test_decode_uncompressed_position_nots_msgcap():
     """
-    Test decode can decode an an uncompressed position report
+    Test decode can decode an uncompressed position report
     advertising message capability
     """
     frame = AX25UnnumberedInformationFrame(
@@ -723,7 +859,7 @@ def test_decode_uncompressed_position_withts():
     assert decoded.message == \
         "000/000/A=000685Mobile"
 
-def test_decode_uncompressed_position_withts():
+def test_decode_uncompressed_position_withts_withmsgcap():
     """
     Test decode can decode an uncompressed position report with timestamp
     advertising messaging capability
@@ -771,12 +907,12 @@ def test_decode_compressed_position_nots():
     assert isinstance(decoded, APRSPositionFrame)
     assert not decoded.has_messaging
     assert decoded.position_ts is None
-    assert decoded.position.lat.degrees == 175
-    assert decoded.position.lat.minutes == 3
-    assert abs(decoded.position.lat.seconds - 55.037) < 0.001
-    assert decoded.position.lng.degrees == 109
-    assert decoded.position.lng.minutes == 17
-    assert abs(decoded.position.lng.seconds - 16.359) < 0.001
+    assert decoded.position.lat.degrees == 49
+    assert decoded.position.lat.minutes == 30
+    assert abs(decoded.position.lat.seconds) < 0.001
+    assert decoded.position.lng.degrees == -72
+    assert decoded.position.lng.minutes == 45
+    assert abs(decoded.position.lng.seconds) < 0.02
     assert decoded.position.symbol.tableident == "/"
     assert decoded.position.symbol.symbol == "&"
     assert decoded.message == \
@@ -801,13 +937,209 @@ def test_decode_compressed_position_withts():
     assert decoded.position_ts.day == 9
     assert decoded.position_ts.hour == 23
     assert decoded.position_ts.minute == 45
-    assert decoded.position.lat.degrees == 175
-    assert decoded.position.lat.minutes == 3
-    assert abs(decoded.position.lat.seconds - 55.037) < 0.001
-    assert decoded.position.lng.degrees == 109
-    assert decoded.position.lng.minutes == 17
-    assert abs(decoded.position.lng.seconds - 16.359) < 0.001
+    assert decoded.position.lat.degrees == 49
+    assert decoded.position.lat.minutes == 30
+    assert abs(decoded.position.lat.seconds) < 0.001
+    assert decoded.position.lng.degrees == -72
+    assert decoded.position.lng.minutes == 45
+    assert abs(decoded.position.lng.seconds) < 0.02
     assert decoded.position.symbol.tableident == "/"
     assert decoded.position.symbol.symbol == "&"
     assert decoded.message == \
         "000/000/A=000685Mobile"
+
+def test_decode_compressed_position_withcsr():
+    """
+    Test decode can decode an compressed position report with Course/Speed.
+    """
+    frame = AX25UnnumberedInformationFrame(
+            destination='APZAIO',
+            source='VK4MSL-7',
+            pid=0xf0,
+            payload=b'=/5L!!<*e7>7P[' # APRS101.PDF page 41
+    )
+    decoded = APRSPositionFrame.decode(
+            frame, frame.payload.decode("US-ASCII"),
+            logging.getLogger('decoder')
+    )
+    assert isinstance(decoded, APRSPositionFrame)
+    assert decoded.has_messaging
+    assert decoded.position_ts is None
+    print ("Latitude:  %3d° %2d' %6.3f\"" % (
+        decoded.position.lat.degrees,
+        decoded.position.lat.minutes,
+        decoded.position.lat.seconds
+    ))
+    print ("Longitude: %3d° %2d' %6.3f\"" % (
+        decoded.position.lng.degrees,
+        decoded.position.lng.minutes,
+        decoded.position.lng.seconds
+    ))
+    assert decoded.position.lat.degrees == 49
+    assert decoded.position.lat.minutes == 30
+    assert abs(decoded.position.lat.seconds) < 0.001
+    assert decoded.position.lng.degrees == -72
+    assert decoded.position.lng.minutes == 45
+    assert abs(decoded.position.lng.seconds) < 0.02
+    assert decoded.position.symbol.tableident == "/"
+    assert decoded.position.symbol.symbol == ">"
+    assert decoded.message is None
+    assert decoded.position.ctype.gpsfix == APRSCompressionTypeGPSFix.CURRENT
+    assert decoded.position.ctype.nmeasrc == APRSCompressionTypeNMEASrc.RMC
+    assert decoded.position.ctype.origin == APRSCompressionTypeOrigin.SOFTWARE
+    assert decoded.position.csr.course == 88
+    assert abs(decoded.position.csr.speed - 36.2) < 0.1
+
+def test_encode_position_nocomment():
+    """
+    Test we can encode a position report without comment.
+    """
+    frame = APRSPositionFrame(
+            destination='APZAIO',
+            source='VK4MSL-7',
+            position=APRSUncompressedCoordinates(
+                lat=APRSLatitude(-27, 26.2354),
+                lng=APRSLongitude(152, 56.5593),
+                symbol=APRSSymbol("/", "&")
+            ),
+            position_ts=None,
+            message=None,
+            messaging=False
+    )
+    assert frame.payload == b"!2726.23S/15256.55E&"
+
+def test_encode_uncompressed_position_nots():
+    """
+    Test we can encode an uncompressed position report without timestamp.
+    """
+    frame = APRSPositionFrame(
+            destination='APZAIO',
+            source='VK4MSL-7',
+            position=APRSUncompressedCoordinates(
+                lat=APRSLatitude(-27, 26.2354),
+                lng=APRSLongitude(152, 56.5593),
+                symbol=APRSSymbol("/", "&")
+            ),
+            position_ts=None,
+            message="Mobile",
+            messaging=False
+    )
+    assert frame.payload == b"!2726.23S/15256.55E&Mobile"
+
+def test_encode_uncompressed_position_nots_msgcap():
+    """
+    Test we can encode an uncompressed position report
+    advertising message capability
+    """
+    frame = APRSPositionFrame(
+            destination='APZAIO',
+            source='VK4MSL-7',
+            position=APRSUncompressedCoordinates(
+                lat=APRSLatitude(-27, 26.2354),
+                lng=APRSLongitude(152, 56.5593),
+                symbol=APRSSymbol("/", "&")
+            ),
+            position_ts=None,
+            message="Mobile",
+            messaging=True
+    )
+    assert frame.payload == b"=2726.23S/15256.55E&Mobile"
+
+def test_encode_uncompressed_position_withts():
+    """
+    Test decode can decode an uncompressed position report with timestamp.
+    """
+    frame = APRSPositionFrame(
+            destination='APZAIO',
+            source='VK4MSL-7',
+            position=APRSUncompressedCoordinates(
+                lat=APRSLatitude(-27, 26.2354),
+                lng=APRSLongitude(152, 56.5593),
+                symbol=APRSSymbol("/", "&")
+            ),
+            position_ts=MDHMTimestamp(7, 31, 6, 33),
+            message=None,
+            messaging=False
+    )
+    assert frame.payload == b"/073106332726.23S/15256.55E&"
+
+def test_encode_uncompressed_position_withts_withmsgcap():
+    """
+    Test decode can decode an uncompressed position report with timestamp
+    advertising messaging capability
+    """
+    frame = APRSPositionFrame(
+            destination='APZAIO',
+            source='VK4MSL-7',
+            position=APRSUncompressedCoordinates(
+                lat=APRSLatitude(-27, 26.2354),
+                lng=APRSLongitude(152, 56.5593),
+                symbol=APRSSymbol("/", "&")
+            ),
+            position_ts=MDHMTimestamp(7, 31, 6, 33),
+            message="My Message",
+            messaging=True
+    )
+    assert frame.payload == b"@073106332726.23S/15256.55E&My Message"
+
+def test_encode_compressed_position_nots():
+    """
+    Test we can encode an compressed position report without timestamp.
+    """
+    frame = APRSPositionFrame(
+            destination='APZAIO',
+            source='VK4MSL-7',
+            position=APRSCompressedCoordinates(
+                lat=APRSCompressedLatitude(-27.437256),
+                lng=APRSLongitude(152.942655),
+                symbol=APRSSymbol("/", "&")
+            ),
+            position_ts=None,
+            message=None,
+            messaging=False
+    )
+    assert frame.payload == b"!/\\B+A15256.55E& sT"
+
+def test_encode_compressed_position_withts():
+    """
+    Test decode can decode an compressed position report with timestamp.
+    """
+    frame = APRSPositionFrame(
+            destination='APZAIO',
+            source='VK4MSL-7',
+            position=APRSCompressedCoordinates(
+                lat=APRSCompressedLatitude(-27.437256),
+                lng=APRSLongitude(152.942655),
+                symbol=APRSSymbol("/", "&")
+            ),
+            position_ts=MDHMTimestamp(7, 31, 6, 33),
+            message=None,
+            messaging=False
+    )
+    assert frame.payload == b"/07310633/\\B+A15256.55E& sT"
+
+def test_encode_compressed_position_withcsr():
+    """
+    Test we can encode an compressed position report with Course/Speed.
+    """
+    frame = APRSPositionFrame(
+            destination='APZAIO',
+            source='VK4MSL-7',
+            position=APRSCompressedCoordinates(
+                lat=APRSCompressedLatitude(-27.437256),
+                lng=APRSLongitude(152.942655),
+                symbol=APRSSymbol("/", "&"),
+                ctype=APRSCompressionType(
+                    gpsfix=APRSCompressionTypeGPSFix.CURRENT,
+                    nmeasrc=APRSCompressionTypeNMEASrc.GGA,
+                    origin=APRSCompressionTypeOrigin.SOFTWARE
+                ),
+                csr=APRSCompressedCourseSpeedRange(
+                    course=60, speed=32
+                )
+            ),
+            position_ts=None,
+            message=None,
+            messaging=False
+    )
+    assert frame.payload == b"!/\\B+A15256.55E&0NS"

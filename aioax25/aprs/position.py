@@ -250,7 +250,7 @@ class APRSCompressionType(object):
         return self.gpsfix.value | self.nmeasrc.value | self.origin.value
 
     def __str__(self):
-        return chr(self.raw)
+        return chr(self.raw + BYTE_VALUE_OFFSET)
 
 
 class APRSCompressedCoordinate(APRSSexagesimal):
@@ -265,33 +265,33 @@ class APRSCompressedCoordinate(APRSSexagesimal):
         # Throw away extra data
         coordinate = coordinate[0:cls.LENGTH]
 
-        # Decompress the compressed value
-        value = decompress(coordinate)
-
-        # Apply scaling
-        value /= cls.SCALE
-
-        # Apply offset
-        value += cls.OFFSET
+        # Convert the value back to decimal degrees
+        value = ( \
+                (decompress(coordinate) / cls.POSTSCALE) \
+                - cls.OFFSET \
+        ) / cls.PRESCALE
 
         return cls(value)
 
     def __str__(self):
         # Scale the decimal value
-        value = int(abs((self.OFFSET - self.decimaldegrees) * self.SCALE))
-
-        # Compress it
-        return compress(value, self.LENGTH)
+        return compress(int(abs(
+            (
+                (self.decimaldegrees * self.PRESCALE) + self.OFFSET
+            ) * self.POSTSCALE
+        )), self.LENGTH)
 
 
 class APRSCompressedLatitude(APRSCompressedCoordinate):
-    SCALE = 380926
+    POSTSCALE = 380926
+    PRESCALE = -1
     OFFSET = 90
 
 
 class APRSCompressedLongitude(APRSCompressedCoordinate):
-    SCALE = 190463
-    OFFSET = -180
+    POSTSCALE = 190463
+    PRESCALE = 1
+    OFFSET = 180
 
 
 class APRSCompressedCourseSpeedRange(object):
@@ -344,7 +344,6 @@ class APRSCompressedCourseSpeedRange(object):
                 course = None
             elif csvalue[0] <= cls.COURSE_SPEED_MAX:
                 # This is a speed/course
-                print(csvalue)
                 rng = None
                 course = cls.COURSE_SCALE * csvalue[0]
                 speed = (cls.SPEED_RADIX ** csvalue[1]) + cls.SPEED_OFFSET
@@ -452,7 +451,7 @@ class APRSCompressedCourseSpeedRange(object):
                     ))
             ]
 
-        return ''.join([ord(b + BYTE_VALUE_OFFSET) for b in bvalues])
+        return ''.join([chr(b + BYTE_VALUE_OFFSET) for b in bvalues])
 
 
 class APRSCompressedCoordinates(object):
@@ -477,8 +476,8 @@ class APRSCompressedCoordinates(object):
         symbol = APRSSymbol(coordinate[0], coordinate[9])
 
         # Decode the latitude and longitude
-        lat = APRSCompressedLatitude.decode(coordinate[2:])
-        lng = APRSCompressedLatitude.decode(coordinate[6:])
+        lat = APRSCompressedLatitude.decode(coordinate[1:])
+        lng = APRSCompressedLongitude.decode(coordinate[5:])
 
         # Do we have a Course/Speed/Range or Type field?
         if coordinate[10] == cls.CST_FILL[0]:
