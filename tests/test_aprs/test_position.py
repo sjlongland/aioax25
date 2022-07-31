@@ -659,14 +659,14 @@ def test_csr_get_speed_q():
     speed = csr.speed_q
     assert isinstance(speed, Quantity)
     assert speed.magnitude == 20.0
-    assert str(speed.units) == "knots"
+    assert str(speed.units) == "knot"
 
 def test_csr_set_speed_q():
     """
     Test we can update the speed as a Quantity
     """
     csr = APRSCompressedCourseSpeedRange(speed=20, course=50)
-    csr.speed_q = Quantity(45, "knots")
+    csr.speed_q = Quantity(45, "knot")
     assert csr.speed == 45
 
 def test_csr_get_rng_q():
@@ -687,7 +687,7 @@ def test_csr_set_rng_q():
     csr.rng_q = Quantity(60, "mile")
     assert csr.rng == 60
 
-def test_csr_get_speed_q():
+def test_csr_get_altitude_q():
     """
     Test we can obtain the altitude as a Quantity
     """
@@ -697,7 +697,7 @@ def test_csr_get_speed_q():
     assert altitude.magnitude == 8000.0
     assert str(altitude.units) == "foot"
 
-def test_csr_set_speed_q():
+def test_csr_set_altitude_q():
     """
     Test we can update the altitude as a Quantity
     """

@@ -301,7 +301,7 @@ class APRSCompressedCourseSpeedRange(object):
     COURSE_SCALE = 4
 
     # this is in "knots".
-    SPEED_UNITS = "knots"
+    SPEED_UNITS = "knot"
     SPEED_RADIX = 1.08
     SPEED_OFFSET = -1
 
