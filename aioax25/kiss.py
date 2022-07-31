@@ -421,7 +421,7 @@ class BaseTransportDevice(BaseKISSDevice):
         raise NotImplementedError('Abstract function')
 
     def _open(self):
-        self._loop.call_soon(ensure_future(self._open_connection()))
+        ensure_future(self._open_connection())
 
     def _on_connect(self, transport):
         self._transport = transport
