@@ -72,6 +72,17 @@ class APRSSymbol(object):
         self.overlay = overlay
         self.overlay_type = overlay_type
 
+    def __repr__(self): # pragma: no cover
+        return (
+                '%s(table=%r, symbol=%r, overlay=%r)' \
+                    % (
+                        self.__class__.__name__,
+                        self.table,
+                        self.symbol,
+                        self.overlay
+                    )
+        )
+
     @property
     def tableident(self):
         """

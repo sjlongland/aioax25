@@ -105,6 +105,15 @@ class APRSSexagesimal(object):
         self.seconds = seconds
         self.ambiguity = APRSPositionAmbiguity(ambiguity)
 
+    def __repr__(self): # pragma: no cover
+        return (
+                '%s(degrees=%r, minutes=%r, seconds=%r, ambiguity=%r)' \
+                % (
+                    self.__class__.__name__,
+                    self.degrees, self.minutes, self.seconds, self.ambiguity
+                )
+        )
+
     def __str__(self):
         """
         Return the APRS-formatted position string.
@@ -190,6 +199,17 @@ class APRSUncompressedCoordinates(object):
         self.lng = lng
         self.symbol = symbol
 
+    def __repr__(self): # pragma: no cover
+        return (
+                '%s(lat=%r, lng=%r, symbol=%r)' % \
+                (
+                        self.__class__.__name__,
+                        self.lat,
+                        self.lng,
+                        self.symbol
+                )
+        )
+
     def __str__(self):
         return ''.join([
                 str(self.lat),
@@ -248,6 +268,15 @@ class APRSCompressionType(object):
     @property
     def raw(self):
         return self.gpsfix.value | self.nmeasrc.value | self.origin.value
+
+    def __repr__(self): # pragma: no cover
+        return (
+                '%s(gpsfix=%r, nmeasrc=%r, origin=%r)' \
+                        % (
+                            self.__class__.__name__,
+                            self.gpsfix, self.nmeasrc, self.origin
+                        )
+        )
 
     def __str__(self):
         return chr(self.raw + BYTE_VALUE_OFFSET)
@@ -426,6 +455,15 @@ class APRSCompressedCourseSpeedRange(object):
         """
         self.altitude = value.to(self.ALTITUDE_UNITS).magnitude
 
+    def __repr__(self): # pragma: no cover
+        return (
+                '%s(course=%r, speed=%r, rng=%r, altitude=%r)' \
+                % (
+                    self.__class__.__name__,
+                    self.course, self.speed, self.rng, self.altitude
+                )
+        )
+
     def __str__(self):
         if self.altitude is not None:
             return compress(
@@ -501,6 +539,19 @@ class APRSCompressedCoordinates(object):
         self.ctype = ctype
         self.csr = csr
 
+    def __repr__(self): # pragma: no cover
+        return (
+                '%s(lat=%r, lng=%r, symbol=%r, ctype=%r, csr=%r)' % \
+                (
+                        self.__class__.__name__,
+                        self.lat,
+                        self.lng,
+                        self.symbol,
+                        self.ctype,
+                        self.csr
+                )
+        )
+
     def __str__(self):
         return ''.join([
             self.symbol.tableident,
@@ -537,7 +588,8 @@ class APRSPositionFrame(APRSFrame):
         else:
             raise ValueError('Not a position frame: %r' % payload)
 
-        log.debug("Timestamp: %s; payload: %r", msgtype, payload)
+        log.debug("Type: %s; timestamp: %r; payload: %r", \
+                msgtype, position_ts, payload)
 
         # Is the position compressed?
         # Uncompressed position looks like this:
@@ -567,6 +619,8 @@ class APRSPositionFrame(APRSFrame):
             # Possibly a compressed position report
             position = APRSCompressedCoordinates.decode(payload)
             message = payload[APRSCompressedCoordinates.LENGTH:]
+
+        log.debug("Position: %r, Message: %r", position, message)
 
         return cls(
                 destination=uiframe.header.destination,
