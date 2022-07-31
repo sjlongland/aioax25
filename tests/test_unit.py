@@ -4,7 +4,15 @@
 Unit handling tests
 """
 
-from aioax25.unit import checknumeric, convertvalue, Quantity
+from pytest import skip
+
+try:
+    from pint import Quantity
+    PINT_SUPPORTED = True
+except ImportError:
+    PINT_SUPPORTED = False
+
+from aioax25.unit import checknumeric, convertvalue
 
 def test_checknumeric_required_none():
     """
@@ -70,6 +78,12 @@ def test_convertvalue_quantity():
     """
     convertvalue should convert Quantity to correct unit
     """
+    if not PINT_SUPPORTED:
+        skip(
+            "pint.Quantity could not be imported, "
+            "so unit conversion won't work as expected."
+        )
+
     assert convertvalue("optparam", \
             Quantity(1, "in"), "cm", required=False) == 2.54, \
             "Should have converted the value"
