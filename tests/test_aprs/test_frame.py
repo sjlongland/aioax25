@@ -7,6 +7,7 @@ from ..nosecompat import eq_, assert_is, assert_is_not
 from aioax25.aprs.frame import APRSFrame
 from aioax25.aprs.message import \
         APRSMessageAckFrame, APRSMessageRejFrame, APRSMessageFrame
+from aioax25.aprs.position import APRSPositionFrame
 from aioax25.frame import AX25UnnumberedInformationFrame
 
 from ..loop import DummyLoop
@@ -49,6 +50,30 @@ def test_decode_unknown_type():
     )
     decoded = APRSFrame.decode(frame, logging.getLogger('decoder'))
     assert_is(decoded, frame)
+
+def test_decode_position():
+    """
+    Test the decode routine can recognise a position report.
+    """
+    frame = AX25UnnumberedInformationFrame(
+            destination='APZAIO',
+            source='VK4MSL-7',
+            pid=0xf0,
+            payload=b'!3722.20N/07900.66W&000/000/A=000685Mobile'
+    )
+    decoded = APRSFrame.decode(frame, logging.getLogger('decoder'))
+    assert decoded is not frame
+    assert isinstance(decoded, APRSPositionFrame)
+    assert decoded.position.lat.degrees == 37
+    assert decoded.position.lat.minutes == 22
+    assert abs(decoded.position.lat.seconds - 12) < 0.001
+    assert decoded.position.lng.degrees == -79
+    assert decoded.position.lng.minutes == 0
+    assert abs(decoded.position.lng.seconds - 39.6) < 0.001
+    assert decoded.position.symbol.tableident == "/"
+    assert decoded.position.symbol.symbol == "&"
+    assert decoded.message == \
+        "000/000/A=000685Mobile"
 
 def test_decode_message():
     """
