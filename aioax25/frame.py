@@ -1022,7 +1022,7 @@ class AX25SetAsyncBalancedModeFrame(AX25BaseUnnumberedFrame):
     This frame is used to initiate a connection request with the destination
     AX.25 node.
     """
-    MODIFIER = 0b01101111
+    MODIFIER = 0b00101111
     CR = True
 
 AX25UnnumberedFrame.register(AX25SetAsyncBalancedModeFrame)
@@ -1035,7 +1035,7 @@ class AX25SetAsyncBalancedModeExtendedFrame(AX25BaseUnnumberedFrame):
     This frame is used to initiate a connection request with the destination
     AX.25 node, using modulo 128 acknowledgements.
     """
-    MODIFIER = 0b00101111
+    MODIFIER = 0b01101111
     CR = True
 
 AX25UnnumberedFrame.register(AX25SetAsyncBalancedModeExtendedFrame)
