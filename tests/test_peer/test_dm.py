@@ -7,7 +7,53 @@ Tests for AX25Peer DM handling
 from aioax25.frame import AX25Address, AX25Path, AX25DisconnectModeFrame
 from aioax25.version import AX25Version
 from .peer import TestingAX25Peer
-from ..mocks import DummyStation
+from ..mocks import DummyStation, DummyTimeout
+
+
+def test_peer_recv_dm():
+    """
+    Test when receiving a DM whilst connected, the peer disconnects.
+    """
+    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    interface = station._interface()
+    peer = TestingAX25Peer(
+            station=station,
+            address=AX25Address('VK4MSL'),
+            repeaters=AX25Path("VK4MSL-2", "VK4MSL-3"),
+            full_duplex=True
+    )
+
+    # Set some dummy data in fields -- this should be cleared out.
+    ack_timer = DummyTimeout(None, None)
+    peer._ack_timeout_handle = ack_timer
+    peer._state = peer.AX25PeerState.CONNECTED
+    peer._send_state = 1
+    peer._send_seq = 2
+    peer._recv_state = 3
+    peer._recv_seq = 4
+    peer._ack_state = 5
+    peer._pending_iframes = dict(comment="pending data")
+    peer._pending_data = ["pending data"]
+
+    # Pass the peer a DM frame
+    peer._on_receive(
+            AX25DisconnectModeFrame(
+                destination=station.address,
+                source=peer.address,
+                repeaters=None
+            )
+    )
+
+    # We should now be "disconnected"
+    assert peer._ack_timeout_handle is None
+    assert peer._state is peer.AX25PeerState.DISCONNECTED
+    assert peer._send_state == 0
+    assert peer._send_seq == 0
+    assert peer._recv_state == 0
+    assert peer._recv_seq == 0
+    assert peer._ack_state == 0
+    assert peer._pending_iframes == {}
+    assert peer._pending_data == []
 
 
 def test_peer_send_dm():
