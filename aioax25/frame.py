@@ -1187,6 +1187,7 @@ class AX25BaseUnnumberedFrame(AX25UnnumberedFrame):
             modifier=self.MODIFIER,
             repeaters=repeaters,
             cr=cr,
+            pf=pf,
             timestamp=timestamp,
             deadline=deadline,
         )
