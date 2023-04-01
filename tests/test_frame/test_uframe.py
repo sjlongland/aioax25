@@ -343,6 +343,36 @@ def test_encode_pf():
     assert frame.control == 0x13
 
 
+def test_encode_sabm():
+    """
+    Test we can encode a SABM frame.
+    """
+    frame = AX25SetAsyncBalancedModeFrame(
+        destination="VK4BWI", source="VK4MSL"
+    )
+    hex_cmp(
+        bytes(frame),
+        "ac 96 68 84 ae 92 e0"  # Destination
+        "ac 96 68 9a a6 98 61"  # Source
+        "3f",  # Control byte
+    )
+
+
+def test_encode_sabme():
+    """
+    Test we can encode a SABME frame.
+    """
+    frame = AX25SetAsyncBalancedModeExtendedFrame(
+        destination="VK4BWI", source="VK4MSL"
+    )
+    hex_cmp(
+        bytes(frame),
+        "ac 96 68 84 ae 92 e0"  # Destination
+        "ac 96 68 9a a6 98 61"  # Source
+        "7f",  # Control byte
+    )
+
+
 def test_encode_frmr_w():
     """
     Test we can set the W bit on a FRMR frame.
