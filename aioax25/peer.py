@@ -481,6 +481,12 @@ class AX25Peer(object):
         # manners:…"
         self._recv_state = (self._recv_state + 1) % self._modulo
 
+        # TODO: the payload here may be a repeat of data already seen, or
+        # for _future_ data (i.e. there's an I-frame that got missed in between
+        # the last one we saw, and this one).  How do we handle this possibly
+        # out-of-order data?
+        self.received_information.emit(frame=frame, payload=frame.payload)
+
         # "a) If it has an I frame to send, that I frame may be sent with the
         # transmitted N(R) equal to its receive state V(R) (thus acknowledging
         # the received frame)."
