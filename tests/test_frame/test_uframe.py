@@ -7,6 +7,7 @@ from aioax25.frame import (
     AX25UnnumberedFrame,
     AX25DisconnectModeFrame,
     AX25SetAsyncBalancedModeFrame,
+    AX25SetAsyncBalancedModeExtendedFrame,
     AX25TestFrame,
 )
 
@@ -65,6 +66,40 @@ def test_decode_sabm_payload():
         assert False, "This should not have worked"
     except ValueError as e:
         assert str(e) == "Frame does not support payload"
+
+
+def test_decode_sabme():
+    """
+    Test that a SABME frame is recognised and decoded.
+    """
+    frame = AX25Frame.decode(
+        from_hex(
+            "ac 96 68 84 ae 92 e0"  # Destination
+            "ac 96 68 9a a6 98 61"  # Source
+            "6f"  # Control byte
+        )
+    )
+    assert isinstance(
+        frame, AX25SetAsyncBalancedModeExtendedFrame
+    ), "Did not decode to SABME frame"
+
+
+def test_decode_sabme_payload():
+    """
+    Test that a SABME frame forbids payload.
+    """
+    try:
+        AX25Frame.decode(
+            from_hex(
+                "ac 96 68 84 ae 92 e0"  # Destination
+                "ac 96 68 9a a6 98 61"  # Source
+                "6f"  # Control byte
+                "11 22 33 44 55"  # Payload
+            )
+        )
+        assert False, "This should not have worked"
+    except ValueError as e:
+        eq_(str(e), "Frame does not support payload")
 
 
 def test_decode_uframe_payload():
