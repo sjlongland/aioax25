@@ -1209,7 +1209,7 @@ class AX25SetAsyncBalancedModeFrame(AX25BaseUnnumberedFrame):
     AX.25 node.
     """
 
-    MODIFIER = 0b01101111
+    MODIFIER = 0b00101111
     CR = True
 
 
@@ -1224,7 +1224,7 @@ class AX25SetAsyncBalancedModeExtendedFrame(AX25BaseUnnumberedFrame):
     AX.25 node, using modulo 128 acknowledgements.
     """
 
-    MODIFIER = 0b00101111
+    MODIFIER = 0b01101111
     CR = True
 
 
