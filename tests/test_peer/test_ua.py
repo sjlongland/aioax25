@@ -26,7 +26,7 @@ def test_peer_send_ua():
     # Request a UA frame be sent
     peer._send_ua()
 
-    # This was a request, so there should be a reply waiting
+    # There should be a frame sent
     assert len(interface.transmit_calls) == 1
     (tx_args, tx_kwargs) = interface.transmit_calls.pop(0)
 
