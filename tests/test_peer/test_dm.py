@@ -14,13 +14,13 @@ def test_peer_recv_dm():
     """
     Test when receiving a DM whilst connected, the peer disconnects.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     interface = station._interface()
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=AX25Path("VK4MSL-2", "VK4MSL-3"),
-            full_duplex=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4MSL-2", "VK4MSL-3"),
+        full_duplex=True,
     )
 
     # Set some dummy data in fields -- this should be cleared out.
@@ -37,11 +37,9 @@ def test_peer_recv_dm():
 
     # Pass the peer a DM frame
     peer._on_receive(
-            AX25DisconnectModeFrame(
-                destination=station.address,
-                source=peer.address,
-                repeaters=None
-            )
+        AX25DisconnectModeFrame(
+            destination=station.address, source=peer.address, repeaters=None
+        )
     )
 
     # We should now be "disconnected"
@@ -60,13 +58,13 @@ def test_peer_send_dm():
     """
     Test _send_dm correctly addresses and sends a DM frame.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     interface = station._interface()
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=AX25Path("VK4MSL-2", "VK4MSL-3"),
-            full_duplex=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4MSL-2", "VK4MSL-3"),
+        full_duplex=True,
     )
 
     # Request a DM frame be sent
@@ -77,7 +75,7 @@ def test_peer_send_dm():
     (tx_args, tx_kwargs) = interface.transmit_calls.pop(0)
 
     # This should be a DM
-    assert tx_kwargs == {'callback': None}
+    assert tx_kwargs == {"callback": None}
     assert len(tx_args) == 1
     (frame,) = tx_args
     assert isinstance(frame, AX25DisconnectModeFrame)

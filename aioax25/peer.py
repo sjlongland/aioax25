@@ -248,9 +248,16 @@ class AX25Peer(object):
 
             if all_paths:
                 best_path = all_paths[-1][0]
+                self._log.info(
+                    "Choosing highest rated TX/most common RX path: %s",
+                    best_path,
+                )
             else:
                 # If no paths exist, use whatever default path is set
                 best_path = self._repeaters
+                self._log.info(
+                    "Choosing given path for replies: %s", best_path
+                )
 
             # Use this until we have reason to change
             self._reply_path = AX25Path(*(best_path or []))
@@ -268,11 +275,17 @@ class AX25Peer(object):
         if relative:
             weight += self._tx_path_score.get(path, 0)
         self._tx_path_score[path] = weight
+        self._log.debug("Weighted score for %s: %d", path, weight)
 
     def ping(self, payload=None, timeout=30.0, callback=None):
         """
         Ping the peer and wait for a response.
         """
+        self._log.debug(
+            "Beginning ping of station (payload=%r timeout=%r)",
+            payload,
+            timeout,
+        )
         handler = AX25PeerTestHandler(self, bytes(payload or b""), timeout)
         handler.done_sig.connect(self._on_test_done)
 
@@ -287,9 +300,15 @@ class AX25Peer(object):
         Connect to the remote node.
         """
         if self._state is self.AX25PeerState.DISCONNECTED:
+            self._log.info("Initiating connection to remote peer")
             handler = AX25PeerConnectionHandler(self)
             handler.done_sig.connect(self._on_connect_response)
             handler._go()
+        else:
+            self._log.info(
+                "Will not connect to peer now, currently in state %s.",
+                self._state.name,
+            )
 
     def accept(self):
         """
@@ -301,6 +320,12 @@ class AX25Peer(object):
             self._stop_ack_timer()
             self._set_conn_state(self.AX25PeerState.CONNECTED)
             self._send_ua()
+        else:
+            self._log.info(
+                "Will not accept connection from peer now, "
+                "currently in state %s.",
+                self._state.name,
+            )
 
     def reject(self):
         """
@@ -312,6 +337,12 @@ class AX25Peer(object):
             self._stop_ack_timer()
             self._set_conn_state(self.AX25PeerState.DISCONNECTED)
             self._send_dm()
+        else:
+            self._log.info(
+                "Will not reject connection from peer now, "
+                "currently in state %s.",
+                self._state.name,
+            )
 
     def disconnect(self):
         """
@@ -322,6 +353,12 @@ class AX25Peer(object):
             self._set_conn_state(self.AX25PeerState.DISCONNECTING)
             self._send_disc()
             self._start_disconnect_ack_timer()
+        else:
+            self._log.info(
+                "Will not disconnect from peer now, "
+                "currently in state %s.",
+                self._state.name,
+            )
 
     def _cancel_idle_timeout(self):
         """
@@ -353,6 +390,10 @@ class AX25Peer(object):
                 self.disconnect()
             else:
                 self._send_dm()
+        else:
+            self._log.debug(
+                "Clean-up initiated in state %s", self._state.name
+            )
 
         # Cancel other timers
         self._cancel_rr_notification()
@@ -370,7 +411,11 @@ class AX25Peer(object):
         if not self._locked_path:
             # Increment the received frame count
             path = tuple(reversed(frame.header.repeaters.reply))
-            self._rx_path_count[path] = self._rx_path_count.get(path, 0) + 1
+            pathcount = self._rx_path_count.get(path, 0) + 1
+            self._log.debug(
+                "Observed %d frame(s) via path %s", pathcount, path
+            )
+            self._rx_path_count[path] = pathcount
 
         # AX.25 2.2 sect 6.3.1: "The originating TNC sending a SABM(E) command
         # ignores and discards any frames except SABM, DISC, UA and DM frames
@@ -450,6 +495,9 @@ class AX25Peer(object):
                     )
             else:
                 # No connection in progress, send a DM.
+                self._log.debug(
+                    "Received I or S frame in state %s", self._state.name
+                )
                 return self._send_dm()
 
     def _on_receive_iframe(self, frame):
@@ -474,6 +522,11 @@ class AX25Peer(object):
         # is not in the busy condition,…"
         if frame.ns != self._recv_seq:
             # TODO: should we send a REJ/SREJ after a time-out?
+            self._log.debug(
+                "I-frame sequence is %s, expecting %s, ignoring",
+                frame.ns,
+                self._recv_seq,
+            )
             return
 
         # "…it accepts the received I frame,
@@ -517,6 +570,7 @@ class AX25Peer(object):
     def _on_receive_rr(self, frame):
         if frame.header.pf:
             # Peer requesting our RR status
+            self._log.debug("RR status requested from peer")
             self._on_receive_rr_rnr_rej_query()
         else:
             # Received peer's RR status, peer no longer busy
@@ -530,6 +584,7 @@ class AX25Peer(object):
     def _on_receive_rnr(self, frame):
         if frame.header.pf:
             # Peer requesting our RNR status
+            self._log.debug("RNR status requested from peer")
             self._on_receive_rr_rnr_rej_query()
         else:
             # Received peer's RNR status, peer is busy
@@ -541,9 +596,11 @@ class AX25Peer(object):
     def _on_receive_rej(self, frame):
         if frame.header.pf:
             # Peer requesting rejected frame status.
+            self._log.debug("REJ status requested from peer")
             self._on_receive_rr_rnr_rej_query()
         else:
             # Reject reject.
+            self._log.debug("REJ notification received from peer")
             # AX.25 sect 4.3.2.3: "Any frames sent with a sequence number
             # of N(R)-1 or less are acknowledged."
             self._ack_outstanding((frame.nr - 1) % self._modulo)
@@ -557,6 +614,7 @@ class AX25Peer(object):
             # AX.25 2.2 sect 4.3.2.4: "If the P/F bit in the SREJ is set to
             # '1', then I frames numbered up to N(R)-1 inclusive are considered
             # as acknowledged."
+            self._log.debug("SREJ received with P/F=1")
             self._ack_outstanding((frame.nr - 1) % self._modulo)
 
         # Re-send the outstanding frame
@@ -598,12 +656,15 @@ class AX25Peer(object):
 
     def _on_test_done(self, handler, **kwargs):
         if not self._testframe_handler:
+            self._log.debug("TEST completed without frame handler")
             return
 
         real_handler = self._testframe_handler()
         if (real_handler is not None) and (handler is not real_handler):
+            self._log.debug("TEST completed with stale handler")
             return
 
+        self._log.debug("TEST completed, removing handler")
         self._testframe_handler = None
 
     def _on_receive_frmr(self, frame):
@@ -624,6 +685,7 @@ class AX25Peer(object):
             # If we don't know the protocol of the peer, we can safely assume
             # AX.25 2.2 now.
             if self._protocol == AX25Version.UNKNOWN:
+                self._log.info("Assuming sender is AX.25 2.2")
                 self._protocol = AX25Version.AX25_22
 
             # Make sure both ends are enabled for AX.25 2.2
@@ -663,8 +725,10 @@ class AX25Peer(object):
         else:
             # Set the incoming connection state, and emit a signal via the
             # station's 'connection_request' signal.
+            self._log.debug("Preparing incoming connection")
             self._set_conn_state(self.AX25PeerState.INCOMING_CONNECTION)
             self._start_connect_ack_timer()
+            self._log.debug("Announcing incoming connection")
             self._station().connection_request.emit(peer=self)
 
     def _start_connect_ack_timer(self):
@@ -686,11 +750,17 @@ class AX25Peer(object):
 
     def _on_incoming_connect_timeout(self):
         if self._state is self.AX25PeerState.INCOMING_CONNECTION:
+            self._log.info("Incoming connection timed out")
             self._ack_timeout_handle = None
             self.reject()
+        else:
+            self._log.debug(
+                "Incoming connection time-out in state %s", self._state.name
+            )
 
     def _on_connect_response(self, response, **kwargs):
         # Handle the connection result.
+        self._log.debug("Connection response: %r", response)
         if response == "ack":
             # We're in.
             self._set_conn_state(self.AX25PeerState.CONNECTED)
@@ -708,6 +778,7 @@ class AX25Peer(object):
                 "%s does not support negotiation" % self._protocol.value
             )
 
+        self._log.debug("Attempting protocol negotiation")
         handler = AX25PeerNegotiationHandler(self)
         handler.done_sig.connect(self._on_negotiate_result)
         handler.done_sig.connect(callback)
@@ -720,6 +791,7 @@ class AX25Peer(object):
         """
         Handle the negotiation response.
         """
+        self._log.debug("Negotiation response: %r", response)
         if response in ("frmr", "dm"):
             # Other station did not like this.
             self._log.info(
@@ -741,6 +813,7 @@ class AX25Peer(object):
             self._protocol = AX25Version.AX25_22
 
         self._negotiated = True
+        self._log.debug("XID negotiation complete")
         self._set_conn_state(self.AX25PeerState.DISCONNECTED)
 
     def _init_connection(self, extended):
@@ -749,6 +822,7 @@ class AX25Peer(object):
         """
         if extended:
             # Set the maximum outstanding frames variable
+            self._log.debug("Initialising AX.25 2.2 mod128 connection")
             self._max_outstanding = self._max_outstanding_mod128
 
             # Initialise the modulo value
@@ -761,6 +835,7 @@ class AX25Peer(object):
             self._REJFrameClass = AX2516BitRejectFrame
             self._SREJFrameClass = AX2516BitSelectiveRejectFrame
         else:
+            self._log.debug("Initialising AX.25 2.0 mod8 connection")
             # Set the maximum outstanding frames variable
             self._max_outstanding = self._max_outstanding_mod8
 
@@ -778,6 +853,8 @@ class AX25Peer(object):
         self._reset_connection_state()
 
     def _reset_connection_state(self):
+        self._log.debug("Resetting the peer state")
+
         # Reset our state
         self._send_state = 0  # AKA V(S)
         self._send_seq = 0  # AKA N(S)
@@ -807,9 +884,12 @@ class AX25Peer(object):
 
     def _on_disc_ua_timeout(self):
         if self._state is self.AX25PeerState.DISCONNECTING:
+            self._log.info("DISC timed out, assuming we're disconnected")
             # Assume we are disconnected.
             self._ack_timeout_handle = None
             self._on_disconnect()
+        else:
+            self._log.debug("DISC time-out in state %s", self._state.name)
 
     def _on_disconnect(self):
         """
@@ -845,6 +925,8 @@ class AX25Peer(object):
         self._log.info("Received UA from peer")
         if self._uaframe_handler:
             self._uaframe_handler()
+        else:
+            self._log.debug("No one cares about the UA")
 
     def _on_receive_dm(self):
         """
@@ -855,8 +937,15 @@ class AX25Peer(object):
             self._log.info("Received DM from peer")
             self._on_disconnect()
         elif self._dmframe_handler:
+            self._log.debug(
+                "Received DM from peer whilst in state %s", self._state.name
+            )
             self._dmframe_handler()
             self._dmframe_handler = None
+        else:
+            self._log.debug(
+                "No one cares about the DM in state %s", self._state.name
+            )
 
     def _on_receive_xid(self, frame):
         """
@@ -877,12 +966,16 @@ class AX25Peer(object):
             # AX.25 2.2 sect 4.3.3.7: "A station receiving an XID command
             # returns an XID response unless a UA response to a mode setting
             # command is awaiting transmission, or a FRMR condition exists".
-            self._log.warning("UA is pending, dropping received XID")
+            self._log.warning(
+                "UA is pending, dropping received XID (state %s)",
+                self._state.name,
+            )
             return
 
         # We have received an XID, AX.25 2.0 and earlier stations do not know
         # this frame, so clearly this is at least AX.25 2.2.
         if self._protocol == AX25Version.UNKNOWN:
+            self._log.info("Assuming AX.25 2.2 peer")
             self._protocol = AX25Version.AX25_22
 
         # Don't process the contents of the frame unless FI and GI match.
@@ -936,15 +1029,21 @@ class AX25Peer(object):
 
         if frame.header.cr:
             # Other station is requesting negotiation, send response.
+            self._log.debug("Sending XID response")
             self._send_xid(cr=False)
         elif self._xidframe_handler is not None:
             # This is a reply to our XID
+            self._log.debug("Forwarding XID response")
             self._xidframe_handler(frame)
             self._xidframe_handler = None
+        else:
+            # No one cared?
+            self._log.debug("Received XID response but no one cares")
 
         # Having received the XID, we consider ourselves having negotiated
         # parameters.  Future connections will skip this step.
         self._negotiated = True
+        self._log.debug("XID negotiation complete")
 
     def _process_xid_cop(self, param):
         if param.pv is None:
@@ -1361,6 +1460,7 @@ class AX25PeerHelper(object):
 
         self._done = True
         self._stop_timer()
+        self._log.debug("finished: %r", kwargs)
         self.done_sig.emit(**kwargs)
 
 
@@ -1380,15 +1480,18 @@ class AX25PeerConnectionHandler(AX25PeerHelper):
     def _go(self):
         if self.peer._negotiated:
             # Already done, we can connect immediately
+            self._log.debug("XID negotiation already done")
             self._on_negotiated(response="already")
         elif (
             self.peer._protocol
             not in (AX25Version.AX25_22, AX25Version.UNKNOWN)
         ) or (self.peer._station()._protocol != AX25Version.AX25_22):
             # Not compatible, just connect
+            self._log.debug("XID negotiation not supported")
             self._on_negotiated(response="not_compatible")
         else:
             # Need to negotiate first.
+            self._log.debug("XID negotiation to be attempted")
             self.peer._negotiate(self._on_negotiated)
 
     def _on_negotiated(self, response, **kwargs):
@@ -1409,8 +1512,13 @@ class AX25PeerConnectionHandler(AX25PeerHelper):
                 or (self.peer._sabmframe_handler is not None)
             ):
                 # We're handling another frame now.
+                self._log.debug("Received XID, but we're busy")
                 self._finish(response="station_busy")
                 return
+
+            self._log.debug(
+                "XID done (state %s), beginning connection", response
+            )
             self.peer._sabmframe_handler = self._on_receive_sabm
             self.peer._uaframe_handler = self._on_receive_ua
             self.peer._frmrframe_handler = self._on_receive_frmr
@@ -1418,46 +1526,57 @@ class AX25PeerConnectionHandler(AX25PeerHelper):
             self.peer._send_sabm()
             self._start_timer()
         else:
+            self._log.debug("Bailing out due to XID response %s", response)
             self._finish(response=response)
 
     def _on_receive_ua(self):
         # Peer just acknowledged our connection
+        self._log.debug("UA received, connection established")
         self.peer._init_connection(self.peer._modulo128)
         self._finish(response="ack")
 
     def _on_receive_sabm(self):
         # Peer was connecting to us, we'll treat this as a UA.
+        self._log.debug("SABM received, connection established")
         self.peer._send_ua()
         self._finish(response="ack")
 
     def _on_receive_frmr(self):
         # Peer just rejected our connect frame, begin FRMR recovery.
+        self._log.debug("FRMR received, recovering")
         self.peer._send_dm()
         self._finish(response="frmr")
 
     def _on_receive_dm(self):
         # Peer just rejected our connect frame.
+        self._log.debug("DM received, bailing here")
         self._finish(response="dm")
 
     def _on_timeout(self):
         if self._retries:
             self._retries -= 1
+            self._log.debug("Retrying, remaining=%d", self._retries)
             self._on_negotiated(response="retry")
         else:
+            self._log.debug("Giving up")
             self._finish(response="timeout")
 
     def _finish(self, **kwargs):
         # Clean up hooks
         if self.peer._sabmframe_handler == self._on_receive_sabm:
+            self._log.debug("Unhooking SABM handler")
             self.peer._sabmframe_handler = None
 
         if self.peer._uaframe_handler == self._on_receive_ua:
+            self._log.debug("Unhooking UA handler")
             self.peer._uaframe_handler = None
 
         if self.peer._frmrframe_handler == self._on_receive_frmr:
+            self._log.debug("Unhooking FRMR handler")
             self.peer._frmrframe_handler = None
 
         if self.peer._dmframe_handler == self._on_receive_dm:
+            self._log.debug("Unhooking DM handler")
             self.peer._dmframe_handler = None
 
         super(AX25PeerConnectionHandler, self)._finish(**kwargs)

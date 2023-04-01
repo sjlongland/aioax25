@@ -4,8 +4,12 @@
 Tests for AX25Peer DISC handling
 """
 
-from aioax25.frame import AX25Address, AX25Path, AX25DisconnectFrame, \
-        AX25UnnumberedAcknowledgeFrame
+from aioax25.frame import (
+    AX25Address,
+    AX25Path,
+    AX25DisconnectFrame,
+    AX25UnnumberedAcknowledgeFrame,
+)
 from aioax25.version import AX25Version
 from .peer import TestingAX25Peer
 from ..mocks import DummyStation, DummyTimeout
@@ -15,13 +19,14 @@ def test_peer_recv_disc():
     """
     Test when receiving a DISC whilst connected, the peer disconnects.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     interface = station._interface()
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=AX25Path("VK4MSL-2", "VK4MSL-3"),
-            full_duplex=True, locked_path=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4MSL-2", "VK4MSL-3"),
+        full_duplex=True,
+        locked_path=True,
     )
 
     # Set some dummy data in fields -- this should be cleared out.
@@ -38,11 +43,9 @@ def test_peer_recv_disc():
 
     # Pass the peer a DISC frame
     peer._on_receive(
-            AX25DisconnectFrame(
-                destination=station.address,
-                source=peer.address,
-                repeaters=None
-            )
+        AX25DisconnectFrame(
+            destination=station.address, source=peer.address, repeaters=None
+        )
     )
 
     # This was a request, so there should be a reply waiting
@@ -50,7 +53,7 @@ def test_peer_recv_disc():
     (tx_args, tx_kwargs) = interface.transmit_calls.pop(0)
 
     # This should be a UA in reply to the DISC
-    assert tx_kwargs == {'callback': None}
+    assert tx_kwargs == {"callback": None}
     assert len(tx_args) == 1
     (frame,) = tx_args
     assert isinstance(frame, AX25UnnumberedAcknowledgeFrame)
@@ -75,13 +78,13 @@ def test_peer_send_disc():
     """
     Test _send_disc correctly addresses and sends a DISC frame.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     interface = station._interface()
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=AX25Path("VK4MSL-2", "VK4MSL-3"),
-            full_duplex=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4MSL-2", "VK4MSL-3"),
+        full_duplex=True,
     )
 
     # Request a DISC frame be sent
@@ -92,7 +95,7 @@ def test_peer_send_disc():
     (tx_args, tx_kwargs) = interface.transmit_calls.pop(0)
 
     # This should be a DISC
-    assert tx_kwargs == {'callback': None}
+    assert tx_kwargs == {"callback": None}
     assert len(tx_args) == 1
     (frame,) = tx_args
     assert isinstance(frame, AX25DisconnectFrame)
