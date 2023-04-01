@@ -1003,7 +1003,7 @@ class AX25BaseUnnumberedFrame(AX25UnnumberedFrame):
 
         super(AX25BaseUnnumberedFrame, self).__init__(destination=destination,
                 source=source, modifier=self.MODIFIER, repeaters=repeaters,
-                cr=cr, timestamp=timestamp, deadline=deadline)
+                cr=cr, pf=pf, timestamp=timestamp, deadline=deadline)
 
     def _copy(self):
         return self.__class__(
