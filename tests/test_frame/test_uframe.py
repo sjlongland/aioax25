@@ -42,7 +42,7 @@ def test_decode_sabm():
         from_hex(
             "ac 96 68 84 ae 92 e0"  # Destination
             "ac 96 68 9a a6 98 61"  # Source
-            "2f"  # Control byte
+            "3f"  # Control byte
         )
     )
     assert isinstance(
@@ -59,7 +59,7 @@ def test_decode_sabm_payload():
             from_hex(
                 "ac 96 68 84 ae 92 e0"  # Destination
                 "ac 96 68 9a a6 98 61"  # Source
-                "2f"  # Control byte
+                "3f"  # Control byte
                 "11 22 33 44 55"  # Payload
             )
         )
@@ -76,7 +76,7 @@ def test_decode_sabme():
         from_hex(
             "ac 96 68 84 ae 92 e0"  # Destination
             "ac 96 68 9a a6 98 61"  # Source
-            "6f"  # Control byte
+            "7f"  # Control byte
         )
     )
     assert isinstance(
