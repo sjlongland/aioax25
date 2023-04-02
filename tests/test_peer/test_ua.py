@@ -14,6 +14,29 @@ from .peer import TestingAX25Peer
 from ..mocks import DummyStation
 
 
+# UA reception
+
+
+def test_peer_recv_ua():
+    """
+    Test _on_receive_ua does nothing if no UA expected.
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = TestingAX25Peer(
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4MSL-2", "VK4MSL-3"),
+        full_duplex=True,
+    )
+
+    peer._on_receive_ua()
+
+    # does nothing
+
+
+# UA transmission
+
+
 def test_peer_send_ua():
     """
     Test _send_ua correctly addresses and sends a UA frame.
