@@ -1154,7 +1154,7 @@ class AX25BaseUnnumberedFrame(AX25UnnumberedFrame):
     """
 
     # Defaults for PF, CR fields
-    PF = False
+    PF = True
     CR = False
 
     @classmethod
@@ -1216,7 +1216,6 @@ class AX25SetAsyncBalancedModeFrame(AX25BaseUnnumberedFrame):
 
     MODIFIER = 0b00101111
     CR = True
-    PF = True
 
 
 AX25UnnumberedFrame.register(AX25SetAsyncBalancedModeFrame)
@@ -1232,7 +1231,6 @@ class AX25SetAsyncBalancedModeExtendedFrame(AX25BaseUnnumberedFrame):
 
     MODIFIER = 0b01101111
     CR = True
-    PF = True
 
 
 AX25UnnumberedFrame.register(AX25SetAsyncBalancedModeExtendedFrame)
