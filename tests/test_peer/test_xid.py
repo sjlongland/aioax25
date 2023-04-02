@@ -4,17 +4,20 @@
 Tests for AX25Peer XID handling
 """
 
-from aioax25.frame import AX25Address, AX25XIDClassOfProceduresParameter, \
-        AX25XIDHDLCOptionalFunctionsParameter, \
-        AX25XIDIFieldLengthTransmitParameter, \
-        AX25XIDIFieldLengthReceiveParameter, \
-        AX25XIDWindowSizeTransmitParameter, \
-        AX25XIDWindowSizeReceiveParameter, \
-        AX25XIDAcknowledgeTimerParameter, \
-        AX25XIDRetriesParameter, \
-        AX25XIDRawParameter, \
-        AX25ExchangeIdentificationFrame, \
-        AX25FrameRejectFrame
+from aioax25.frame import (
+    AX25Address,
+    AX25XIDClassOfProceduresParameter,
+    AX25XIDHDLCOptionalFunctionsParameter,
+    AX25XIDIFieldLengthTransmitParameter,
+    AX25XIDIFieldLengthReceiveParameter,
+    AX25XIDWindowSizeTransmitParameter,
+    AX25XIDWindowSizeReceiveParameter,
+    AX25XIDAcknowledgeTimerParameter,
+    AX25XIDRetriesParameter,
+    AX25XIDRawParameter,
+    AX25ExchangeIdentificationFrame,
+    AX25FrameRejectFrame,
+)
 from aioax25.version import AX25Version
 from .peer import TestingAX25Peer
 from ..mocks import DummyStation
@@ -24,18 +27,18 @@ def test_peer_process_xid_cop_fds_fdp():
     """
     Test _process_xid_cop enables full-duplex if both stations negotiate it.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            full_duplex=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        full_duplex=True,
     )
 
     # Pass in a CoP XID parameter
-    peer._process_xid_cop(AX25XIDClassOfProceduresParameter(
-        full_duplex=True, half_duplex=False
-    ))
+    peer._process_xid_cop(
+        AX25XIDClassOfProceduresParameter(full_duplex=True, half_duplex=False)
+    )
 
     # Full duplex should be enabled
     assert peer._full_duplex
@@ -45,18 +48,18 @@ def test_peer_process_xid_cop_fds_hdp():
     """
     Test _process_xid_cop disables full-duplex if the peer is half-duplex.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            full_duplex=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        full_duplex=True,
     )
 
     # Pass in a CoP XID parameter
-    peer._process_xid_cop(AX25XIDClassOfProceduresParameter(
-        full_duplex=False, half_duplex=True
-    ))
+    peer._process_xid_cop(
+        AX25XIDClassOfProceduresParameter(full_duplex=False, half_duplex=True)
+    )
 
     # Full duplex should be disabled
     assert not peer._full_duplex
@@ -66,18 +69,18 @@ def test_peer_process_xid_cop_hds_fdp():
     """
     Test _process_xid_cop disables full-duplex if the station is half-duplex.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            full_duplex=False
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        full_duplex=False,
     )
 
     # Pass in a CoP XID parameter
-    peer._process_xid_cop(AX25XIDClassOfProceduresParameter(
-        full_duplex=True, half_duplex=False
-    ))
+    peer._process_xid_cop(
+        AX25XIDClassOfProceduresParameter(full_duplex=True, half_duplex=False)
+    )
 
     # Full duplex should be disabled
     assert not peer._full_duplex
@@ -88,18 +91,18 @@ def test_peer_process_xid_cop_malformed_cop_fdx_hdx():
     Test _process_xid_cop disables full-duplex the CoP frame sets both
     half-duplex and full-duplex flags.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            full_duplex=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        full_duplex=True,
     )
 
     # Pass in a CoP XID parameter
-    peer._process_xid_cop(AX25XIDClassOfProceduresParameter(
-        full_duplex=True, half_duplex=True
-    ))
+    peer._process_xid_cop(
+        AX25XIDClassOfProceduresParameter(full_duplex=True, half_duplex=True)
+    )
 
     # Full duplex should be disabled
     assert not peer._full_duplex
@@ -110,18 +113,20 @@ def test_peer_process_xid_cop_malformed_cop_nfdx_nhdx():
     Test _process_xid_cop disables full-duplex the CoP frame clears both
     half-duplex and full-duplex flags.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            full_duplex=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        full_duplex=True,
     )
 
     # Pass in a CoP XID parameter
-    peer._process_xid_cop(AX25XIDClassOfProceduresParameter(
-        full_duplex=False, half_duplex=False
-    ))
+    peer._process_xid_cop(
+        AX25XIDClassOfProceduresParameter(
+            full_duplex=False, half_duplex=False
+        )
+    )
 
     # Full duplex should be disabled
     assert not peer._full_duplex
@@ -131,19 +136,18 @@ def test_peer_process_xid_cop_default():
     """
     Test _process_xid_cop assumes AX.25 2.2 defaults if given null CoP
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            full_duplex=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        full_duplex=True,
     )
 
     # Pass in a CoP XID parameter
-    peer._process_xid_cop(AX25XIDRawParameter(
-        pi=AX25XIDClassOfProceduresParameter.PI,
-        pv=None
-    ))
+    peer._process_xid_cop(
+        AX25XIDRawParameter(pi=AX25XIDClassOfProceduresParameter.PI, pv=None)
+    )
 
     # Full duplex should be disabled
     assert not peer._full_duplex
@@ -153,18 +157,18 @@ def test_peer_process_xid_hdlcoptfunc_stnssr_peerssr():
     """
     Test _process_xid_hdlcoptfunc sets SRR if both set SRR
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            reject_mode=TestingAX25Peer.AX25RejectMode.SELECTIVE_RR
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        reject_mode=TestingAX25Peer.AX25RejectMode.SELECTIVE_RR,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
-    peer._process_xid_hdlcoptfunc(AX25XIDHDLCOptionalFunctionsParameter(
-        rej=True, srej=True
-    ))
+    peer._process_xid_hdlcoptfunc(
+        AX25XIDHDLCOptionalFunctionsParameter(rej=True, srej=True)
+    )
 
     # Selective Reject-Reject should be chosen.
     assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.SELECTIVE_RR
@@ -174,18 +178,18 @@ def test_peer_process_xid_hdlcoptfunc_stnsr_peerssr():
     """
     Test _process_xid_hdlcoptfunc sets SR if station sets SR
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            reject_mode=TestingAX25Peer.AX25RejectMode.SELECTIVE
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        reject_mode=TestingAX25Peer.AX25RejectMode.SELECTIVE,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
-    peer._process_xid_hdlcoptfunc(AX25XIDHDLCOptionalFunctionsParameter(
-        rej=True, srej=True
-    ))
+    peer._process_xid_hdlcoptfunc(
+        AX25XIDHDLCOptionalFunctionsParameter(rej=True, srej=True)
+    )
 
     # Selective Reject should be chosen.
     assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.SELECTIVE
@@ -195,18 +199,18 @@ def test_peer_process_xid_hdlcoptfunc_stnssr_peersr():
     """
     Test _process_xid_hdlcoptfunc sets SR if peer sets SR
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            reject_mode=TestingAX25Peer.AX25RejectMode.SELECTIVE_RR
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        reject_mode=TestingAX25Peer.AX25RejectMode.SELECTIVE_RR,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
-    peer._process_xid_hdlcoptfunc(AX25XIDHDLCOptionalFunctionsParameter(
-        rej=False, srej=True
-    ))
+    peer._process_xid_hdlcoptfunc(
+        AX25XIDHDLCOptionalFunctionsParameter(rej=False, srej=True)
+    )
 
     # Selective Reject should be chosen.
     assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.SELECTIVE
@@ -216,18 +220,18 @@ def test_peer_process_xid_hdlcoptfunc_stnsr_peersr():
     """
     Test _process_xid_hdlcoptfunc sets SR if both agree on SR
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            reject_mode=TestingAX25Peer.AX25RejectMode.SELECTIVE
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        reject_mode=TestingAX25Peer.AX25RejectMode.SELECTIVE,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
-    peer._process_xid_hdlcoptfunc(AX25XIDHDLCOptionalFunctionsParameter(
-        rej=False, srej=True
-    ))
+    peer._process_xid_hdlcoptfunc(
+        AX25XIDHDLCOptionalFunctionsParameter(rej=False, srej=True)
+    )
 
     # Selective Reject should be chosen.
     assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.SELECTIVE
@@ -237,18 +241,18 @@ def test_peer_process_xid_hdlcoptfunc_stnir_peersr():
     """
     Test _process_xid_hdlcoptfunc sets IR if station sets IR (peer=SR)
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            reject_mode=TestingAX25Peer.AX25RejectMode.IMPLICIT
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        reject_mode=TestingAX25Peer.AX25RejectMode.IMPLICIT,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
-    peer._process_xid_hdlcoptfunc(AX25XIDHDLCOptionalFunctionsParameter(
-        rej=False, srej=True
-    ))
+    peer._process_xid_hdlcoptfunc(
+        AX25XIDHDLCOptionalFunctionsParameter(rej=False, srej=True)
+    )
 
     # Implicit Reject should be chosen.
     assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.IMPLICIT
@@ -258,18 +262,18 @@ def test_peer_process_xid_hdlcoptfunc_stnsr_peerir():
     """
     Test _process_xid_hdlcoptfunc sets IR if peer sets IR (station=SR)
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            reject_mode=TestingAX25Peer.AX25RejectMode.SELECTIVE
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        reject_mode=TestingAX25Peer.AX25RejectMode.SELECTIVE,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
-    peer._process_xid_hdlcoptfunc(AX25XIDHDLCOptionalFunctionsParameter(
-        rej=True, srej=False
-    ))
+    peer._process_xid_hdlcoptfunc(
+        AX25XIDHDLCOptionalFunctionsParameter(rej=True, srej=False)
+    )
 
     # Implicit Reject should be chosen.
     assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.IMPLICIT
@@ -279,18 +283,18 @@ def test_peer_process_xid_hdlcoptfunc_stnir_peerssr():
     """
     Test _process_xid_hdlcoptfunc sets IR if station sets IR (peer=SSR)
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            reject_mode=TestingAX25Peer.AX25RejectMode.IMPLICIT
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        reject_mode=TestingAX25Peer.AX25RejectMode.IMPLICIT,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
-    peer._process_xid_hdlcoptfunc(AX25XIDHDLCOptionalFunctionsParameter(
-        rej=True, srej=True
-    ))
+    peer._process_xid_hdlcoptfunc(
+        AX25XIDHDLCOptionalFunctionsParameter(rej=True, srej=True)
+    )
 
     # Implicit Reject should be chosen.
     assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.IMPLICIT
@@ -300,18 +304,18 @@ def test_peer_process_xid_hdlcoptfunc_stnssr_peerir():
     """
     Test _process_xid_hdlcoptfunc sets IR if peer sets IR (station=SSR)
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            reject_mode=TestingAX25Peer.AX25RejectMode.SELECTIVE_RR
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        reject_mode=TestingAX25Peer.AX25RejectMode.SELECTIVE_RR,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
-    peer._process_xid_hdlcoptfunc(AX25XIDHDLCOptionalFunctionsParameter(
-        rej=True, srej=False
-    ))
+    peer._process_xid_hdlcoptfunc(
+        AX25XIDHDLCOptionalFunctionsParameter(rej=True, srej=False)
+    )
 
     # Implicit Reject should be chosen.
     assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.IMPLICIT
@@ -321,18 +325,18 @@ def test_peer_process_xid_hdlcoptfunc_malformed_rej_srej():
     """
     Test _process_xid_hdlcoptfunc sets IR if peer clears REJ and SREJ
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            reject_mode=TestingAX25Peer.AX25RejectMode.SELECTIVE_RR
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        reject_mode=TestingAX25Peer.AX25RejectMode.SELECTIVE_RR,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
-    peer._process_xid_hdlcoptfunc(AX25XIDHDLCOptionalFunctionsParameter(
-        rej=False, srej=False
-    ))
+    peer._process_xid_hdlcoptfunc(
+        AX25XIDHDLCOptionalFunctionsParameter(rej=False, srej=False)
+    )
 
     # Implicit Reject should be chosen.
     assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.IMPLICIT
@@ -342,19 +346,20 @@ def test_peer_process_xid_hdlcoptfunc_default_rej_srej():
     """
     Test _process_xid_hdlcoptfunc sets SR if peer does not send value.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            reject_mode=TestingAX25Peer.AX25RejectMode.SELECTIVE_RR
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        reject_mode=TestingAX25Peer.AX25RejectMode.SELECTIVE_RR,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
-    peer._process_xid_hdlcoptfunc(AX25XIDRawParameter(
-        pi=AX25XIDHDLCOptionalFunctionsParameter.PI,
-        pv=None
-    ))
+    peer._process_xid_hdlcoptfunc(
+        AX25XIDRawParameter(
+            pi=AX25XIDHDLCOptionalFunctionsParameter.PI, pv=None
+        )
+    )
 
     # Selective Reject should be chosen.
     assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.SELECTIVE
@@ -364,18 +369,18 @@ def test_peer_process_xid_hdlcoptfunc_s128_p128():
     """
     Test _process_xid_hdlcoptfunc sets mod128 if both agree
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            modulo128=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        modulo128=True,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
-    peer._process_xid_hdlcoptfunc(AX25XIDHDLCOptionalFunctionsParameter(
-        modulo8=False, modulo128=True
-    ))
+    peer._process_xid_hdlcoptfunc(
+        AX25XIDHDLCOptionalFunctionsParameter(modulo8=False, modulo128=True)
+    )
 
     # Modulo128 should be chosen.
     assert peer._modulo128
@@ -385,18 +390,18 @@ def test_peer_process_xid_hdlcoptfunc_s128_p8():
     """
     Test _process_xid_hdlcoptfunc sets mod8 if peer sets mod8
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            modulo128=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        modulo128=True,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
-    peer._process_xid_hdlcoptfunc(AX25XIDHDLCOptionalFunctionsParameter(
-        modulo8=True, modulo128=False
-    ))
+    peer._process_xid_hdlcoptfunc(
+        AX25XIDHDLCOptionalFunctionsParameter(modulo8=True, modulo128=False)
+    )
 
     # Modulo8 should be chosen.
     assert not peer._modulo128
@@ -406,18 +411,18 @@ def test_peer_process_xid_hdlcoptfunc_s8_p128():
     """
     Test _process_xid_hdlcoptfunc sets mod8 if station sets mod8
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            modulo128=False
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        modulo128=False,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
-    peer._process_xid_hdlcoptfunc(AX25XIDHDLCOptionalFunctionsParameter(
-        modulo8=False, modulo128=True
-    ))
+    peer._process_xid_hdlcoptfunc(
+        AX25XIDHDLCOptionalFunctionsParameter(modulo8=False, modulo128=True)
+    )
 
     # Modulo8 should be chosen.
     assert not peer._modulo128
@@ -427,18 +432,18 @@ def test_peer_process_xid_hdlcoptfunc_s8_p8():
     """
     Test _process_xid_hdlcoptfunc sets mod8 if both agree on mod8
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            modulo128=False
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        modulo128=False,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
-    peer._process_xid_hdlcoptfunc(AX25XIDHDLCOptionalFunctionsParameter(
-        modulo8=True, modulo128=False
-    ))
+    peer._process_xid_hdlcoptfunc(
+        AX25XIDHDLCOptionalFunctionsParameter(modulo8=True, modulo128=False)
+    )
 
     # Modulo8 should be chosen.
     assert not peer._modulo128
@@ -448,18 +453,18 @@ def test_peer_process_xid_hdlcoptfunc_malformed_m8s_m128s():
     """
     Test _process_xid_hdlcoptfunc sets mod8 if peer sets mod8 and mod128 bits
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            modulo128=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        modulo128=True,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
-    peer._process_xid_hdlcoptfunc(AX25XIDHDLCOptionalFunctionsParameter(
-        modulo8=True, modulo128=True
-    ))
+    peer._process_xid_hdlcoptfunc(
+        AX25XIDHDLCOptionalFunctionsParameter(modulo8=True, modulo128=True)
+    )
 
     # Modulo8 should be chosen.
     assert not peer._modulo128
@@ -469,18 +474,18 @@ def test_peer_process_xid_hdlcoptfunc_malformed_m8c_m128c():
     """
     Test _process_xid_hdlcoptfunc sets mod8 if peer clears mod8 and mod128 bits
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            modulo128=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        modulo128=True,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
-    peer._process_xid_hdlcoptfunc(AX25XIDHDLCOptionalFunctionsParameter(
-        modulo8=False, modulo128=False
-    ))
+    peer._process_xid_hdlcoptfunc(
+        AX25XIDHDLCOptionalFunctionsParameter(modulo8=False, modulo128=False)
+    )
 
     # Modulo8 should be chosen.
     assert not peer._modulo128
@@ -490,12 +495,12 @@ def test_peer_process_xid_ifieldlenrx_station_smaller():
     """
     Test _process_xid_ifieldlenrx chooses station's field length if it's smaller
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            max_ifield=128
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        max_ifield=128,
     )
 
     # Pass in a I-Field Length Receive XID parameter
@@ -509,12 +514,12 @@ def test_peer_process_xid_ifieldlenrx_peer_smaller():
     """
     Test _process_xid_ifieldlenrx chooses peer's field length if it's smaller
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            max_ifield=256
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        max_ifield=256,
     )
 
     # Pass in a I-Field Length Receive XID parameter
@@ -528,19 +533,20 @@ def test_peer_process_xid_ifieldlenrx_default():
     """
     Test _process_xid_ifieldlenrx assumes defaults if not given a value
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            max_ifield=256
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        max_ifield=256,
     )
 
     # Pass in a I-Field Length Receive XID parameter
-    peer._process_xid_ifieldlenrx(AX25XIDRawParameter(
-        pi=AX25XIDIFieldLengthReceiveParameter.PI,
-        pv=None
-    ))
+    peer._process_xid_ifieldlenrx(
+        AX25XIDRawParameter(
+            pi=AX25XIDIFieldLengthReceiveParameter.PI, pv=None
+        )
+    )
 
     # 256 bytes should be set
     assert peer._max_ifield == 256
@@ -550,13 +556,13 @@ def test_peer_process_xid_winszrx_station_smaller():
     """
     Test _process_xid_winszrx chooses station's window size if it's smaller
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            modulo128=True,
-            max_outstanding_mod128=63
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        modulo128=True,
+        max_outstanding_mod128=63,
     )
 
     # Pass in a Window Size Receive XID parameter
@@ -570,13 +576,13 @@ def test_peer_process_xid_winszrx_peer_smaller():
     """
     Test _process_xid_winszrx chooses peer's window size if it's smaller
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            modulo128=True,
-            max_outstanding_mod128=127
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        modulo128=True,
+        max_outstanding_mod128=127,
     )
 
     # Pass in a Window Size Receive XID parameter
@@ -590,20 +596,19 @@ def test_peer_process_xid_winszrx_default():
     """
     Test _process_xid_winszrx assumes defaults if not given a value
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            modulo128=True,
-            max_outstanding_mod128=127
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        modulo128=True,
+        max_outstanding_mod128=127,
     )
 
     # Pass in a Window Size Receive XID parameter
-    peer._process_xid_winszrx(AX25XIDRawParameter(
-        pi=AX25XIDWindowSizeReceiveParameter.PI,
-        pv=None
-    ))
+    peer._process_xid_winszrx(
+        AX25XIDRawParameter(pi=AX25XIDWindowSizeReceiveParameter.PI, pv=None)
+    )
 
     # 7 frames should be set
     assert peer._max_outstanding == 7
@@ -613,12 +618,12 @@ def test_peer_process_xid_acktimer_station_larger():
     """
     Test _process_xid_acktimer chooses station's acknowledge timer if it's larger
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            ack_timeout=10.0
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        ack_timeout=10.0,
     )
 
     # Pass in a Acknowledge Timer XID parameter
@@ -632,12 +637,12 @@ def test_peer_process_xid_acktimer_peer_larger():
     """
     Test _process_xid_acktimer chooses peer's acknowledge timer if it's larger
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            ack_timeout=5.0
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        ack_timeout=5.0,
     )
 
     # Pass in a Acknowledge Timer XID parameter
@@ -651,19 +656,18 @@ def test_peer_process_xid_acktimer_default():
     """
     Test _process_xid_acktimer assumes defaults if not given a value
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            ack_timeout=1.0
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        ack_timeout=1.0,
     )
 
     # Pass in a Acknowledge Timer XID parameter
-    peer._process_xid_acktimer(AX25XIDRawParameter(
-        pi=AX25XIDAcknowledgeTimerParameter.PI,
-        pv=None
-    ))
+    peer._process_xid_acktimer(
+        AX25XIDRawParameter(pi=AX25XIDAcknowledgeTimerParameter.PI, pv=None)
+    )
 
     # 3 seconds should be set
     assert peer._ack_timeout == 3.0
@@ -673,12 +677,12 @@ def test_peer_process_xid_retrycounter_station_larger():
     """
     Test _process_xid_retrycounter chooses station's retry count if it's larger
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            max_retries=6
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        max_retries=6,
     )
 
     # Pass in a Retries XID parameter
@@ -692,12 +696,12 @@ def test_peer_process_xid_retrycounter_peer_larger():
     """
     Test _process_xid_retrycounter chooses peer's retry count if it's larger
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            max_retries=2
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        max_retries=2,
     )
 
     # Pass in a Retries XID parameter
@@ -711,19 +715,18 @@ def test_peer_process_xid_retrycounter_default():
     """
     Test _process_xid_retrycounter assumes defaults if not given a value
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None,
-            max_retries=0
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=None,
+        max_retries=0,
     )
 
     # Pass in a Retries XID parameter
-    peer._process_xid_retrycounter(AX25XIDRawParameter(
-        pi=AX25XIDRetriesParameter.PI,
-        pv=None
-    ))
+    peer._process_xid_retrycounter(
+        AX25XIDRawParameter(pi=AX25XIDRetriesParameter.PI, pv=None)
+    )
 
     # 10 retries should be set
     assert peer._max_retries == 10
@@ -733,13 +736,11 @@ def test_peer_on_receive_xid_ax20_mode():
     """
     Test _on_receive responds with FRMR when in AX.25 2.0 mode.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     station._protocol = AX25Version.AX25_20
     interface = station._interface()
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None
+        station=station, address=AX25Address("VK4MSL"), repeaters=None
     )
 
     # Nothing yet sent
@@ -747,12 +748,12 @@ def test_peer_on_receive_xid_ax20_mode():
 
     # Pass in the XID frame to our AX.25 2.0 station.
     peer._on_receive(
-            AX25ExchangeIdentificationFrame(
-                destination=station.address,
-                source=peer.address,
-                repeaters=None,
-                parameters=[]
-            )
+        AX25ExchangeIdentificationFrame(
+            destination=station.address,
+            source=peer.address,
+            repeaters=None,
+            parameters=[],
+        )
     )
 
     # One frame sent
@@ -760,7 +761,7 @@ def test_peer_on_receive_xid_ax20_mode():
     (tx_args, tx_kwargs) = interface.transmit_calls.pop(0)
 
     # This should be a FRMR
-    assert tx_kwargs == {'callback': None}
+    assert tx_kwargs == {"callback": None}
     assert len(tx_args) == 1
     (frame,) = tx_args
     assert isinstance(frame, AX25FrameRejectFrame)
@@ -776,12 +777,10 @@ def test_peer_on_receive_xid_connecting():
     """
     Test _on_receive ignores XID when connecting.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     interface = station._interface()
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None
+        station=station, address=AX25Address("VK4MSL"), repeaters=None
     )
 
     # Nothing yet sent
@@ -792,13 +791,13 @@ def test_peer_on_receive_xid_connecting():
 
     # Pass in the XID frame to our AX.25 2.2 station.
     peer._on_receive(
-            AX25ExchangeIdentificationFrame(
-                destination=station.address,
-                source=peer.address,
-                repeaters=None,
-                parameters=[],
-                cr=True
-            )
+        AX25ExchangeIdentificationFrame(
+            destination=station.address,
+            source=peer.address,
+            repeaters=None,
+            parameters=[],
+            cr=True,
+        )
     )
 
     # Still nothing yet sent
@@ -809,12 +808,10 @@ def test_peer_on_receive_xid_disconnecting():
     """
     Test _on_receive ignores XID when disconnecting.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     interface = station._interface()
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None
+        station=station, address=AX25Address("VK4MSL"), repeaters=None
     )
 
     # Nothing yet sent
@@ -825,13 +822,13 @@ def test_peer_on_receive_xid_disconnecting():
 
     # Pass in the XID frame to our AX.25 2.2 station.
     peer._on_receive(
-            AX25ExchangeIdentificationFrame(
-                destination=station.address,
-                source=peer.address,
-                repeaters=None,
-                parameters=[],
-                cr=True
-            )
+        AX25ExchangeIdentificationFrame(
+            destination=station.address,
+            source=peer.address,
+            repeaters=None,
+            parameters=[],
+            cr=True,
+        )
     )
 
     # Still nothing yet sent
@@ -842,12 +839,10 @@ def test_peer_on_receive_xid_sets_proto_version():
     """
     Test _on_receive sets protocol version if unknown.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     interface = station._interface()
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None
+        station=station, address=AX25Address("VK4MSL"), repeaters=None
     )
 
     # Version should be unknown
@@ -855,12 +850,12 @@ def test_peer_on_receive_xid_sets_proto_version():
 
     # Pass in the XID frame to our AX.25 2.2 station.
     peer._on_receive(
-            AX25ExchangeIdentificationFrame(
-                destination=station.address,
-                source=peer.address,
-                repeaters=None,
-                parameters=[]
-            )
+        AX25ExchangeIdentificationFrame(
+            destination=station.address,
+            source=peer.address,
+            repeaters=None,
+            parameters=[],
+        )
     )
 
     # We now should consider the other station as AX.25 2.2 or better
@@ -871,23 +866,23 @@ def test_peer_on_receive_xid_keeps_known_proto_version():
     """
     Test _on_receive keeps existing protocol version if known.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     interface = station._interface()
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            protocol=AX25Version.AX25_22,
-            repeaters=None
+        station=station,
+        address=AX25Address("VK4MSL"),
+        protocol=AX25Version.AX25_22,
+        repeaters=None,
     )
 
     # Pass in the XID frame to our AX.25 2.2 station.
     peer._on_receive(
-            AX25ExchangeIdentificationFrame(
-                destination=station.address,
-                source=peer.address,
-                repeaters=None,
-                parameters=[]
-            )
+        AX25ExchangeIdentificationFrame(
+            destination=station.address,
+            source=peer.address,
+            repeaters=None,
+            parameters=[],
+        )
     )
 
     # We should still consider the other station as AX.25 2.2 or better
@@ -898,33 +893,28 @@ def test_peer_on_receive_xid_ignores_bad_fi():
     """
     Test _on_receive ignores parameters if FI is unknown
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     interface = station._interface()
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None
+        station=station, address=AX25Address("VK4MSL"), repeaters=None
     )
 
     # Stub out _process_xid_cop
     def _stub_process_cop(param):
-        assert False, 'Should not be called'
+        assert False, "Should not be called"
+
     peer._process_xid_cop = _stub_process_cop
 
     # Pass in the XID frame to our AX.25 2.2 station.
     # There should be no assertion triggered.
     peer._on_receive(
-            AX25ExchangeIdentificationFrame(
-                destination=station.address,
-                source=peer.address,
-                repeaters=None,
-                parameters=[
-                    AX25XIDClassOfProceduresParameter(
-                        half_duplex=True
-                    )
-                ],
-                fi=26
-            )
+        AX25ExchangeIdentificationFrame(
+            destination=station.address,
+            source=peer.address,
+            repeaters=None,
+            parameters=[AX25XIDClassOfProceduresParameter(half_duplex=True)],
+            fi=26,
+        )
     )
 
 
@@ -932,33 +922,28 @@ def test_peer_on_receive_xid_ignores_bad_gi():
     """
     Test _on_receive ignores parameters if GI is unknown
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     interface = station._interface()
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None
+        station=station, address=AX25Address("VK4MSL"), repeaters=None
     )
 
     # Stub out _process_xid_cop
     def _stub_process_cop(param):
-        assert False, 'Should not be called'
+        assert False, "Should not be called"
+
     peer._process_xid_cop = _stub_process_cop
 
     # Pass in the XID frame to our AX.25 2.2 station.
     # There should be no assertion triggered.
     peer._on_receive(
-            AX25ExchangeIdentificationFrame(
-                destination=station.address,
-                source=peer.address,
-                repeaters=None,
-                parameters=[
-                    AX25XIDClassOfProceduresParameter(
-                        half_duplex=True
-                    )
-                ],
-                gi=26
-            )
+        AX25ExchangeIdentificationFrame(
+            destination=station.address,
+            source=peer.address,
+            repeaters=None,
+            parameters=[AX25XIDClassOfProceduresParameter(half_duplex=True)],
+            gi=26,
+        )
     )
 
 
@@ -966,25 +951,21 @@ def test_peer_on_receive_xid_processes_parameters():
     """
     Test _on_receive processes parameters on good XID frames
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     interface = station._interface()
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None
+        station=station, address=AX25Address("VK4MSL"), repeaters=None
     )
 
     # Pass in the XID frame to our AX.25 2.2 station.
     # There should be no assertion triggered.
     peer._on_receive(
-            AX25ExchangeIdentificationFrame(
-                destination=station.address,
-                source=peer.address,
-                repeaters=None,
-                parameters=[
-                    AX25XIDIFieldLengthReceiveParameter(512)
-                ]
-            )
+        AX25ExchangeIdentificationFrame(
+            destination=station.address,
+            source=peer.address,
+            repeaters=None,
+            parameters=[AX25XIDIFieldLengthReceiveParameter(512)],
+        )
     )
 
     # Should be negotiated to 64 bytes
@@ -995,12 +976,10 @@ def test_peer_on_receive_xid_reply():
     """
     Test _on_receive sends reply if incoming frame has CR=True
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     interface = station._interface()
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None
+        station=station, address=AX25Address("VK4MSL"), repeaters=None
     )
 
     # Nothing yet sent
@@ -1008,13 +987,13 @@ def test_peer_on_receive_xid_reply():
 
     # Pass in the XID frame to our AX.25 2.2 station.
     peer._on_receive(
-            AX25ExchangeIdentificationFrame(
-                destination=station.address,
-                source=peer.address,
-                repeaters=None,
-                parameters=[],
-                cr=True
-            )
+        AX25ExchangeIdentificationFrame(
+            destination=station.address,
+            source=peer.address,
+            repeaters=None,
+            parameters=[],
+            cr=True,
+        )
     )
 
     # This was a request, so there should be a reply waiting
@@ -1022,7 +1001,7 @@ def test_peer_on_receive_xid_reply():
     (tx_args, tx_kwargs) = interface.transmit_calls.pop(0)
 
     # This should be a XID
-    assert tx_kwargs == {'callback': None}
+    assert tx_kwargs == {"callback": None}
     assert len(tx_args) == 1
     (frame,) = tx_args
     assert isinstance(frame, AX25ExchangeIdentificationFrame)
@@ -1074,12 +1053,10 @@ def test_peer_on_receive_xid_relay():
     """
     Test _on_receive sends relays to XID handler if CR=False
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     interface = station._interface()
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=None
+        station=station, address=AX25Address("VK4MSL"), repeaters=None
     )
 
     # Nothing yet sent
@@ -1087,16 +1064,16 @@ def test_peer_on_receive_xid_relay():
 
     # Hook the XID handler
     xid_events = []
-    peer._xidframe_handler = lambda *a, **kw : xid_events.append((a, kw))
+    peer._xidframe_handler = lambda *a, **kw: xid_events.append((a, kw))
 
     # Pass in the XID frame to our AX.25 2.2 station.
     frame = AX25ExchangeIdentificationFrame(
-                destination=station.address,
-                source=peer.address,
-                repeaters=None,
-                parameters=[],
-                cr=False
-            )
+        destination=station.address,
+        source=peer.address,
+        repeaters=None,
+        parameters=[],
+        cr=False,
+    )
     peer._on_receive(frame)
 
     # There should have been a XID event

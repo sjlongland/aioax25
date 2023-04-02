@@ -50,33 +50,34 @@ from . import uint
 
 # Frame type classes
 
+
 class AX25Frame(object):
     """
     Base class for AX.25 frames.
     """
 
     # The following are the same for 8 and 16-bit control fields.
-    CONTROL_I_MASK  = 0b00000001
-    CONTROL_I_VAL   = 0b00000000
+    CONTROL_I_MASK = 0b00000001
+    CONTROL_I_VAL = 0b00000000
     CONTROL_US_MASK = 0b00000011
-    CONTROL_S_VAL   = 0b00000001
-    CONTROL_U_VAL   = 0b00000011
+    CONTROL_S_VAL = 0b00000001
+    CONTROL_U_VAL = 0b00000011
 
     # PID codes
-    PID_ISO8208_CCITT   = 0x01
+    PID_ISO8208_CCITT = 0x01
     PID_VJ_IP4_COMPRESS = 0x06
-    PID_VJ_IP4          = 0x07
-    PID_SEGMENTATION    = 0x08
-    PID_TEXNET          = 0xc3
-    PID_LINKQUALITY     = 0xc4
-    PID_APPLETALK       = 0xca
-    PID_APPLETALK_ARP   = 0xcb
-    PID_ARPA_IP4        = 0xcc
-    PID_APRA_ARP        = 0xcd
-    PID_FLEXNET         = 0xce
-    PID_NETROM          = 0xcf
-    PID_NO_L3           = 0xf0
-    PID_ESCAPE          = 0xff
+    PID_VJ_IP4 = 0x07
+    PID_SEGMENTATION = 0x08
+    PID_TEXNET = 0xC3
+    PID_LINKQUALITY = 0xC4
+    PID_APPLETALK = 0xCA
+    PID_APPLETALK_ARP = 0xCB
+    PID_ARPA_IP4 = 0xCC
+    PID_APRA_ARP = 0xCD
+    PID_FLEXNET = 0xCE
+    PID_NETROM = 0xCF
+    PID_NO_L3 = 0xF0
+    PID_ESCAPE = 0xFF
 
     @classmethod
     def decode(cls, data, modulo128=None):
@@ -92,7 +93,7 @@ class AX25Frame(object):
             (header, data) = AX25FrameHeader.decode(bytes(data))
 
         if not data:
-            raise ValueError('Insufficient packet data')
+            raise ValueError("Insufficient packet data")
 
         # Next should be the control field.  Control field
         # can be either 8 or 16-bits, we don't know at this point.
@@ -111,8 +112,8 @@ class AX25Frame(object):
                 # And the caller has told us it's a 16-bit field, so let's
                 # decode the rest of it!
                 if len(data) < 2:
-                    raise ValueError('Insufficient packet data')
-                control |= (data[1] << 8)
+                    raise ValueError("Insufficient packet data")
+                control |= data[1] << 8
 
                 # Discard the control field from the data payload as we
                 # have decoded it now.
@@ -132,12 +133,12 @@ class AX25Frame(object):
                 # We don't know at this point so the only safe answer is to
                 # return a raw frame and decode it later.
                 return AX25RawFrame(
-                        destination=header.destination,
-                        source=header.source,
-                        repeaters=header.repeaters,
-                        cr=header.cr,
-                        src_cr=header.src_cr,
-                        payload=data
+                    destination=header.destination,
+                    source=header.source,
+                    repeaters=header.repeaters,
+                    cr=header.cr,
+                    src_cr=header.src_cr,
+                    payload=data,
                 )
 
             # We've got the full control field and payload now.
@@ -147,17 +148,26 @@ class AX25Frame(object):
             elif (control & cls.CONTROL_US_MASK) == cls.CONTROL_S_VAL:
                 # This is a S frame.  No payload expected
                 if len(data):
-                    raise ValueError('Supervisory frames do not '\
-                            'support payloads.')
+                    raise ValueError(
+                        "Supervisory frames do not " "support payloads."
+                    )
                 return SupervisoryFrame.decode(header, control)
-            else: # pragma: no cover
-                assert False, 'Unrecognised control field: 0x%04x'\
-                        % control
+            else:  # pragma: no cover
+                assert False, "Unrecognised control field: 0x%04x" % control
 
-    def __init__(self, destination, source, repeaters=None,
-            cr=False, src_cr=None, timestamp=None, deadline=None):
-        self._header = AX25FrameHeader(destination, source, repeaters, \
-                cr, src_cr)
+    def __init__(
+        self,
+        destination,
+        source,
+        repeaters=None,
+        cr=False,
+        src_cr=None,
+        timestamp=None,
+        deadline=None,
+    ):
+        self._header = AX25FrameHeader(
+            destination, source, repeaters, cr, src_cr
+        )
         self._timestamp = timestamp or time.time()
         self._deadline = deadline
 
@@ -199,7 +209,7 @@ class AX25Frame(object):
     @deadline.setter
     def deadline(self, deadline):
         if self._deadline is not None:
-            raise ValueError('Deadline may not be changed after being set')
+            raise ValueError("Deadline may not be changed after being set")
         self._deadline = deadline
 
     @property
@@ -207,11 +217,11 @@ class AX25Frame(object):
         return self._header
 
     @property
-    def frame_payload(self): # pragma: no cover
+    def frame_payload(self):  # pragma: no cover
         """
         Return the bytes in the frame payload (including the control bytes)
         """
-        raise NotImplementedError('To be implemented in sub-class')
+        raise NotImplementedError("To be implemented in sub-class")
 
     @property
     def tnc2(self):
@@ -235,7 +245,7 @@ class AX258BitFrame(AX25Frame):
     Base class for AX.25 frames which have a 8-bit control field.
     """
 
-    POLL_FINAL  = 0b00010000
+    POLL_FINAL = 0b00010000
 
     # Control field bits
     #
@@ -244,19 +254,30 @@ class AX258BitFrame(AX25Frame):
     #     N(R)   | P |    N(S)   | 0   I Frame
     #     N(R)   |P/F| S   S | 0   1   S Frame
     #  M   M   M |P/F| M   M | 1   1   U Frame
-    CONTROL_NR_MASK     = 0b11100000
-    CONTROL_NR_SHIFT    = 5
-    CONTROL_NS_MASK     = 0b00001110
-    CONTROL_NS_SHIFT    = 1
+    CONTROL_NR_MASK = 0b11100000
+    CONTROL_NR_SHIFT = 5
+    CONTROL_NS_MASK = 0b00001110
+    CONTROL_NS_SHIFT = 1
 
-    def __init__(self, destination, source, repeaters=None,
-            cr=False, src_cr=None, timestamp=None, deadline=None):
+    def __init__(
+        self,
+        destination,
+        source,
+        repeaters=None,
+        cr=False,
+        src_cr=None,
+        timestamp=None,
+        deadline=None,
+    ):
         super(AX258BitFrame, self).__init__(
-                destination=destination,
-                source=source,
-                repeaters=repeaters,
-                cr=cr, src_cr=src_cr,
-                timestamp=timestamp, deadline=deadline)
+            destination=destination,
+            source=source,
+            repeaters=repeaters,
+            cr=cr,
+            src_cr=src_cr,
+            timestamp=timestamp,
+            deadline=deadline,
+        )
 
     @property
     def control(self):
@@ -275,7 +296,7 @@ class AX2516BitFrame(AX25Frame):
     Base class for AX.25 frames which have a 16-bit control field.
     """
 
-    POLL_FINAL  = 0b0000000100000000
+    POLL_FINAL = 0b0000000100000000
 
     # Control field bits.  These are sent least-significant bit first.
     # Unnumbered frames _always_ use the 8-bit control format, so here
@@ -285,19 +306,30 @@ class AX2516BitFrame(AX25Frame):
     # --------------------------------------------------------------
     #            N(R)            | P |            N(S)           | 0   I Frame
     #            N(R)            |P/F| 0   0   0   0 | S   S | 0   1   S Frame
-    CONTROL_NR_MASK     = 0b1111111000000000
-    CONTROL_NR_SHIFT    = 9
-    CONTROL_NS_MASK     = 0b0000000011111110
-    CONTROL_NS_SHIFT    = 1
+    CONTROL_NR_MASK = 0b1111111000000000
+    CONTROL_NR_SHIFT = 9
+    CONTROL_NS_MASK = 0b0000000011111110
+    CONTROL_NS_SHIFT = 1
 
-    def __init__(self, destination, source, repeaters=None,
-            cr=False, src_cr=None, timestamp=None, deadline=None):
+    def __init__(
+        self,
+        destination,
+        source,
+        repeaters=None,
+        cr=False,
+        src_cr=None,
+        timestamp=None,
+        deadline=None,
+    ):
         super(AX2516BitFrame, self).__init__(
-                destination=destination,
-                source=source,
-                repeaters=repeaters,
-                cr=cr, src_cr=src_cr,
-                timestamp=timestamp, deadline=deadline)
+            destination=destination,
+            source=source,
+            repeaters=repeaters,
+            cr=cr,
+            src_cr=src_cr,
+            timestamp=timestamp,
+            deadline=deadline,
+        )
 
     @property
     def control(self):
@@ -310,11 +342,7 @@ class AX2516BitFrame(AX25Frame):
         """
         # The control field is sent in LITTLE ENDIAN format so as to avoid
         # S frames possibly getting confused with U frames.
-        return uint.encode(
-                self.control,
-                big_endian=False,
-                length=2
-        )
+        return uint.encode(self.control, big_endian=False, length=2)
 
 
 class AX25RawFrame(AX25Frame):
@@ -329,17 +357,27 @@ class AX25RawFrame(AX25Frame):
     used as-is.
     """
 
-    def __init__(self, destination, source, repeaters=None,
-            cr=False, src_cr=None, payload=None,
-            timestamp=None, deadline=None):
+    def __init__(
+        self,
+        destination,
+        source,
+        repeaters=None,
+        cr=False,
+        src_cr=None,
+        payload=None,
+        timestamp=None,
+        deadline=None,
+    ):
         super(AX25RawFrame, self).__init__(
-                destination=destination,
-                source=source,
-                repeaters=repeaters,
-                cr=cr, src_cr=src_cr,
-                timestamp=timestamp,
-                deadline=deadline)
-        self._payload = payload or b''
+            destination=destination,
+            source=source,
+            repeaters=repeaters,
+            cr=cr,
+            src_cr=src_cr,
+            timestamp=timestamp,
+            deadline=deadline,
+        )
+        self._payload = payload or b""
 
     @property
     def frame_payload(self):
@@ -347,12 +385,12 @@ class AX25RawFrame(AX25Frame):
 
     def _copy(self):
         return self.__class__(
-                destination=self.header.destination,
-                source=self.header.source,
-                repeaters=self.header.repeaters,
-                cr=self.header.cr,
-                src_cr=self.header.src_cr,
-                payload=self.frame_payload
+            destination=self.header.destination,
+            source=self.header.source,
+            repeaters=self.header.repeaters,
+            cr=self.header.cr,
+            src_cr=self.header.src_cr,
+            payload=self.frame_payload,
         )
 
 
@@ -364,6 +402,7 @@ class AX25UnnumberedFrame(AX258BitFrame):
 
     All U frames have an 8-bit control field.
     """
+
     MODIFIER_MASK = 0b11101111
 
     SUBCLASSES = {}
@@ -373,8 +412,9 @@ class AX25UnnumberedFrame(AX258BitFrame):
         """
         Register a sub-class of UnnumberedFrame with the decoder.
         """
-        assert subclass.MODIFIER not in cls.SUBCLASSES, \
-                'Duplicate registration'
+        assert (
+            subclass.MODIFIER not in cls.SUBCLASSES
+        ), "Duplicate registration"
         cls.SUBCLASSES[subclass.MODIFIER] = subclass
 
     @classmethod
@@ -394,26 +434,42 @@ class AX25UnnumberedFrame(AX258BitFrame):
 
         # If we're still here, clearly this is a plain U frame.
         if data:
-            raise ValueError('Unnumbered frames (other than UI and '\
-                            'FRMR) do not have payloads')
+            raise ValueError(
+                "Unnumbered frames (other than UI and "
+                "FRMR) do not have payloads"
+            )
 
         return cls(
-                destination=header.destination,
-                source=header.source,
-                repeaters=header.repeaters,
-                cr=header.cr,
-                src_cr=header.src_cr,
-                modifier=modifier,
-                pf=bool(control & cls.POLL_FINAL)
+            destination=header.destination,
+            source=header.source,
+            repeaters=header.repeaters,
+            cr=header.cr,
+            src_cr=header.src_cr,
+            modifier=modifier,
+            pf=bool(control & cls.POLL_FINAL),
         )
 
-    def __init__(self, destination, source, modifier,
-            repeaters=None, pf=False, cr=False, src_cr=None,
-            timestamp=None, deadline=None):
+    def __init__(
+        self,
+        destination,
+        source,
+        modifier,
+        repeaters=None,
+        pf=False,
+        cr=False,
+        src_cr=None,
+        timestamp=None,
+        deadline=None,
+    ):
         super(AX25UnnumberedFrame, self).__init__(
-                destination=destination, source=source,
-                repeaters=repeaters, cr=cr, src_cr=src_cr,
-                timestamp=timestamp, deadline=deadline)
+            destination=destination,
+            source=source,
+            repeaters=repeaters,
+            cr=cr,
+            src_cr=src_cr,
+            timestamp=timestamp,
+            deadline=deadline,
+        )
         self._pf = bool(pf)
         self._modifier = int(modifier) & self.MODIFIER_MASK
 
@@ -443,13 +499,13 @@ class AX25UnnumberedFrame(AX258BitFrame):
 
     def _copy(self):
         return self.__class__(
-                destination=self.header.destination,
-                source=self.header.source,
-                repeaters=self.header.repeaters,
-                modifier=self.modifier,
-                cr=self.header.cr,
-                src_cr=self.header.src_cr,
-                pf=self.pf
+            destination=self.header.destination,
+            source=self.header.source,
+            repeaters=self.header.repeaters,
+            modifier=self.modifier,
+            cr=self.header.cr,
+            src_cr=self.header.src_cr,
+            pf=self.pf,
         )
 
 
@@ -461,27 +517,43 @@ class AX25InformationFrameMixin(object):
     @classmethod
     def decode(cls, header, control, data):
         return cls(
-                destination=header.destination,
-                source=header.source,
-                repeaters=header.repeaters,
-                cr=header.cr,
-                nr=int((control & cls.CONTROL_NR_MASK) >> cls.CONTROL_NR_SHIFT),
-                ns=int((control & cls.CONTROL_NS_MASK) >> cls.CONTROL_NS_SHIFT),
-                pf=bool(control & cls.POLL_FINAL),
-                pid=data[0],
-                payload=data[1:]
+            destination=header.destination,
+            source=header.source,
+            repeaters=header.repeaters,
+            cr=header.cr,
+            nr=int((control & cls.CONTROL_NR_MASK) >> cls.CONTROL_NR_SHIFT),
+            ns=int((control & cls.CONTROL_NS_MASK) >> cls.CONTROL_NS_SHIFT),
+            pf=bool(control & cls.POLL_FINAL),
+            pid=data[0],
+            payload=data[1:],
         )
 
-    def __init__(self, destination, source, pid, nr, ns, payload,
-            repeaters=None, pf=False, cr=False, timestamp=None, deadline=None):
+    def __init__(
+        self,
+        destination,
+        source,
+        pid,
+        nr,
+        ns,
+        payload,
+        repeaters=None,
+        pf=False,
+        cr=False,
+        timestamp=None,
+        deadline=None,
+    ):
         super(AX25InformationFrameMixin, self).__init__(
-                destination=destination, source=source,
-                repeaters=repeaters, cr=cr,
-                timestamp=timestamp, deadline=deadline)
+            destination=destination,
+            source=source,
+            repeaters=repeaters,
+            cr=cr,
+            timestamp=timestamp,
+            deadline=deadline,
+        )
         self._nr = int(nr)
         self._pf = bool(pf)
         self._ns = int(ns)
-        self._pid = int(pid) & 0xff
+        self._pid = int(pid) & 0xFF
         self._payload = bytes(payload)
 
     @property
@@ -515,40 +587,45 @@ class AX25InformationFrameMixin(object):
 
     @property
     def frame_payload(self):
-        return super(AX25InformationFrameMixin, self).frame_payload \
-                + bytearray([self.pid]) \
-                + self.payload
+        return (
+            super(AX25InformationFrameMixin, self).frame_payload
+            + bytearray([self.pid])
+            + self.payload
+        )
 
     @property
     def _control(self):
         """
         Return the value of the control byte.
         """
-        return ((self.nr << self.CONTROL_NR_SHIFT) & self.CONTROL_NR_MASK) \
-                | (self.POLL_FINAL if self.pf else 0) \
-                | ((self.ns << self.CONTROL_NS_SHIFT) & self.CONTROL_NS_MASK) \
-                | self.CONTROL_I_VAL
+        return (
+            ((self.nr << self.CONTROL_NR_SHIFT) & self.CONTROL_NR_MASK)
+            | (self.POLL_FINAL if self.pf else 0)
+            | ((self.ns << self.CONTROL_NS_SHIFT) & self.CONTROL_NS_MASK)
+            | self.CONTROL_I_VAL
+        )
 
     def __str__(self):
-        return '%s: N(R)=%d P/F=%s N(S)=%d PID=0x%02x Payload=%r' % (
-                self.header,
-                self.nr,
-                self.pf,
-                self.ns,
-                self.pid,
-                self.payload)
+        return "%s: N(R)=%d P/F=%s N(S)=%d PID=0x%02x Payload=%r" % (
+            self.header,
+            self.nr,
+            self.pf,
+            self.ns,
+            self.pid,
+            self.payload,
+        )
 
     def _copy(self):
         return self.__class__(
-                destination=self.header.destination,
-                source=self.header.source,
-                repeaters=self.header.repeaters,
-                cr=self.header.cr,
-                pf=self.pf,
-                pid=self.pid,
-                nr=self.nr,
-                ns=self.ns,
-                payload=self.payload
+            destination=self.header.destination,
+            source=self.header.source,
+            repeaters=self.header.repeaters,
+            cr=self.header.cr,
+            pf=self.pf,
+            pid=self.pid,
+            nr=self.nr,
+            ns=self.ns,
+            payload=self.payload,
         )
 
 
@@ -556,6 +633,7 @@ class AX258BitInformationFrame(AX25InformationFrameMixin, AX258BitFrame):
     """
     A representation of an information frame using modulo-8 acknowledgements.
     """
+
     pass
 
 
@@ -563,6 +641,7 @@ class AX2516BitInformationFrame(AX25InformationFrameMixin, AX2516BitFrame):
     """
     A representation of an information frame using modulo-128 acknowledgements.
     """
+
     pass
 
 
@@ -572,26 +651,39 @@ class AX25SupervisoryFrameMixin(object):
     """
 
     # Supervisory field bits
-    SUPER_MASK      = 0b00001100
+    SUPER_MASK = 0b00001100
 
     @classmethod
     def decode(cls, header, control):
-        code=int(control & cls.SUPER_MASK)
+        code = int(control & cls.SUPER_MASK)
         return cls.SUBCLASSES[code](
-                destination=header.destination,
-                source=header.source,
-                repeaters=header.repeaters,
-                cr=header.cr,
-                nr=int((control & cls.CONTROL_NR_MASK) >> cls.CONTROL_NR_SHIFT),
-                pf=bool(control & cls.POLL_FINAL)
+            destination=header.destination,
+            source=header.source,
+            repeaters=header.repeaters,
+            cr=header.cr,
+            nr=int((control & cls.CONTROL_NR_MASK) >> cls.CONTROL_NR_SHIFT),
+            pf=bool(control & cls.POLL_FINAL),
         )
 
-    def __init__(self, destination, source, nr,
-            repeaters=None, pf=False, cr=False, timestamp=None, deadline=None):
+    def __init__(
+        self,
+        destination,
+        source,
+        nr,
+        repeaters=None,
+        pf=False,
+        cr=False,
+        timestamp=None,
+        deadline=None,
+    ):
         super(AX25SupervisoryFrameMixin, self).__init__(
-                destination=destination, source=source,
-                repeaters=repeaters, cr=cr,
-                timestamp=timestamp, deadline=deadline)
+            destination=destination,
+            source=source,
+            repeaters=repeaters,
+            cr=cr,
+            timestamp=timestamp,
+            deadline=deadline,
+        )
         self._nr = int(nr)
         self._code = self.SUPERVISOR_CODE
         self._pf = bool(pf)
@@ -622,29 +714,34 @@ class AX25SupervisoryFrameMixin(object):
         """
         Return the value of the control byte.
         """
-        return ((self.nr << self.CONTROL_NR_SHIFT) & self.CONTROL_NR_MASK) \
-                | (self.POLL_FINAL if self.pf else 0) \
-                | (self.code & self.SUPER_MASK) \
-                | self.CONTROL_S_VAL
+        return (
+            ((self.nr << self.CONTROL_NR_SHIFT) & self.CONTROL_NR_MASK)
+            | (self.POLL_FINAL if self.pf else 0)
+            | (self.code & self.SUPER_MASK)
+            | self.CONTROL_S_VAL
+        )
 
     def __str__(self):
-        return '%s: N(R)=%d P/F=%s %s' % (
-                self.header,
-                self.nr,
-                self.pf,
-                self.__class__.__name__)
+        return "%s: N(R)=%d P/F=%s %s" % (
+            self.header,
+            self.nr,
+            self.pf,
+            self.__class__.__name__,
+        )
 
     def _copy(self):
         return self.__class__(
-                destination=self.header.destination,
-                source=self.header.source,
-                repeaters=self.header.repeaters,
-                cr=self.header.cr,
-                pf=self.pf,
-                nr=self.nr
+            destination=self.header.destination,
+            source=self.header.source,
+            repeaters=self.header.repeaters,
+            cr=self.header.cr,
+            pf=self.pf,
+            nr=self.nr,
         )
 
+
 # The 4 types of supervisory frame
+
 
 class AX25ReceiveReadyFrameMixin(AX25SupervisoryFrameMixin):
     """
@@ -654,6 +751,7 @@ class AX25ReceiveReadyFrameMixin(AX25SupervisoryFrameMixin):
     If pf=True, this is a query being sent asking "are you ready?", otherwise
     this is a response saying "I am ready".
     """
+
     SUPERVISOR_CODE = 0b00000000
 
 
@@ -665,6 +763,7 @@ class AX25ReceiveNotReadyFrameMixin(AX25SupervisoryFrameMixin):
     to receive more traffic and that we may need to re-transmit frames when
     we're ready to receive them.
     """
+
     SUPERVISOR_CODE = 0b00000100
 
 
@@ -676,6 +775,7 @@ class AX25RejectFrameMixin(AX25SupervisoryFrameMixin):
     All frames prior to the indicated frame are received, everything that
     follows must be re-sent.
     """
+
     SUPERVISOR_CODE = 0b00001000
 
 
@@ -686,9 +786,12 @@ class AX25SelectiveRejectFrameMixin(AX25SupervisoryFrameMixin):
     This indicates a specific frame was not received and needs to be re-sent.
     There is no requirement to send subsequent frames.
     """
+
     SUPERVISOR_CODE = 0b00001100
 
+
 # 8 and 16-bit variants of the above 4 types
+
 
 class AX258BitReceiveReadyFrame(AX25ReceiveReadyFrameMixin, AX258BitFrame):
     pass
@@ -698,11 +801,15 @@ class AX2516BitReceiveReadyFrame(AX25ReceiveReadyFrameMixin, AX2516BitFrame):
     pass
 
 
-class AX258BitReceiveNotReadyFrame(AX25ReceiveNotReadyFrameMixin, AX258BitFrame):
+class AX258BitReceiveNotReadyFrame(
+    AX25ReceiveNotReadyFrameMixin, AX258BitFrame
+):
     pass
 
 
-class AX2516BitReceiveNotReadyFrame(AX25ReceiveNotReadyFrameMixin, AX2516BitFrame):
+class AX2516BitReceiveNotReadyFrame(
+    AX25ReceiveNotReadyFrameMixin, AX2516BitFrame
+):
     pass
 
 
@@ -714,69 +821,99 @@ class AX2516BitRejectFrame(AX25RejectFrameMixin, AX2516BitFrame):
     pass
 
 
-class AX258BitSelectiveRejectFrame(AX25SelectiveRejectFrameMixin, AX258BitFrame):
+class AX258BitSelectiveRejectFrame(
+    AX25SelectiveRejectFrameMixin, AX258BitFrame
+):
     pass
 
 
-class AX2516BitSelectiveRejectFrame(AX25SelectiveRejectFrameMixin, AX2516BitFrame):
+class AX2516BitSelectiveRejectFrame(
+    AX25SelectiveRejectFrameMixin, AX2516BitFrame
+):
     pass
+
 
 # 8 and 16-bit variants of the base class
 
+
 class AX258BitSupervisoryFrame(AX25SupervisoryFrameMixin, AX258BitFrame):
-    SUBCLASSES = dict([
-        (c.SUPERVISOR_CODE, c)
-        for c in (
-            AX258BitReceiveReadyFrame,
-            AX258BitReceiveNotReadyFrame,
-            AX258BitRejectFrame,
-            AX258BitSelectiveRejectFrame
-        )
-    ])
+    SUBCLASSES = dict(
+        [
+            (c.SUPERVISOR_CODE, c)
+            for c in (
+                AX258BitReceiveReadyFrame,
+                AX258BitReceiveNotReadyFrame,
+                AX258BitRejectFrame,
+                AX258BitSelectiveRejectFrame,
+            )
+        ]
+    )
 
 
 class AX2516BitSupervisoryFrame(AX25SupervisoryFrameMixin, AX2516BitFrame):
-    SUBCLASSES = dict([
-        (c.SUPERVISOR_CODE, c)
-        for c in (
-            AX2516BitReceiveReadyFrame,
-            AX2516BitReceiveNotReadyFrame,
-            AX2516BitRejectFrame,
-            AX2516BitSelectiveRejectFrame
-        )
-    ])
+    SUBCLASSES = dict(
+        [
+            (c.SUPERVISOR_CODE, c)
+            for c in (
+                AX2516BitReceiveReadyFrame,
+                AX2516BitReceiveNotReadyFrame,
+                AX2516BitRejectFrame,
+                AX2516BitSelectiveRejectFrame,
+            )
+        ]
+    )
+
 
 # Un-numbered frame types
+
 
 class AX25UnnumberedInformationFrame(AX25UnnumberedFrame):
     """
     A representation of an un-numbered information frame.
     """
+
     MODIFIER = 0b00000011
 
     @classmethod
     def decode(cls, header, control, data):
         if not data:
-            raise ValueError('Payload of UI must be at least one byte')
+            raise ValueError("Payload of UI must be at least one byte")
         return cls(
-                destination=header.destination,
-                source=header.source,
-                repeaters=header.repeaters,
-                cr=header.cr,
-                src_cr=header.src_cr,
-                pf=bool(control & cls.POLL_FINAL),
-                pid=data[0],
-                payload=data[1:]
+            destination=header.destination,
+            source=header.source,
+            repeaters=header.repeaters,
+            cr=header.cr,
+            src_cr=header.src_cr,
+            pf=bool(control & cls.POLL_FINAL),
+            pid=data[0],
+            payload=data[1:],
         )
 
-    def __init__(self, destination, source, pid, payload,
-            repeaters=None, pf=False, cr=False, src_cr=None,
-            timestamp=None, deadline=None):
+    def __init__(
+        self,
+        destination,
+        source,
+        pid,
+        payload,
+        repeaters=None,
+        pf=False,
+        cr=False,
+        src_cr=None,
+        timestamp=None,
+        deadline=None,
+    ):
         super(AX25UnnumberedInformationFrame, self).__init__(
-                destination=destination, source=source,
-                repeaters=repeaters, cr=cr, src_cr=src_cr, pf=pf,
-                modifier=self.MODIFIER, timestamp=timestamp, deadline=deadline)
-        self._pid = int(pid) & 0xff
+            destination=destination,
+            source=source,
+            repeaters=repeaters,
+            cr=cr,
+            src_cr=src_cr,
+            pf=pf,
+            modifier=self.MODIFIER,
+            timestamp=timestamp,
+            deadline=deadline,
+        )
+        self._pid = int(pid) & 0xFF
         self._payload = bytes(payload)
 
     @property
@@ -789,26 +926,29 @@ class AX25UnnumberedInformationFrame(AX25UnnumberedFrame):
 
     @property
     def frame_payload(self):
-        return super(AX25UnnumberedInformationFrame, self).frame_payload \
-                + bytearray([self.pid]) \
-                + self.payload
+        return (
+            super(AX25UnnumberedInformationFrame, self).frame_payload
+            + bytearray([self.pid])
+            + self.payload
+        )
 
     def __str__(self):
-        return '%s: PID=0x%02x Payload=%r' % (
-                self.header,
-                self.pid,
-                self.payload)
+        return "%s: PID=0x%02x Payload=%r" % (
+            self.header,
+            self.pid,
+            self.payload,
+        )
 
     def _copy(self):
         return self.__class__(
-                destination=self.header.destination,
-                source=self.header.source,
-                repeaters=self.header.repeaters,
-                cr=self.header.cr,
-                src_cr=self.header.src_cr,
-                pf=self.pf,
-                pid=self.pid,
-                payload=self.payload
+            destination=self.header.destination,
+            source=self.header.source,
+            repeaters=self.header.repeaters,
+            cr=self.header.cr,
+            src_cr=self.header.src_cr,
+            pf=self.pf,
+            pid=self.pid,
+            payload=self.payload,
         )
 
     @property
@@ -818,14 +958,16 @@ class AX25UnnumberedInformationFrame(AX25UnnumberedFrame):
         """
         return self.get_tnc2()
 
-    def get_tnc2(self, charset='latin1', errors='strict'):
+    def get_tnc2(self, charset="latin1", errors="strict"):
         """
         Return the frame in "TNC2" format with given charset.
         """
-        return '%s:%s' % (
-                self.header.tnc2,
-                self.payload.decode(charset, errors)
+        return "%s:%s" % (
+            self.header.tnc2,
+            self.payload.decode(charset, errors),
         )
+
+
 AX25UnnumberedFrame.register(AX25UnnumberedInformationFrame)
 
 
@@ -837,21 +979,20 @@ class AX25FrameRejectFrame(AX25UnnumberedFrame):
     """
 
     MODIFIER = 0b10000111
-    W_MASK   = 0b00000001
-    X_MASK   = 0b00000010
-    Y_MASK   = 0b00000100
-    Z_MASK   = 0b00001000
-    VR_MASK  = 0b11100000
-    VR_POS   = 5
-    CR_MASK  = 0b00010000
-    VS_MASK  = 0b00001110
-    VS_POS   = 1
-
+    W_MASK = 0b00000001
+    X_MASK = 0b00000010
+    Y_MASK = 0b00000100
+    Z_MASK = 0b00001000
+    VR_MASK = 0b11100000
+    VR_POS = 5
+    CR_MASK = 0b00010000
+    VS_MASK = 0b00001110
+    VS_POS = 1
 
     @classmethod
     def decode(cls, header, control, data):
         if len(data) != 3:
-            raise ValueError('Payload of FRMR must be 3 bytes')
+            raise ValueError("Payload of FRMR must be 3 bytes")
 
         # W, X, Y and Z bits
         w = bool(data[0] & cls.W_MASK)
@@ -868,24 +1009,48 @@ class AX25FrameRejectFrame(AX25UnnumberedFrame):
         frmr_control = data[2]
 
         return cls(
-                destination=header.destination,
-                source=header.source,
-                repeaters=header.repeaters,
-                cr=header.cr,
-                src_cr=header.src_cr,
-                pf=bool(control & cls.POLL_FINAL),
-                w=w, x=x, y=y, z=z,
-                vr=vr, frmr_cr=cr, vs=vs,
-                frmr_control=frmr_control
+            destination=header.destination,
+            source=header.source,
+            repeaters=header.repeaters,
+            cr=header.cr,
+            src_cr=header.src_cr,
+            pf=bool(control & cls.POLL_FINAL),
+            w=w,
+            x=x,
+            y=y,
+            z=z,
+            vr=vr,
+            frmr_cr=cr,
+            vs=vs,
+            frmr_control=frmr_control,
         )
 
-    def __init__(self, destination, source, w, x, y, z,
-            vr, frmr_cr, vs, frmr_control,
-            repeaters=None, pf=False, cr=False, src_cr=None):
+    def __init__(
+        self,
+        destination,
+        source,
+        w,
+        x,
+        y,
+        z,
+        vr,
+        frmr_cr,
+        vs,
+        frmr_control,
+        repeaters=None,
+        pf=False,
+        cr=False,
+        src_cr=None,
+    ):
         super(AX25FrameRejectFrame, self).__init__(
-                destination=destination, source=source,
-                repeaters=repeaters, cr=cr, src_cr=src_cr, pf=pf,
-                modifier=self.MODIFIER)
+            destination=destination,
+            source=source,
+            repeaters=repeaters,
+            cr=cr,
+            src_cr=src_cr,
+            pf=pf,
+            modifier=self.MODIFIER,
+        )
 
         self._w = bool(w)
         self._x = bool(x)
@@ -898,8 +1063,9 @@ class AX25FrameRejectFrame(AX25UnnumberedFrame):
 
     @property
     def frame_payload(self):
-        return super(AX25FrameRejectFrame, self).frame_payload \
-                + bytes(self._gen_frame_payload())
+        return super(AX25FrameRejectFrame, self).frame_payload + bytes(
+            self._gen_frame_payload()
+        )
 
     def _gen_frame_payload(self):
         wxyz = 0
@@ -956,16 +1122,22 @@ class AX25FrameRejectFrame(AX25UnnumberedFrame):
 
     def _copy(self):
         return self.__class__(
-                destination=self.header.destination,
-                source=self.header.source,
-                repeaters=self.header.repeaters,
-                w=self.w, x=self.x, y=self.y, z=self.z,
-                frmr_cr=self.frmr_cr, vr=self.vr, vs=self.vs,
-                frmr_control=self.frmr_control,
-                cr=self.header.cr,
-                src_cr=self.header.src_cr,
-                pf=self.pf
+            destination=self.header.destination,
+            source=self.header.source,
+            repeaters=self.header.repeaters,
+            w=self.w,
+            x=self.x,
+            y=self.y,
+            z=self.z,
+            frmr_cr=self.frmr_cr,
+            vr=self.vr,
+            vs=self.vs,
+            frmr_control=self.frmr_control,
+            cr=self.header.cr,
+            src_cr=self.header.src_cr,
+            pf=self.pf,
         )
+
 
 AX25UnnumberedFrame.register(AX25FrameRejectFrame)
 
@@ -984,34 +1156,49 @@ class AX25BaseUnnumberedFrame(AX25UnnumberedFrame):
     @classmethod
     def decode(cls, header, control, data):
         if len(data):
-            raise ValueError('Frame does not support payload')
+            raise ValueError("Frame does not support payload")
 
         return cls(
-                destination=header.destination,
-                source=header.source,
-                repeaters=header.repeaters,
-                pf=bool(control & cls.POLL_FINAL),
-                cr=header.cr
+            destination=header.destination,
+            source=header.source,
+            repeaters=header.repeaters,
+            pf=bool(control & cls.POLL_FINAL),
+            cr=header.cr,
         )
 
-    def __init__(self, destination, source,
-            repeaters=None, pf=None, cr=None, timestamp=None, deadline=None):
+    def __init__(
+        self,
+        destination,
+        source,
+        repeaters=None,
+        pf=None,
+        cr=None,
+        timestamp=None,
+        deadline=None,
+    ):
         if pf is None:
             pf = self.PF
         if cr is None:
             cr = self.CR
 
-        super(AX25BaseUnnumberedFrame, self).__init__(destination=destination,
-                source=source, modifier=self.MODIFIER, repeaters=repeaters,
-                cr=cr, pf=pf, timestamp=timestamp, deadline=deadline)
+        super(AX25BaseUnnumberedFrame, self).__init__(
+            destination=destination,
+            source=source,
+            modifier=self.MODIFIER,
+            repeaters=repeaters,
+            cr=cr,
+            pf=pf,
+            timestamp=timestamp,
+            deadline=deadline,
+        )
 
     def _copy(self):
         return self.__class__(
-                destination=self.header.destination,
-                source=self.header.source,
-                repeaters=self.header.repeaters,
-                cr=self.header.cr,
-                pf=self.pf
+            destination=self.header.destination,
+            source=self.header.source,
+            repeaters=self.header.repeaters,
+            cr=self.header.cr,
+            pf=self.pf,
         )
 
 
@@ -1022,9 +1209,11 @@ class AX25SetAsyncBalancedModeFrame(AX25BaseUnnumberedFrame):
     This frame is used to initiate a connection request with the destination
     AX.25 node.
     """
+
     MODIFIER = 0b00101111
     CR = True
     PF = True
+
 
 AX25UnnumberedFrame.register(AX25SetAsyncBalancedModeFrame)
 
@@ -1036,9 +1225,11 @@ class AX25SetAsyncBalancedModeExtendedFrame(AX25BaseUnnumberedFrame):
     This frame is used to initiate a connection request with the destination
     AX.25 node, using modulo 128 acknowledgements.
     """
+
     MODIFIER = 0b01101111
     CR = True
     PF = True
+
 
 AX25UnnumberedFrame.register(AX25SetAsyncBalancedModeExtendedFrame)
 
@@ -1049,8 +1240,10 @@ class AX25DisconnectFrame(AX25BaseUnnumberedFrame):
 
     This frame is used to initiate a disconnection from the other station.
     """
+
     MODIFIER = 0b01000011
     CR = True
+
 
 AX25UnnumberedFrame.register(AX25DisconnectFrame)
 
@@ -1061,8 +1254,10 @@ class AX25DisconnectModeFrame(AX25BaseUnnumberedFrame):
 
     This frame is used to indicate to the other station that it is disconnected.
     """
+
     MODIFIER = 0b00001111
     CR = False
+
 
 AX25UnnumberedFrame.register(AX25DisconnectModeFrame)
 
@@ -1071,6 +1266,7 @@ class AX25XIDParameterIdentifier(enum.Enum):
     """
     Known values of PI in XID frames.
     """
+
     # Negotiates half/full duplex operation
     ClassesOfProcedure = 2
 
@@ -1124,7 +1320,7 @@ class AX25XIDParameter(object):
         remaining data.
         """
         if len(data) < 2:
-            raise ValueError('Insufficient data for parameter')
+            raise ValueError("Insufficient data for parameter")
 
         pi = data[0]
         pl = data[1]
@@ -1132,7 +1328,7 @@ class AX25XIDParameter(object):
 
         if pl > 0:
             if len(data) < pl:
-                raise ValueError('Parameter is truncated')
+                raise ValueError("Parameter is truncated")
             pv = data[0:pl]
             data = data[pl:]
         else:
@@ -1167,12 +1363,13 @@ class AX25XIDParameter(object):
         return self._pi
 
     @property
-    def pv(self): # pragma: no cover
+    def pv(self):  # pragma: no cover
         """
         Return the Parameter Value
         """
-        raise NotImplementedError('To be implemented in %s' \
-                % self.__class__.__name__)
+        raise NotImplementedError(
+            "To be implemented in %s" % self.__class__.__name__
+        )
 
     def __bytes__(self):
         """
@@ -1188,12 +1385,13 @@ class AX25XIDParameter(object):
 
         return param
 
-    def copy(self): # pragma: no cover
+    def copy(self):  # pragma: no cover
         """
         Return a copy of this parameter.
         """
-        raise NotImplementedError('To be implemented in %s' \
-                % self.__class__.__name__)
+        raise NotImplementedError(
+            "To be implemented in %s" % self.__class__.__name__
+        )
 
 
 class AX25XIDRawParameter(AX25XIDParameter):
@@ -1221,10 +1419,7 @@ class AX25XIDRawParameter(AX25XIDParameter):
         """
         Return a copy of this parameter.
         """
-        return self.__class__(
-                pi=self.pi,
-                pv=self.pv
-        )
+        return self.__class__(pi=self.pi, pv=self.pv)
 
 
 class AX25XIDClassOfProceduresParameter(AX25XIDParameter):
@@ -1232,18 +1427,19 @@ class AX25XIDClassOfProceduresParameter(AX25XIDParameter):
     Class of Procedures XID parameter.  This parameter is used to negotiate
     half or full duplex communications between two TNCs.
     """
+
     PI = AX25XIDParameterIdentifier.ClassesOfProcedure
 
     # Bit fields for this parameter:
-    BALANCED_ABM        = 0b0000000000000001    # Should be 1
-    UNBALANCED_NRM_PRI  = 0b0000000000000010    # Should be 0
-    UNBALANCED_NRM_SEC  = 0b0000000000000100    # Should be 0
-    UNBALANCED_ARM_PRI  = 0b0000000000001000    # Should be 0
-    UNBALANCED_ARM_SEC  = 0b0000000000010000    # Should be 0
-    HALF_DUPLEX         = 0b0000000000100000    # Should oppose FULL_DUPLEX
-    FULL_DUPLEX         = 0b0000000001000000    # Should oppose HALF_DUPLEX
-    RESERVED_MASK       = 0b1111111110000000    # Should be all zeros
-    RESERVED_POS        = 7
+    BALANCED_ABM = 0b0000000000000001  # Should be 1
+    UNBALANCED_NRM_PRI = 0b0000000000000010  # Should be 0
+    UNBALANCED_NRM_SEC = 0b0000000000000100  # Should be 0
+    UNBALANCED_ARM_PRI = 0b0000000000001000  # Should be 0
+    UNBALANCED_ARM_SEC = 0b0000000000010000  # Should be 0
+    HALF_DUPLEX = 0b0000000000100000  # Should oppose FULL_DUPLEX
+    FULL_DUPLEX = 0b0000000001000000  # Should oppose HALF_DUPLEX
+    RESERVED_MASK = 0b1111111110000000  # Should be all zeros
+    RESERVED_POS = 7
 
     @classmethod
     def decode(cls, pv):
@@ -1257,13 +1453,20 @@ class AX25XIDClassOfProceduresParameter(AX25XIDParameter):
             unbalanced_arm_pri=bool(pv & cls.UNBALANCED_ARM_PRI),
             unbalanced_arm_sec=bool(pv & cls.UNBALANCED_ARM_SEC),
             balanced_abm=bool(pv & cls.BALANCED_ABM),
-            reserved=((pv & cls.RESERVED_MASK) >> cls.RESERVED_POS)
+            reserved=((pv & cls.RESERVED_MASK) >> cls.RESERVED_POS),
         )
 
-    def __init__(self, full_duplex=False, half_duplex=False,
-            unbalanced_nrm_pri=False, unbalanced_nrm_sec=False,
-            unbalanced_arm_pri=False, unbalanced_arm_sec=False,
-            balanced_abm=True, reserved=0):
+    def __init__(
+        self,
+        full_duplex=False,
+        half_duplex=False,
+        unbalanced_nrm_pri=False,
+        unbalanced_nrm_sec=False,
+        unbalanced_arm_pri=False,
+        unbalanced_arm_sec=False,
+        balanced_abm=True,
+        reserved=0,
+    ):
         """
         Create a Class Of Procedures XID parameter.  The defaults are set
         so that at most, only half_duplex or full_duplex should need setting.
@@ -1272,7 +1475,7 @@ class AX25XIDClassOfProceduresParameter(AX25XIDParameter):
         self._full_duplex = full_duplex
         self._unbalanced_nrm_pri = unbalanced_nrm_pri
         self._unbalanced_nrm_sec = unbalanced_nrm_sec
-        self._unbalanced_arm_pri = unbalanced_arm_pri 
+        self._unbalanced_arm_pri = unbalanced_arm_pri
         self._unbalanced_arm_sec = unbalanced_arm_sec
         self._balanced_abm = balanced_abm
         self._reserved = reserved
@@ -1283,16 +1486,18 @@ class AX25XIDClassOfProceduresParameter(AX25XIDParameter):
         # We reproduce all bits as given, even if the combination is invalid
         # Value is encoded in little-endian format as two bytes.
         return uint.encode(
-            (   ((self.reserved << self.RESERVED_POS)
-                    & self.RESERVED_MASK)
-            |   ((self.full_duplex and self.FULL_DUPLEX) or 0)
-            |   ((self.half_duplex and self.HALF_DUPLEX) or 0)
-            |   ((self.unbalanced_nrm_pri and self.UNBALANCED_NRM_PRI) or 0)
-            |   ((self.unbalanced_nrm_sec and self.UNBALANCED_NRM_SEC) or 0)
-            |   ((self.unbalanced_arm_pri and self.UNBALANCED_ARM_PRI) or 0)
-            |   ((self.unbalanced_arm_sec and self.UNBALANCED_ARM_SEC) or 0)
-            |   ((self.balanced_abm and self.BALANCED_ABM) or 0)),
-            big_endian=True, length=2
+            (
+                ((self.reserved << self.RESERVED_POS) & self.RESERVED_MASK)
+                | ((self.full_duplex and self.FULL_DUPLEX) or 0)
+                | ((self.half_duplex and self.HALF_DUPLEX) or 0)
+                | ((self.unbalanced_nrm_pri and self.UNBALANCED_NRM_PRI) or 0)
+                | ((self.unbalanced_nrm_sec and self.UNBALANCED_NRM_SEC) or 0)
+                | ((self.unbalanced_arm_pri and self.UNBALANCED_ARM_PRI) or 0)
+                | ((self.unbalanced_arm_sec and self.UNBALANCED_ARM_SEC) or 0)
+                | ((self.balanced_abm and self.BALANCED_ABM) or 0)
+            ),
+            big_endian=True,
+            length=2,
         )
 
     @property
@@ -1329,23 +1534,26 @@ class AX25XIDClassOfProceduresParameter(AX25XIDParameter):
 
     def copy(self):
         return self.__class__(
-                half_duplex=self.half_duplex,
-                full_duplex=self.full_duplex,
-                unbalanced_nrm_pri=self.unbalanced_nrm_pri,
-                unbalanced_nrm_sec=self.unbalanced_nrm_sec,
-                unbalanced_arm_pri=self.unbalanced_arm_pri,
-                unbalanced_arm_sec=self.unbalanced_arm_sec,
-                reserved=self.reserved
+            half_duplex=self.half_duplex,
+            full_duplex=self.full_duplex,
+            unbalanced_nrm_pri=self.unbalanced_nrm_pri,
+            unbalanced_nrm_sec=self.unbalanced_nrm_sec,
+            unbalanced_arm_pri=self.unbalanced_arm_pri,
+            unbalanced_arm_sec=self.unbalanced_arm_sec,
+            reserved=self.reserved,
         )
+
+
 AX25XIDParameter.register(AX25XIDClassOfProceduresParameter)
 
 # From AX.25 2.2 spec section 6.3.2:
 AX25_20_DEFAULT_XID_COP = AX25XIDClassOfProceduresParameter(
-        half_duplex=True, full_duplex=False
+    half_duplex=True, full_duplex=False
 )
 AX25_22_DEFAULT_XID_COP = AX25XIDClassOfProceduresParameter(
-        half_duplex=True, full_duplex=False
+    half_duplex=True, full_duplex=False
 )
+
 
 class AX25XIDHDLCOptionalFunctionsParameter(AX25XIDParameter):
     """
@@ -1353,71 +1561,91 @@ class AX25XIDHDLCOptionalFunctionsParameter(AX25XIDParameter):
     what optional features of the HDLC specification will be used to
     synchronise communications.
     """
+
     PI = AX25XIDParameterIdentifier.HDLCOptionalFunctions
 
     # Bit fields for this parameter:
-    RESERVED1           = 0b000000000000000000000001    # Should be 0
-    REJ                 = 0b000000000000000000000010    # Negotiable
-    SREJ                = 0b000000000000000000000100    # Negotiable
-    UI                  = 0b000000000000000000001000    # Should be 0
-    SIM_RIM             = 0b000000000000000000010000    # Should be 0
-    UP                  = 0b000000000000000000100000    # Should be 0
-    BASIC_ADDR          = 0b000000000000000001000000    # Should be 1
-    EXTD_ADDR           = 0b000000000000000010000000    # Should be 0
-    DELETE_I_RESP       = 0b000000000000000100000000    # Should be 0
-    DELETE_I_CMD        = 0b000000000000001000000000    # Should be 0
-    MODULO8             = 0b000000000000010000000000    # Negotiable
-    MODULO128           = 0b000000000000100000000000    # Negotiable
-    RSET                = 0b000000000001000000000000    # Should be 0
-    TEST                = 0b000000000010000000000000    # Should be 1
-    RD                  = 0b000000000100000000000000    # Should be 0
-    FCS16               = 0b000000001000000000000000    # Should be 1
-    FCS32               = 0b000000010000000000000000    # Should be 0
-    SYNC_TX             = 0b000000100000000000000000    # Should be 1
-    START_STOP_TX       = 0b000001000000000000000000    # Should be 0
-    START_STOP_FLOW_CTL = 0b000010000000000000000000    # Should be 0
-    START_STOP_TRANSP   = 0b000100000000000000000000    # Should be 0
-    SREJ_MULTIFRAME     = 0b001000000000000000000000    # Should be 0
-    RESERVED2_MASK      = 0b110000000000000000000000    # Should be 00
-    RESERVED2_POS       = 22
+    RESERVED1 = 0b000000000000000000000001  # Should be 0
+    REJ = 0b000000000000000000000010  # Negotiable
+    SREJ = 0b000000000000000000000100  # Negotiable
+    UI = 0b000000000000000000001000  # Should be 0
+    SIM_RIM = 0b000000000000000000010000  # Should be 0
+    UP = 0b000000000000000000100000  # Should be 0
+    BASIC_ADDR = 0b000000000000000001000000  # Should be 1
+    EXTD_ADDR = 0b000000000000000010000000  # Should be 0
+    DELETE_I_RESP = 0b000000000000000100000000  # Should be 0
+    DELETE_I_CMD = 0b000000000000001000000000  # Should be 0
+    MODULO8 = 0b000000000000010000000000  # Negotiable
+    MODULO128 = 0b000000000000100000000000  # Negotiable
+    RSET = 0b000000000001000000000000  # Should be 0
+    TEST = 0b000000000010000000000000  # Should be 1
+    RD = 0b000000000100000000000000  # Should be 0
+    FCS16 = 0b000000001000000000000000  # Should be 1
+    FCS32 = 0b000000010000000000000000  # Should be 0
+    SYNC_TX = 0b000000100000000000000000  # Should be 1
+    START_STOP_TX = 0b000001000000000000000000  # Should be 0
+    START_STOP_FLOW_CTL = 0b000010000000000000000000  # Should be 0
+    START_STOP_TRANSP = 0b000100000000000000000000  # Should be 0
+    SREJ_MULTIFRAME = 0b001000000000000000000000  # Should be 0
+    RESERVED2_MASK = 0b110000000000000000000000  # Should be 00
+    RESERVED2_POS = 22
 
     @classmethod
     def decode(cls, pv):
         # Decode the PV
         pv = uint.decode(pv, big_endian=False)
         return cls(
-                modulo128=bool(pv & cls.MODULO128),
-                modulo8=bool(pv & cls.MODULO8),
-                srej=bool(pv & cls.SREJ),
-                rej=bool(pv & cls.REJ),
-                srej_multiframe=bool(pv & cls.SREJ_MULTIFRAME),
-                start_stop_transp=bool(pv & cls.START_STOP_TRANSP),
-                start_stop_flow_ctl=bool(pv & cls.START_STOP_FLOW_CTL),
-                start_stop_tx=bool(pv & cls.START_STOP_TX),
-                sync_tx=bool(pv & cls.SYNC_TX),
-                fcs32=bool(pv & cls.FCS32),
-                fcs16=bool(pv & cls.FCS16),
-                rd=bool(pv & cls.RD),
-                test=bool(pv & cls.TEST),
-                rset=bool(pv & cls.RSET),
-                delete_i_cmd=bool(pv & cls.DELETE_I_CMD),
-                delete_i_resp=bool(pv & cls.DELETE_I_RESP),
-                extd_addr=bool(pv & cls.EXTD_ADDR),
-                basic_addr=bool(pv & cls.BASIC_ADDR),
-                up=bool(pv & cls.UP),
-                sim_rim=bool(pv & cls.SIM_RIM),
-                ui=bool(pv & cls.UI),
-                reserved2=(pv & cls.RESERVED2_MASK) >> cls.RESERVED2_POS,
-                reserved1=bool(pv & cls.RESERVED1)
+            modulo128=bool(pv & cls.MODULO128),
+            modulo8=bool(pv & cls.MODULO8),
+            srej=bool(pv & cls.SREJ),
+            rej=bool(pv & cls.REJ),
+            srej_multiframe=bool(pv & cls.SREJ_MULTIFRAME),
+            start_stop_transp=bool(pv & cls.START_STOP_TRANSP),
+            start_stop_flow_ctl=bool(pv & cls.START_STOP_FLOW_CTL),
+            start_stop_tx=bool(pv & cls.START_STOP_TX),
+            sync_tx=bool(pv & cls.SYNC_TX),
+            fcs32=bool(pv & cls.FCS32),
+            fcs16=bool(pv & cls.FCS16),
+            rd=bool(pv & cls.RD),
+            test=bool(pv & cls.TEST),
+            rset=bool(pv & cls.RSET),
+            delete_i_cmd=bool(pv & cls.DELETE_I_CMD),
+            delete_i_resp=bool(pv & cls.DELETE_I_RESP),
+            extd_addr=bool(pv & cls.EXTD_ADDR),
+            basic_addr=bool(pv & cls.BASIC_ADDR),
+            up=bool(pv & cls.UP),
+            sim_rim=bool(pv & cls.SIM_RIM),
+            ui=bool(pv & cls.UI),
+            reserved2=(pv & cls.RESERVED2_MASK) >> cls.RESERVED2_POS,
+            reserved1=bool(pv & cls.RESERVED1),
         )
 
-    def __init__(self, modulo128=False, modulo8=False, srej=False, rej=False,
-            srej_multiframe=False, start_stop_transp=False,
-            start_stop_flow_ctl=False, start_stop_tx=False, sync_tx=True,
-            fcs32=False, fcs16=True, rd=False, test=True, rset=False,
-            delete_i_cmd=False, delete_i_resp=False, extd_addr=True,
-            basic_addr=False, up=False, sim_rim=False, ui=False,
-            reserved2=0, reserved1=False):
+    def __init__(
+        self,
+        modulo128=False,
+        modulo8=False,
+        srej=False,
+        rej=False,
+        srej_multiframe=False,
+        start_stop_transp=False,
+        start_stop_flow_ctl=False,
+        start_stop_tx=False,
+        sync_tx=True,
+        fcs32=False,
+        fcs16=True,
+        rd=False,
+        test=True,
+        rset=False,
+        delete_i_cmd=False,
+        delete_i_resp=False,
+        extd_addr=True,
+        basic_addr=False,
+        up=False,
+        sim_rim=False,
+        ui=False,
+        reserved2=0,
+        reserved1=False,
+    ):
         """
         HDLC Optional Features XID parameter.  The defaults are set
         so that at most, only srej, rej, modulo8 and/or modulo128 need setting.
@@ -1446,38 +1674,45 @@ class AX25XIDHDLCOptionalFunctionsParameter(AX25XIDParameter):
         self._reserved2 = reserved2
         self._reserved1 = reserved1
 
-        super(AX25XIDHDLCOptionalFunctionsParameter, self).__init__(pi=self.PI)
+        super(AX25XIDHDLCOptionalFunctionsParameter, self).__init__(
+            pi=self.PI
+        )
 
     @property
     def pv(self):
         # We reproduce all bits as given, even if the combination is invalid
         return uint.encode(
-            (   ((self.reserved2 << self.RESERVED2_POS)
-                    & self.RESERVED2_MASK)
-            |   ((self.modulo128 and self.MODULO128) or 0)
-            |   ((self.modulo8 and self.MODULO8) or 0)
-            |   ((self.srej and self.SREJ) or 0)
-            |   ((self.rej and self.REJ) or 0)
-            |   ((self.srej_multiframe and self.SREJ_MULTIFRAME) or 0)
-            |   ((self.start_stop_transp and self.START_STOP_TRANSP) or 0)
-            |   ((self.start_stop_flow_ctl and self.START_STOP_FLOW_CTL) or 0)
-            |   ((self.start_stop_tx and self.START_STOP_TX) or 0)
-            |   ((self.sync_tx and self.SYNC_TX) or 0)
-            |   ((self.fcs32 and self.FCS32) or 0)
-            |   ((self.fcs16 and self.FCS16) or 0)
-            |   ((self.rd and self.RD) or 0)
-            |   ((self.test and self.TEST) or 0)
-            |   ((self.rset and self.RSET) or 0)
-            |   ((self.delete_i_cmd and self.DELETE_I_CMD) or 0)
-            |   ((self.delete_i_resp and self.DELETE_I_RESP) or 0)
-            |   ((self.extd_addr and self.EXTD_ADDR) or 0)
-            |   ((self.basic_addr and self.BASIC_ADDR) or 0)
-            |   ((self.up and self.UP) or 0)
-            |   ((self.sim_rim and self.SIM_RIM) or 0)
-            |   ((self.ui and self.UI) or 0)
-            |   ((self.reserved1 and self.RESERVED1) or 0)),
-            big_endian=False, length=3
-       )
+            (
+                ((self.reserved2 << self.RESERVED2_POS) & self.RESERVED2_MASK)
+                | ((self.modulo128 and self.MODULO128) or 0)
+                | ((self.modulo8 and self.MODULO8) or 0)
+                | ((self.srej and self.SREJ) or 0)
+                | ((self.rej and self.REJ) or 0)
+                | ((self.srej_multiframe and self.SREJ_MULTIFRAME) or 0)
+                | ((self.start_stop_transp and self.START_STOP_TRANSP) or 0)
+                | (
+                    (self.start_stop_flow_ctl and self.START_STOP_FLOW_CTL)
+                    or 0
+                )
+                | ((self.start_stop_tx and self.START_STOP_TX) or 0)
+                | ((self.sync_tx and self.SYNC_TX) or 0)
+                | ((self.fcs32 and self.FCS32) or 0)
+                | ((self.fcs16 and self.FCS16) or 0)
+                | ((self.rd and self.RD) or 0)
+                | ((self.test and self.TEST) or 0)
+                | ((self.rset and self.RSET) or 0)
+                | ((self.delete_i_cmd and self.DELETE_I_CMD) or 0)
+                | ((self.delete_i_resp and self.DELETE_I_RESP) or 0)
+                | ((self.extd_addr and self.EXTD_ADDR) or 0)
+                | ((self.basic_addr and self.BASIC_ADDR) or 0)
+                | ((self.up and self.UP) or 0)
+                | ((self.sim_rim and self.SIM_RIM) or 0)
+                | ((self.ui and self.UI) or 0)
+                | ((self.reserved1 and self.RESERVED1) or 0)
+            ),
+            big_endian=False,
+            length=3,
+        )
 
     @property
     def modulo128(self):
@@ -1573,26 +1808,40 @@ class AX25XIDHDLCOptionalFunctionsParameter(AX25XIDParameter):
 
     def copy(self):
         return self.__class__(
-                modulo128=self.modulo128, modulo8=self.modulo8,
-                srej=self.srej, rej=self.rej,
-                srej_multiframe=self.srej_multiframe,
-                start_stop_transp=self.start_stop_transp,
-                start_stop_flow_ctl=self.start_stop_flow_ctl,
-                start_stop_tx=self.start_stop_tx, sync_tx=self.sync_tx,
-                fcs32=self.fcs32, fcs16=self.fcs16, rd=self.rd, test=self.test,
-                rset=self.rset, delete_i_cmd=self.delete_i_cmd,
-                delete_i_resp=self.delete_i_resp, extd_addr=self.extd_addr,
-                basic_addr=self.basic_addr, up=self.up, sim_rim=self.sim_rim,
-                ui=self.ui, reserved2=self.reserved2, reserved1=self.reserved1
+            modulo128=self.modulo128,
+            modulo8=self.modulo8,
+            srej=self.srej,
+            rej=self.rej,
+            srej_multiframe=self.srej_multiframe,
+            start_stop_transp=self.start_stop_transp,
+            start_stop_flow_ctl=self.start_stop_flow_ctl,
+            start_stop_tx=self.start_stop_tx,
+            sync_tx=self.sync_tx,
+            fcs32=self.fcs32,
+            fcs16=self.fcs16,
+            rd=self.rd,
+            test=self.test,
+            rset=self.rset,
+            delete_i_cmd=self.delete_i_cmd,
+            delete_i_resp=self.delete_i_resp,
+            extd_addr=self.extd_addr,
+            basic_addr=self.basic_addr,
+            up=self.up,
+            sim_rim=self.sim_rim,
+            ui=self.ui,
+            reserved2=self.reserved2,
+            reserved1=self.reserved1,
         )
+
+
 AX25XIDParameter.register(AX25XIDHDLCOptionalFunctionsParameter)
 
 # From AX.25 2.2 spec section 6.3.2:
 AX25_20_DEFAULT_XID_HDLCOPTFUNC = AX25XIDHDLCOptionalFunctionsParameter(
-        rej=True, srej=False, modulo8=True, modulo128=False
+    rej=True, srej=False, modulo8=True, modulo128=False
 )
 AX25_22_DEFAULT_XID_HDLCOPTFUNC = AX25XIDHDLCOptionalFunctionsParameter(
-        rej=False, srej=True, modulo8=True, modulo128=False
+    rej=False, srej=True, modulo8=True, modulo128=False
 )
 
 
@@ -1601,6 +1850,7 @@ class AX25XIDBigEndianParameter(AX25XIDParameter):
     Base class for all big-endian parameters (field lengths, window sizes, ACK
     timers, retries).
     """
+
     LENGTH = None
 
     @classmethod
@@ -1629,11 +1879,15 @@ class AX25XIDBigEndianParameter(AX25XIDParameter):
 
 class AX25XIDIFieldLengthTransmitParameter(AX25XIDBigEndianParameter):
     PI = AX25XIDParameterIdentifier.IFieldLengthTransmit
+
+
 AX25XIDParameter.register(AX25XIDIFieldLengthTransmitParameter)
 
 
 class AX25XIDIFieldLengthReceiveParameter(AX25XIDBigEndianParameter):
     PI = AX25XIDParameterIdentifier.IFieldLengthReceive
+
+
 AX25XIDParameter.register(AX25XIDIFieldLengthReceiveParameter)
 
 # From AX.25 2.2 spec section 6.3.2:
@@ -1644,12 +1898,16 @@ AX25_22_DEFAULT_XID_IFIELDRX = AX25XIDIFieldLengthReceiveParameter(2048)
 class AX25XIDWindowSizeTransmitParameter(AX25XIDBigEndianParameter):
     PI = AX25XIDParameterIdentifier.WindowSizeTransmit
     LENGTH = 1
+
+
 AX25XIDParameter.register(AX25XIDWindowSizeTransmitParameter)
 
 
 class AX25XIDWindowSizeReceiveParameter(AX25XIDBigEndianParameter):
     PI = AX25XIDParameterIdentifier.WindowSizeReceive
     LENGTH = 1
+
+
 AX25XIDParameter.register(AX25XIDWindowSizeReceiveParameter)
 
 # From AX.25 2.2 spec section 6.3.2:
@@ -1659,6 +1917,8 @@ AX25_22_DEFAULT_XID_WINDOWSZRX = AX25XIDIFieldLengthReceiveParameter(7)
 
 class AX25XIDAcknowledgeTimerParameter(AX25XIDBigEndianParameter):
     PI = AX25XIDParameterIdentifier.AcknowledgeTimer
+
+
 AX25XIDParameter.register(AX25XIDAcknowledgeTimerParameter)
 
 # From AX.25 2.2 spec section 6.3.2:
@@ -1668,6 +1928,8 @@ AX25_22_DEFAULT_XID_ACKTIMER = AX25XIDIFieldLengthReceiveParameter(3000)
 
 class AX25XIDRetriesParameter(AX25XIDBigEndianParameter):
     PI = AX25XIDParameterIdentifier.Retries
+
+
 AX25XIDParameter.register(AX25XIDRetriesParameter)
 
 # From AX.25 2.2 spec section 6.3.2:
@@ -1681,12 +1943,13 @@ class AX25ExchangeIdentificationFrame(AX25UnnumberedFrame):
 
     This frame is used to negotiate TNC features.
     """
+
     MODIFIER = 0b10101111
 
     @classmethod
     def decode(cls, header, control, data):
         if len(data) < 4:
-            raise ValueError('Truncated XID header')
+            raise ValueError("Truncated XID header")
 
         fi = data[0]
         gi = data[1]
@@ -1695,7 +1958,7 @@ class AX25ExchangeIdentificationFrame(AX25UnnumberedFrame):
         data = data[4:]
 
         if len(data) != gl:
-            raise ValueError('Truncated XID data')
+            raise ValueError("Truncated XID data")
 
         parameters = []
         while data:
@@ -1703,25 +1966,43 @@ class AX25ExchangeIdentificationFrame(AX25UnnumberedFrame):
             parameters.append(param)
 
         return cls(
-                destination=header.destination,
-                source=header.source,
-                repeaters=header.repeaters,
-                fi=fi, gi=gi,
-                parameters=parameters,
-                pf=bool(control & cls.POLL_FINAL),
-                cr=header.cr
+            destination=header.destination,
+            source=header.source,
+            repeaters=header.repeaters,
+            fi=fi,
+            gi=gi,
+            parameters=parameters,
+            pf=bool(control & cls.POLL_FINAL),
+            cr=header.cr,
         )
 
     # AX.25 2.2 sect 4.3.3.7 defines the following values for FI and GI:
     FI = 0x82
     GI = 0x80
 
-    def __init__(self, destination, source, parameters, fi=FI, gi=GI,
-            repeaters=None, pf=False, cr=False, timestamp=None, deadline=None):
+    def __init__(
+        self,
+        destination,
+        source,
+        parameters,
+        fi=FI,
+        gi=GI,
+        repeaters=None,
+        pf=False,
+        cr=False,
+        timestamp=None,
+        deadline=None,
+    ):
         super(AX25ExchangeIdentificationFrame, self).__init__(
-                destination=destination, source=source,
-                repeaters=repeaters, cr=cr, pf=pf,
-                modifier=self.MODIFIER, timestamp=timestamp, deadline=deadline)
+            destination=destination,
+            source=source,
+            repeaters=repeaters,
+            cr=cr,
+            pf=pf,
+            modifier=self.MODIFIER,
+            timestamp=timestamp,
+            deadline=deadline,
+        )
         self._fi = int(fi)
         self._gi = int(gi)
         self._parameters = list(parameters)
@@ -1740,29 +2021,26 @@ class AX25ExchangeIdentificationFrame(AX25UnnumberedFrame):
 
     @property
     def frame_payload(self):
-        parameters = b''.join([
-            bytes(param)
-            for param in self.parameters
-        ])
-        return super(AX25ExchangeIdentificationFrame, self).frame_payload \
-                + bytes([self.fi, self.gi]) \
-                + uint.encode(len(parameters), length=2, big_endian=True) \
-                + parameters
+        parameters = b"".join([bytes(param) for param in self.parameters])
+        return (
+            super(AX25ExchangeIdentificationFrame, self).frame_payload
+            + bytes([self.fi, self.gi])
+            + uint.encode(len(parameters), length=2, big_endian=True)
+            + parameters
+        )
 
     def _copy(self):
         return self.__class__(
-                destination=self.header.destination,
-                source=self.header.source,
-                fi=self.fi,
-                gi=self.gi,
-                parameters=[
-                    p.copy()
-                    for p in self.parameters
-                ],
-                repeaters=self.header.repeaters,
-                cr=self.header.cr,
-                pf=self.pf
+            destination=self.header.destination,
+            source=self.header.source,
+            fi=self.fi,
+            gi=self.gi,
+            parameters=[p.copy() for p in self.parameters],
+            repeaters=self.header.repeaters,
+            cr=self.header.cr,
+            pf=self.pf,
         )
+
 
 AX25UnnumberedFrame.register(AX25ExchangeIdentificationFrame)
 
@@ -1773,8 +2051,10 @@ class AX25UnnumberedAcknowledgeFrame(AX25BaseUnnumberedFrame):
 
     This frame is used to acknowledge a SABM/SABME frame.
     """
+
     MODIFIER = 0b01100011
     CR = False
+
 
 AX25UnnumberedFrame.register(AX25UnnumberedAcknowledgeFrame)
 
@@ -1785,25 +2065,41 @@ class AX25TestFrame(AX25UnnumberedFrame):
 
     This frame is used to initiate an echo request.
     """
+
     MODIFIER = 0b11100011
 
     @classmethod
     def decode(cls, header, control, data):
         return cls(
-                destination=header.destination,
-                source=header.source,
-                repeaters=header.repeaters,
-                payload=data,
-                pf=bool(control & cls.POLL_FINAL),
-                cr=header.cr
+            destination=header.destination,
+            source=header.source,
+            repeaters=header.repeaters,
+            payload=data,
+            pf=bool(control & cls.POLL_FINAL),
+            cr=header.cr,
         )
 
-    def __init__(self, destination, source, payload,
-            repeaters=None, pf=False, cr=False, timestamp=None, deadline=None):
+    def __init__(
+        self,
+        destination,
+        source,
+        payload,
+        repeaters=None,
+        pf=False,
+        cr=False,
+        timestamp=None,
+        deadline=None,
+    ):
         super(AX25TestFrame, self).__init__(
-                destination=destination, source=source,
-                repeaters=repeaters, cr=cr, pf=pf,
-                modifier=self.MODIFIER, timestamp=timestamp, deadline=deadline)
+            destination=destination,
+            source=source,
+            repeaters=repeaters,
+            cr=cr,
+            pf=pf,
+            modifier=self.MODIFIER,
+            timestamp=timestamp,
+            deadline=deadline,
+        )
         self._payload = bytes(payload)
 
     @property
@@ -1816,22 +2112,25 @@ class AX25TestFrame(AX25UnnumberedFrame):
 
     def _copy(self):
         return self.__class__(
-                destination=self.header.destination,
-                source=self.header.source,
-                payload=self.payload,
-                repeaters=self.header.repeaters,
-                cr=self.header.cr,
-                pf=self.pf
+            destination=self.header.destination,
+            source=self.header.source,
+            payload=self.payload,
+            repeaters=self.header.repeaters,
+            cr=self.header.cr,
+            pf=self.pf,
         )
+
 
 AX25UnnumberedFrame.register(AX25TestFrame)
 
 # Helper classes
 
+
 class AX25FrameHeader(object):
     """
     A representation of an AX.25 frame header.
     """
+
     @classmethod
     def decode(cls, data):
         """
@@ -1846,19 +2145,29 @@ class AX25FrameHeader(object):
 
         # Whatever's left is the frame payload data.
         if len(addresses) < 2:
-            raise ValueError('Too few addresses')
+            raise ValueError("Too few addresses")
 
-        return (cls(
-            destination=addresses[0],
-            source=addresses[1],
-            repeaters=addresses[2:],
-            cr=addresses[0].ch,
-            # Legacy AX.25 1.x stations set the C bits identically
-            legacy=addresses[0].ch is addresses[1].ch
-        ), data)
+        return (
+            cls(
+                destination=addresses[0],
+                source=addresses[1],
+                repeaters=addresses[2:],
+                cr=addresses[0].ch,
+                # Legacy AX.25 1.x stations set the C bits identically
+                legacy=addresses[0].ch is addresses[1].ch,
+            ),
+            data,
+        )
 
-    def __init__(self, destination, source, repeaters=None,
-            cr=False, src_cr=None, legacy=False):
+    def __init__(
+        self,
+        destination,
+        source,
+        repeaters=None,
+        cr=False,
+        src_cr=None,
+        legacy=False,
+    ):
         self._cr = bool(cr)
         self._src_cr = src_cr
         self._legacy = bool(legacy)
@@ -1900,11 +2209,10 @@ class AX25FrameHeader(object):
         """
         Dump the frame header in human-readable form.
         """
-        return '%s>%s%s' % (
-                self._source,
-                self._destination,
-                (',%s' % self._repeaters) \
-                        if self._repeaters else ''
+        return "%s>%s%s" % (
+            self._source,
+            self._destination,
+            (",%s" % self._repeaters) if self._repeaters else "",
         )
 
     def __bytes__(self):
@@ -1939,7 +2247,7 @@ class AX25FrameHeader(object):
         """
         if self._src_cr is None:
             if self.legacy:
-                return self.cr      # AX.25 1.x: the C/R bits are identical
+                return self.cr  # AX.25 1.x: the C/R bits are identical
             else:
                 return not self.cr  # AX.25 2.x: the C/R bits are opposite
         else:
@@ -1956,11 +2264,10 @@ class AX25FrameHeader(object):
         """
         # XXX "TNC2 format" is largely undefined… unless someone feels like
         # deciphering the TAPR TNC2's firmware source code. (hello Z80 assembly!)
-        return '%s>%s%s' % (
-                self._source.copy(ch=False),
-                self._destination.copy(ch=False),
-                (',%s' % self._repeaters) \
-                        if self._repeaters else ''
+        return "%s>%s%s" % (
+            self._source.copy(ch=False),
+            self._destination.copy(ch=False),
+            (",%s" % self._repeaters) if self._repeaters else "",
         )
 
     @property
@@ -1972,14 +2279,12 @@ class AX25Path(Sequence):
     """
     A representation of a digipeater path.
     """
+
     def __init__(self, *path):
         """
         Construct a path using the given path.
         """
-        self._path = tuple([
-            AX25Address.decode(digi)
-            for digi in path
-        ])
+        self._path = tuple([AX25Address.decode(digi) for digi in path])
 
     def __len__(self):
         """
@@ -1997,17 +2302,15 @@ class AX25Path(Sequence):
         """
         Return a string representation of the digipeater path.
         """
-        return ','.join(
-                str(addr) for addr in self._path
-        )
+        return ",".join(str(addr) for addr in self._path)
 
     def __repr__(self):
         """
         Return the Python representation of the digipeater path.
         """
-        return '%s(%s)' % (
-                self.__class__.__name__,
-                ', '.join([repr(addr) for addr in self._path])
+        return "%s(%s)" % (
+            self.__class__.__name__,
+            ", ".join([repr(addr) for addr in self._path]),
         )
 
     @property
@@ -2016,14 +2319,14 @@ class AX25Path(Sequence):
         Return the reply path (the "consumed" digipeaters in reverse order).
         """
         return self.__class__(
-                *tuple([
+            *tuple(
+                [
                     digi.copy(ch=False)
-                    for digi in
-                    filter(
-                        lambda digi : digi.ch,
-                        reversed(self._path)
+                    for digi in filter(
+                        lambda digi: digi.ch, reversed(self._path)
                     )
-                ])
+                ]
+            )
         )
 
     def replace(self, alias, address):
@@ -2034,10 +2337,12 @@ class AX25Path(Sequence):
         alias = AX25Address.decode(alias).normalised
         address = AX25Address.decode(address)
         return self.__class__(
-                *tuple([
+            *tuple(
+                [
                     address if (digi.normalised == alias) else digi
                     for digi in self._path
-                ])
+                ]
+            )
         )
 
 
@@ -2046,7 +2351,7 @@ class AX25Address(object):
     A representation of an AX.25 address (callsign + SSID)
     """
 
-    CALL_RE = re.compile(r'^([0-9A-Z]+)(?:-([0-9]{1,2}))?(\*?)$')
+    CALL_RE = re.compile(r"^([0-9A-Z]+)(?:-([0-9]{1,2}))?(\*?)$")
 
     @classmethod
     def decode(cls, data, ssid=None):
@@ -2056,32 +2361,29 @@ class AX25Address(object):
         if isinstance(data, (bytes, bytearray)):
             # Ensure the data is at least 7 bytes!
             if len(data) < 7:
-                raise ValueError('AX.25 addresses must be 7 bytes!')
+                raise ValueError("AX.25 addresses must be 7 bytes!")
 
             # This is a binary representation in the AX.25 frame header
-            callsign = bytes([
-                b >> 1
-                for b in data[0:6]
-            ]).decode('US-ASCII').strip()
-            ssid        = (data[6]          & 0b00011110) >> 1
-            ch          = bool(data[6]      & 0b10000000)
-            res1        = bool(data[6]      & 0b01000000)
-            res0        = bool(data[6]      & 0b00100000)
-            extension   = bool(data[6]      & 0b00000001)
+            callsign = (
+                bytes([b >> 1 for b in data[0:6]]).decode("US-ASCII").strip()
+            )
+            ssid = (data[6] & 0b00011110) >> 1
+            ch = bool(data[6] & 0b10000000)
+            res1 = bool(data[6] & 0b01000000)
+            res0 = bool(data[6] & 0b00100000)
+            extension = bool(data[6] & 0b00000001)
             return cls(callsign, ssid, ch, res0, res1, extension)
         elif isinstance(data, str):
             # This is a human-readable representation
             match = cls.CALL_RE.match(data.upper())
             if not match:
-                raise ValueError('Not a valid SSID: %s' % data)
+                raise ValueError("Not a valid SSID: %s" % data)
 
             if ssid is None:
                 ssid = int(match.group(2) or 0)
 
             return cls(
-                    callsign=match.group(1),
-                    ssid=ssid,
-                    ch=match.group(3) == '*'
+                callsign=match.group(1), ssid=ssid, ch=match.group(3) == "*"
             )
         elif isinstance(data, AX25Address):
             # Clone factory
@@ -2089,20 +2391,27 @@ class AX25Address(object):
         else:
             raise TypeError("Don't know how to decode %r" % data)
 
-    def __init__(self, callsign, ssid=0,
-            ch=False, res0=True, res1=True, extension=False):
-        self._callsign  = str(callsign).upper()
-        self._ssid      = int(ssid) & 0b00001111
-        self._ch        = bool(ch)
-        self._res0      = bool(res0)
-        self._res1      = bool(res1)
+    def __init__(
+        self,
+        callsign,
+        ssid=0,
+        ch=False,
+        res0=True,
+        res1=True,
+        extension=False,
+    ):
+        self._callsign = str(callsign).upper()
+        self._ssid = int(ssid) & 0b00001111
+        self._ch = bool(ch)
+        self._res0 = bool(res0)
+        self._res1 = bool(res1)
         self._extension = bool(extension)
 
     def _encode(self):
         """
         Generate the encoded AX.25 address.
         """
-        for byte in self._callsign[0:6].ljust(6).encode('US-ASCII'):
+        for byte in self._callsign[0:6].ljust(6).encode("US-ASCII"):
             yield (byte << 1)
 
         # SSID byte
@@ -2129,40 +2438,55 @@ class AX25Address(object):
         """
         address = self.callsign
         if self.ssid > 0:
-            address += '-%d' % self.ssid
+            address += "-%d" % self.ssid
 
         if self.ch:
-            address += '*'
+            address += "*"
         return address
 
     def __repr__(self):
         """
         Return the Python representation of this object.
         """
-        return ('%s(callsign=%s, ssid=%d, ch=%r, res0=%r, '\
-                'res1=%r, extension=%r)') % (\
-                self.__class__.__name__,
-                self.callsign, self.ssid, self.ch,
-                self.res0, self.res1, self.extension
+        return (
+            "%s(callsign=%s, ssid=%d, ch=%r, res0=%r, "
+            "res1=%r, extension=%r)"
+        ) % (
+            self.__class__.__name__,
+            self.callsign,
+            self.ssid,
+            self.ch,
+            self.res0,
+            self.res1,
+            self.extension,
         )
 
     def __eq__(self, other):
         if not isinstance(other, AX25Address):
             return NotImplemented
 
-        for field in ('callsign', 'ssid', 'extension',
-                    'res0', 'res1', 'ch'):
+        for field in ("callsign", "ssid", "extension", "res0", "res1", "ch"):
             if getattr(self, field) != getattr(other, field):
                 return False
 
         return True
 
     def __hash__(self):
-        return hash(tuple([
-            getattr(self, field)
-            for field in
-            ('callsign', 'ssid', 'extension', 'res0', 'res1', 'ch')
-        ]))
+        return hash(
+            tuple(
+                [
+                    getattr(self, field)
+                    for field in (
+                        "callsign",
+                        "ssid",
+                        "extension",
+                        "res0",
+                        "res1",
+                        "ch",
+                    )
+                ]
+            )
+        )
 
     @property
     def callsign(self):
@@ -2228,12 +2552,12 @@ class AX25Address(object):
         Return a copy of this address, optionally with fields overridden.
         """
         mydata = dict(
-                callsign=self.callsign,
-                ssid=self.ssid,
-                ch=self.ch,
-                res0=self.res0,
-                res1=self.res1,
-                extension=self.extension
+            callsign=self.callsign,
+            ssid=self.ssid,
+            ch=self.ch,
+            res0=self.res0,
+            res1=self.res1,
+            extension=self.extension,
         )
         mydata.update(overrides)
         return self.__class__(**mydata)

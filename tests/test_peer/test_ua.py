@@ -4,7 +4,11 @@
 Tests for AX25Peer UA handling
 """
 
-from aioax25.frame import AX25Address, AX25Path, AX25UnnumberedAcknowledgeFrame
+from aioax25.frame import (
+    AX25Address,
+    AX25Path,
+    AX25UnnumberedAcknowledgeFrame,
+)
 from aioax25.version import AX25Version
 from .peer import TestingAX25Peer
 from ..mocks import DummyStation
@@ -14,13 +18,13 @@ def test_peer_send_ua():
     """
     Test _send_ua correctly addresses and sends a UA frame.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     interface = station._interface()
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=AX25Path("VK4MSL-2", "VK4MSL-3"),
-            full_duplex=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4MSL-2", "VK4MSL-3"),
+        full_duplex=True,
     )
 
     # Request a UA frame be sent
@@ -31,7 +35,7 @@ def test_peer_send_ua():
     (tx_args, tx_kwargs) = interface.transmit_calls.pop(0)
 
     # This should be a UA
-    assert tx_kwargs == {'callback': None}
+    assert tx_kwargs == {"callback": None}
     assert len(tx_args) == 1
     (frame,) = tx_args
     assert isinstance(frame, AX25UnnumberedAcknowledgeFrame)

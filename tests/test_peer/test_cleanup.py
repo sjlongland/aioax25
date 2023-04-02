@@ -10,16 +10,17 @@ from ..mocks import DummyStation, DummyTimeout
 
 # Idle time-out cancellation
 
+
 def test_cancel_idle_timeout_inactive():
     """
     Test that calling _cancel_idle_timeout with no time-out is a no-op.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=AX25Path('VK4RZB'),
-            locked_path=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
     )
 
     # Constructor resets the timer, so discard that time-out handle
@@ -33,15 +34,15 @@ def test_cancel_idle_timeout_active():
     """
     Test that calling _cancel_idle_timeout active time-out cancels it.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=AX25Path('VK4RZB'),
-            locked_path=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
     )
 
-    timeout = DummyTimeout(0, lambda : None)
+    timeout = DummyTimeout(0, lambda: None)
     peer._idle_timeout_handle = timeout
 
     peer._cancel_idle_timeout()
@@ -49,18 +50,20 @@ def test_cancel_idle_timeout_active():
     assert peer._idle_timeout_handle is None
     assert timeout.cancelled is True
 
+
 # Idle time-out reset
+
 
 def test_reset_idle_timeout():
     """
     Test that calling _reset_idle_timeout re-creates a time-out object
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=AX25Path('VK4RZB'),
-            locked_path=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
     )
 
     # Grab the original time-out created by the constructor
@@ -77,7 +80,9 @@ def test_reset_idle_timeout():
     assert peer._idle_timeout_handle.delay == peer._idle_timeout
     assert peer._idle_timeout_handle.callback == peer._cleanup
 
+
 # Clean-up steps
+
 
 def test_cleanup_disconnected():
     """
@@ -86,27 +91,31 @@ def test_cleanup_disconnected():
     # Most of the time, there will be no pending RR notifications, so
     # _cancel_rr_notification will be a no-op in this case.
 
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=AX25Path('VK4RZB'),
-            locked_path=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
     )
 
     # Stub methods
 
     actions = []
+
     def _cancel_rr_notification():
-        actions.append('cancel-rr')
+        actions.append("cancel-rr")
+
     peer._cancel_rr_notification = _cancel_rr_notification
 
     def disconnect():
-        assert False, 'Should not call disconnect'
+        assert False, "Should not call disconnect"
+
     peer.disconnect = disconnect
 
     def _send_dm():
-        assert False, 'Should not send DM'
+        assert False, "Should not send DM"
+
     peer._send_dm = _send_dm
 
     # Set state
@@ -115,8 +124,8 @@ def test_cleanup_disconnected():
     # Do clean-up
     peer._cleanup()
 
-    assert actions == ['cancel-rr']
- 
+    assert actions == ["cancel-rr"]
+
 
 def test_cleanup_disconnecting():
     """
@@ -125,27 +134,31 @@ def test_cleanup_disconnecting():
     # Most of the time, there will be no pending RR notifications, so
     # _cancel_rr_notification will be a no-op in this case.
 
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=AX25Path('VK4RZB'),
-            locked_path=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
     )
 
     # Stub methods
 
     actions = []
+
     def _cancel_rr_notification():
-        actions.append('cancel-rr')
+        actions.append("cancel-rr")
+
     peer._cancel_rr_notification = _cancel_rr_notification
 
     def disconnect():
-        assert False, 'Should not call disconnect'
+        assert False, "Should not call disconnect"
+
     peer.disconnect = disconnect
 
     def _send_dm():
-        assert False, 'Should not send DM'
+        assert False, "Should not send DM"
+
     peer._send_dm = _send_dm
 
     # Set state
@@ -154,34 +167,38 @@ def test_cleanup_disconnecting():
     # Do clean-up
     peer._cleanup()
 
-    assert actions == ['cancel-rr'] 
+    assert actions == ["cancel-rr"]
 
 
 def test_cleanup_connecting():
     """
     Test that clean-up whilst connecting sends DM then cancels RR notifications
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=AX25Path('VK4RZB'),
-            locked_path=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
     )
 
     # Stub methods
 
     actions = []
+
     def _cancel_rr_notification():
-        actions.append('cancel-rr')
+        actions.append("cancel-rr")
+
     peer._cancel_rr_notification = _cancel_rr_notification
 
     def disconnect():
-        assert False, 'Should not call disconnect'
+        assert False, "Should not call disconnect"
+
     peer.disconnect = disconnect
 
     def _send_dm():
-        actions.append('sent-dm')
+        actions.append("sent-dm")
+
     peer._send_dm = _send_dm
 
     # Set state
@@ -190,34 +207,38 @@ def test_cleanup_connecting():
     # Do clean-up
     peer._cleanup()
 
-    assert actions == ['sent-dm', 'cancel-rr']
+    assert actions == ["sent-dm", "cancel-rr"]
 
 
 def test_cleanup_connected():
     """
     Test that clean-up whilst connected sends DISC then cancels RR notifications
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
-            station=station,
-            address=AX25Address('VK4MSL'),
-            repeaters=AX25Path('VK4RZB'),
-            locked_path=True
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
     )
 
     # Stub methods
 
     actions = []
+
     def _cancel_rr_notification():
-        actions.append('cancel-rr')
+        actions.append("cancel-rr")
+
     peer._cancel_rr_notification = _cancel_rr_notification
 
     def disconnect():
-        actions.append('disconnect')
+        actions.append("disconnect")
+
     peer.disconnect = disconnect
 
     def _send_dm():
-        assert False, 'Should not send DM'
+        assert False, "Should not send DM"
+
     peer._send_dm = _send_dm
 
     # Set state
@@ -226,4 +247,4 @@ def test_cleanup_connected():
     # Do clean-up
     peer._cleanup()
 
-    assert actions == ['disconnect', 'cancel-rr']
+    assert actions == ["disconnect", "cancel-rr"]

@@ -15,8 +15,8 @@ def test_peerconn_go():
     """
     Test _go triggers negotiation if the peer has not yet done so.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerConnectionHandler(peer)
 
     # Nothing should be set up
@@ -37,9 +37,9 @@ def test_peerconn_go_peer_ax20():
     """
     Test _go skips negotiation for AX.25 2.0 stations.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
     station._protocol = AX25Version.AX25_20
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerConnectionHandler(peer)
 
     # Nothing should be set up
@@ -63,7 +63,7 @@ def test_peerconn_go_peer_ax20():
     (frame, callback) = peer.transmit_calls.pop(0)
 
     # Frame should be a SABM frame
-    assert frame == 'sabm'
+    assert frame == "sabm"
     assert callback is None
 
 
@@ -71,8 +71,8 @@ def test_peerconn_go_peer_ax20():
     """
     Test _go skips negotiation for AX.25 2.0 peers.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     peer._protocol = AX25Version.AX25_20
     helper = AX25PeerConnectionHandler(peer)
 
@@ -97,7 +97,7 @@ def test_peerconn_go_peer_ax20():
     (frame, callback) = peer.transmit_calls.pop(0)
 
     # Frame should be a SABM frame
-    assert frame == 'sabm'
+    assert frame == "sabm"
     assert callback is None
 
 
@@ -105,8 +105,8 @@ def test_peerconn_go_prenegotiated():
     """
     Test _go skips negotiation if already completed.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerConnectionHandler(peer)
 
     # Pretend we've done negotiation
@@ -133,7 +133,7 @@ def test_peerconn_go_prenegotiated():
     (frame, callback) = peer.transmit_calls.pop(0)
 
     # Frame should be a SABM frame
-    assert frame == 'sabm'
+    assert frame == "sabm"
     assert callback is None
 
 
@@ -141,8 +141,8 @@ def test_peerconn_on_negotiated_failed():
     """
     Test _on_negotiated winds up the request if negotiation fails.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerConnectionHandler(peer)
 
     # Nothing should be set up
@@ -152,19 +152,19 @@ def test_peerconn_on_negotiated_failed():
 
     # Hook the done signal
     done_evts = []
-    helper.done_sig.connect(lambda **kw : done_evts.append(kw))
+    helper.done_sig.connect(lambda **kw: done_evts.append(kw))
 
     # Try to connect
-    helper._on_negotiated('whoopsie')
-    assert done_evts == [{'response': 'whoopsie'}]
+    helper._on_negotiated("whoopsie")
+    assert done_evts == [{"response": "whoopsie"}]
 
 
 def test_peerconn_on_negotiated_sabmframe_handler():
     """
     Test _on_negotiated refuses to run if another SABM frame handler is hooked.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerConnectionHandler(peer)
 
     # Nothing should be set up
@@ -173,23 +173,23 @@ def test_peerconn_on_negotiated_sabmframe_handler():
     assert peer.transmit_calls == []
 
     # Hook the SABM handler
-    peer._sabmframe_handler = lambda *a, **kwa : None
+    peer._sabmframe_handler = lambda *a, **kwa: None
 
     # Hook the done signal
     done_evts = []
-    helper.done_sig.connect(lambda **kw : done_evts.append(kw))
+    helper.done_sig.connect(lambda **kw: done_evts.append(kw))
 
     # Try to connect
-    helper._on_negotiated('xid')
-    assert done_evts == [{'response': 'station_busy'}]
+    helper._on_negotiated("xid")
+    assert done_evts == [{"response": "station_busy"}]
 
 
 def test_peerconn_on_negotiated_uaframe_handler():
     """
     Test _on_negotiated refuses to run if another UA frame handler is hooked.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerConnectionHandler(peer)
 
     # Nothing should be set up
@@ -198,23 +198,23 @@ def test_peerconn_on_negotiated_uaframe_handler():
     assert peer.transmit_calls == []
 
     # Hook the UA handler
-    peer._uaframe_handler = lambda *a, **kwa : None
+    peer._uaframe_handler = lambda *a, **kwa: None
 
     # Hook the done signal
     done_evts = []
-    helper.done_sig.connect(lambda **kw : done_evts.append(kw))
+    helper.done_sig.connect(lambda **kw: done_evts.append(kw))
 
     # Try to connect
-    helper._on_negotiated('xid')
-    assert done_evts == [{'response': 'station_busy'}]
+    helper._on_negotiated("xid")
+    assert done_evts == [{"response": "station_busy"}]
 
 
 def test_peerconn_on_negotiated_frmrframe_handler():
     """
     Test _on_negotiated refuses to run if another FRMR frame handler is hooked.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerConnectionHandler(peer)
 
     # Nothing should be set up
@@ -223,23 +223,23 @@ def test_peerconn_on_negotiated_frmrframe_handler():
     assert peer.transmit_calls == []
 
     # Hook the FRMR handler
-    peer._frmrframe_handler = lambda *a, **kwa : None
+    peer._frmrframe_handler = lambda *a, **kwa: None
 
     # Hook the done signal
     done_evts = []
-    helper.done_sig.connect(lambda **kw : done_evts.append(kw))
+    helper.done_sig.connect(lambda **kw: done_evts.append(kw))
 
     # Try to connect
-    helper._on_negotiated('xid')
-    assert done_evts == [{'response': 'station_busy'}]
+    helper._on_negotiated("xid")
+    assert done_evts == [{"response": "station_busy"}]
 
 
 def test_peerconn_on_negotiated_dmframe_handler():
     """
     Test _on_negotiated refuses to run if another DM frame handler is hooked.
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerConnectionHandler(peer)
 
     # Nothing should be set up
@@ -248,27 +248,27 @@ def test_peerconn_on_negotiated_dmframe_handler():
     assert peer.transmit_calls == []
 
     # Hook the DM handler
-    peer._dmframe_handler = lambda *a, **kwa : None
+    peer._dmframe_handler = lambda *a, **kwa: None
 
     # Hook the done signal
     done_evts = []
-    helper.done_sig.connect(lambda **kw : done_evts.append(kw))
+    helper.done_sig.connect(lambda **kw: done_evts.append(kw))
 
     # Try to connect
-    helper._on_negotiated('xid')
-    assert done_evts == [{'response': 'station_busy'}]
+    helper._on_negotiated("xid")
+    assert done_evts == [{"response": "station_busy"}]
 
 
 def test_peerconn_on_negotiated_xid():
     """
     Test _on_negotiated triggers SABM transmission on receipt of XID
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerConnectionHandler(peer)
 
     # Try to connect
-    helper._on_negotiated('xid')
+    helper._on_negotiated("xid")
 
     # Helper should not be done
     assert not helper._done
@@ -283,7 +283,7 @@ def test_peerconn_on_negotiated_xid():
     (frame, callback) = peer.transmit_calls.pop(0)
 
     # Frame should be a SABM frame
-    assert frame == 'sabm'
+    assert frame == "sabm"
     assert callback is None
 
 
@@ -291,8 +291,8 @@ def test_peerconn_receive_ua():
     """
     Test _on_receive_ua ends the helper
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerConnectionHandler(peer)
 
     # Assume we're using modulo-8 mode
@@ -304,14 +304,16 @@ def test_peerconn_receive_ua():
 
     # Stub peer _init_connection
     count = dict(init=0)
+
     def _init_connection(extended):
-        assert extended is False, 'Should be in Modulo-8 mode'
-        count['init'] += 1
+        assert extended is False, "Should be in Modulo-8 mode"
+        count["init"] += 1
+
     peer._init_connection = _init_connection
 
     # Hook the done signal
     done_evts = []
-    helper.done_sig.connect(lambda **kw : done_evts.append(kw))
+    helper.done_sig.connect(lambda **kw: done_evts.append(kw))
 
     # Call _on_receive_ua
     helper._on_receive_ua()
@@ -321,15 +323,15 @@ def test_peerconn_receive_ua():
 
     # See that the helper finished
     assert helper._done is True
-    assert done_evts == [{'response': 'ack'}]
+    assert done_evts == [{"response": "ack"}]
 
 
 def test_peerconn_receive_ua_mod128():
     """
     Test _on_receive_ua handles Mod128 mode
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerConnectionHandler(peer)
 
     # Assume we're using modulo-128 mode
@@ -341,14 +343,16 @@ def test_peerconn_receive_ua_mod128():
 
     # Stub peer _init_connection
     count = dict(init=0)
+
     def _init_connection(extended):
-        assert extended is True, 'Should be in Modulo-128 mode'
-        count['init'] += 1
+        assert extended is True, "Should be in Modulo-128 mode"
+        count["init"] += 1
+
     peer._init_connection = _init_connection
 
     # Hook the done signal
     done_evts = []
-    helper.done_sig.connect(lambda **kw : done_evts.append(kw))
+    helper.done_sig.connect(lambda **kw: done_evts.append(kw))
 
     # Call _on_receive_ua
     helper._on_receive_ua()
@@ -358,15 +362,15 @@ def test_peerconn_receive_ua_mod128():
 
     # See that the helper finished
     assert helper._done is True
-    assert done_evts == [{'response': 'ack'}]
+    assert done_evts == [{"response": "ack"}]
 
 
 def test_peerconn_receive_sabm():
     """
     Test _on_receive_sabm ends the helper
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerConnectionHandler(peer)
 
     # Nothing should be set up
@@ -375,13 +379,15 @@ def test_peerconn_receive_sabm():
 
     # Stub peer _send_ua
     count = dict(send_ua=0)
+
     def _send_ua():
-        count['send_ua'] += 1
+        count["send_ua"] += 1
+
     peer._send_ua = _send_ua
 
     # Hook the done signal
     done_evts = []
-    helper.done_sig.connect(lambda **kw : done_evts.append(kw))
+    helper.done_sig.connect(lambda **kw: done_evts.append(kw))
 
     # Call _on_receive_sabm
     helper._on_receive_sabm()
@@ -391,15 +397,15 @@ def test_peerconn_receive_sabm():
 
     # See that the helper finished
     assert helper._done is True
-    assert done_evts == [{'response': 'ack'}]
+    assert done_evts == [{"response": "ack"}]
 
 
 def test_peerconn_receive_frmr():
     """
     Test _on_receive_frmr ends the helper
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerConnectionHandler(peer)
 
     # Nothing should be set up
@@ -408,21 +414,21 @@ def test_peerconn_receive_frmr():
 
     # Hook the done signal
     done_evts = []
-    helper.done_sig.connect(lambda **kw : done_evts.append(kw))
+    helper.done_sig.connect(lambda **kw: done_evts.append(kw))
 
     # Call _on_receive_frmr
     helper._on_receive_frmr()
 
     # See that the helper finished
     assert helper._done is True
-    assert done_evts == [{'response': 'frmr'}]
+    assert done_evts == [{"response": "frmr"}]
 
     # Station should have been asked to send a DM
     assert len(peer.transmit_calls) == 1
     (frame, callback) = peer.transmit_calls.pop(0)
 
     # Frame should be a DM frame
-    assert frame == 'dm'
+    assert frame == "dm"
     assert callback is None
 
 
@@ -430,8 +436,8 @@ def test_peerconn_receive_dm():
     """
     Test _on_receive_dm ends the helper
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerConnectionHandler(peer)
 
     # Nothing should be set up
@@ -440,22 +446,22 @@ def test_peerconn_receive_dm():
 
     # Hook the done signal
     done_evts = []
-    helper.done_sig.connect(lambda **kw : done_evts.append(kw))
+    helper.done_sig.connect(lambda **kw: done_evts.append(kw))
 
     # Call _on_receive_frmr
     helper._on_receive_dm()
 
     # See that the helper finished
     assert helper._done is True
-    assert done_evts == [{'response': 'dm'}]
+    assert done_evts == [{"response": "dm"}]
 
 
 def test_peerconn_on_timeout_first():
     """
     Test _on_timeout retries if there are retries left
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerConnectionHandler(peer)
 
     # Nothing should be set up
@@ -487,7 +493,7 @@ def test_peerconn_on_timeout_first():
     (frame, callback) = peer.transmit_calls.pop(0)
 
     # Frame should be a SABM frame
-    assert frame == 'sabm'
+    assert frame == "sabm"
     assert callback is None
 
 
@@ -495,8 +501,8 @@ def test_peerconn_on_timeout_last():
     """
     Test _on_timeout finishes the helper if retries exhausted
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerConnectionHandler(peer)
 
     # Nothing should be set up
@@ -515,7 +521,7 @@ def test_peerconn_on_timeout_last():
 
     # Hook the done signal
     done_evts = []
-    helper.done_sig.connect(lambda **kw : done_evts.append(kw))
+    helper.done_sig.connect(lambda **kw: done_evts.append(kw))
 
     # Call the time-out handler
     helper._on_timeout()
@@ -534,19 +540,19 @@ def test_peerconn_on_timeout_last():
 
     # See that the helper finished
     assert helper._done is True
-    assert done_evts == [{'response': 'timeout'}]
+    assert done_evts == [{"response": "timeout"}]
 
 
 def test_peerconn_finish_disconnect_ua():
     """
     Test _finish leaves other UA hooks intact
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerConnectionHandler(peer)
 
     # Pretend we're hooked up
-    dummy_uaframe_handler = lambda *a, **kw : None
+    dummy_uaframe_handler = lambda *a, **kw: None
     peer._sabmframe_handler = helper._on_receive_sabm
     peer._uaframe_handler = dummy_uaframe_handler
     peer._frmrframe_handler = helper._on_receive_frmr
@@ -566,12 +572,12 @@ def test_peerconn_finish_disconnect_sabm():
     """
     Test _finish leaves other SABM hooks intact
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerConnectionHandler(peer)
 
     # Pretend we're hooked up
-    dummy_sabmframe_handler = lambda *a, **kw : None
+    dummy_sabmframe_handler = lambda *a, **kw: None
     peer._sabmframe_handler = dummy_sabmframe_handler
     peer._uaframe_handler = helper._on_receive_ua
     peer._frmrframe_handler = helper._on_receive_frmr
@@ -591,12 +597,12 @@ def test_peerconn_finish_disconnect_frmr():
     """
     Test _finish leaves other FRMR hooks intact
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerConnectionHandler(peer)
 
     # Pretend we're hooked up
-    dummy_frmrframe_handler = lambda *a, **kw : None
+    dummy_frmrframe_handler = lambda *a, **kw: None
     peer._sabmframe_handler = helper._on_receive_sabm
     peer._uaframe_handler = helper._on_receive_ua
     peer._frmrframe_handler = dummy_frmrframe_handler
@@ -616,12 +622,12 @@ def test_peerconn_finish_disconnect_dm():
     """
     Test _finish leaves other DM hooks intact
     """
-    station = DummyStation(AX25Address('VK4MSL', ssid=1))
-    peer = DummyPeer(station, AX25Address('VK4MSL'))
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
     helper = AX25PeerConnectionHandler(peer)
 
     # Pretend we're hooked up
-    dummy_dmframe_handler = lambda *a, **kw : None
+    dummy_dmframe_handler = lambda *a, **kw: None
     peer._sabmframe_handler = helper._on_receive_sabm
     peer._uaframe_handler = helper._on_receive_ua
     peer._frmrframe_handler = helper._on_receive_frmr

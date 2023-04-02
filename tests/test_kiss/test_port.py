@@ -22,15 +22,16 @@ def test_send():
     Test that frames passed to send are wrapped in a KISS frame and passed up.
     """
     dev = DummyKISSDevice()
-    port = KISSPort(dev, 5, logging.getLogger('port'))
-    port.send(b'this is a test frame')
+    port = KISSPort(dev, 5, logging.getLogger("port"))
+    port.send(b"this is a test frame")
 
     eq_(len(dev.sent), 1)
     last = dev.sent.pop(0)
 
     assert isinstance(last, KISSCmdData)
     eq_(last.port, 5)
-    eq_(last.payload, b'this is a test frame')
+    eq_(last.payload, b"this is a test frame")
+
 
 def test_receive_frame():
     """
@@ -38,14 +39,15 @@ def test_receive_frame():
     """
     sent = []
     dev = DummyKISSDevice()
-    port = KISSPort(dev, 5, logging.getLogger('port'))
-    port.received.connect(lambda frame, **k : sent.append(frame))
+    port = KISSPort(dev, 5, logging.getLogger("port"))
+    port.received.connect(lambda frame, **k: sent.append(frame))
 
-    port._receive_frame(KISSCmdData(port=5, payload=b'this is a test frame'))
+    port._receive_frame(KISSCmdData(port=5, payload=b"this is a test frame"))
 
     # We should have received that via the signal
-    eq_(len(sent),1)
-    eq_(sent.pop(0), b'this is a test frame')
+    eq_(len(sent), 1)
+    eq_(sent.pop(0), b"this is a test frame")
+
 
 def test_receive_frame_filter_nondata():
     """
@@ -53,11 +55,12 @@ def test_receive_frame_filter_nondata():
     """
     sent = []
     dev = DummyKISSDevice()
-    port = KISSPort(dev, 5, logging.getLogger('port'))
-    port.received.connect(lambda frame, **k : sent.append(frame))
+    port = KISSPort(dev, 5, logging.getLogger("port"))
+    port.received.connect(lambda frame, **k: sent.append(frame))
 
-    port._receive_frame(KISSCommand(port=5, cmd=8,
-        payload=b'this is a test frame'))
+    port._receive_frame(
+        KISSCommand(port=5, cmd=8, payload=b"this is a test frame")
+    )
 
     # We should not have received that frame
-    eq_(len(sent),0)
+    eq_(len(sent), 0)

@@ -10,7 +10,7 @@ from aioax25.signal import Signal
 class DummyAPRSInterface(object):
     def __init__(self):
         self.received_msg = Signal()
-        self.mycall = AX25Address.decode('VK4MSL-10')
+        self.mycall = AX25Address.decode("VK4MSL-10")
         self.transmitted = []
 
     def transmit(self, frame):
@@ -22,7 +22,7 @@ def test_mydigi_read():
     Test we can obtain a copy of the digipeater call list.
     """
     digipeater = APRSDigipeater()
-    digipeater._mydigi.add(AX25Address.decode('VK4MSL'))
+    digipeater._mydigi.add(AX25Address.decode("VK4MSL"))
     mydigi = digipeater.mydigi
 
     assert mydigi is not digipeater._mydigi
@@ -34,12 +34,10 @@ def test_mydigi_replace():
     Test we can replace the digipeater call list.
     """
     digipeater = APRSDigipeater()
-    digipeater._mydigi.add(AX25Address.decode('VK4MSL'))
-    digipeater.mydigi = ['VK4BWI']
+    digipeater._mydigi.add(AX25Address.decode("VK4MSL"))
+    digipeater.mydigi = ["VK4BWI"]
 
-    eq_(digipeater.mydigi, set([
-        AX25Address.decode('VK4BWI')
-    ]))
+    eq_(digipeater.mydigi, set([AX25Address.decode("VK4BWI")]))
 
 
 def test_connect_noadd():
@@ -62,9 +60,7 @@ def test_disconnect_norm():
     digipeater = APRSDigipeater()
     digipeater.connect(interface)
     digipeater.disconnect(interface, rmcall=False)
-    eq_(digipeater._mydigi, set([
-        AX25Address.decode('VK4MSL-10')
-    ]))
+    eq_(digipeater._mydigi, set([AX25Address.decode("VK4MSL-10")]))
 
 
 def test_rx_irrelevant():
@@ -77,14 +73,12 @@ def test_rx_irrelevant():
     interface.received_msg.emit(
         interface=interface,
         frame=AX25UnnumberedInformationFrame(
-            destination='VK4MSL-1',
-            source='VK4MSL-2',
-            repeaters=[
-                'VK4RZA',
-                'VK4RZB'
-            ],
-            pid=0xff, payload=b'testing'
-        )
+            destination="VK4MSL-1",
+            source="VK4MSL-2",
+            repeaters=["VK4RZA", "VK4RZB"],
+            pid=0xFF,
+            payload=b"testing",
+        ),
     )
 
     # This should have been dropped
@@ -101,15 +95,12 @@ def test_rx_selfdigied():
     interface.received_msg.emit(
         interface=interface,
         frame=AX25UnnumberedInformationFrame(
-            destination='VK4MSL-1',
-            source='VK4MSL-2',
-            repeaters=[
-                'VK4RZA',
-                'VK4MSL-10*',
-                'VK4RZB'
-            ],
-            pid=0xff, payload=b'testing'
-        )
+            destination="VK4MSL-1",
+            source="VK4MSL-2",
+            repeaters=["VK4RZA", "VK4MSL-10*", "VK4RZB"],
+            pid=0xFF,
+            payload=b"testing",
+        ),
     )
 
     # This should have been dropped
@@ -126,15 +117,12 @@ def test_rx_selftodigi_uplink():
     interface.received_msg.emit(
         interface=interface,
         frame=AX25UnnumberedInformationFrame(
-            destination='VK4MSL-1',
-            source='VK4MSL-2',
-            repeaters=[
-                'VK4RZA',
-                'VK4MSL-10',
-                'VK4RZB'
-            ],
-            pid=0xff, payload=b'testing'
-        )
+            destination="VK4MSL-1",
+            source="VK4MSL-2",
+            repeaters=["VK4RZA", "VK4MSL-10", "VK4RZB"],
+            pid=0xFF,
+            payload=b"testing",
+        ),
     )
 
     # This should have been dropped
@@ -151,14 +139,12 @@ def test_rx_selftodigi_first():
     interface.received_msg.emit(
         interface=interface,
         frame=AX25UnnumberedInformationFrame(
-            destination='VK4MSL-1',
-            source='VK4MSL-2',
-            repeaters=[
-                'VK4MSL-10',
-                'VK4RZB'
-            ],
-            pid=0xff, payload=b'testing'
-        )
+            destination="VK4MSL-1",
+            source="VK4MSL-2",
+            repeaters=["VK4MSL-10", "VK4RZB"],
+            pid=0xFF,
+            payload=b"testing",
+        ),
     )
 
     # This should have been digipeated
@@ -166,7 +152,7 @@ def test_rx_selftodigi_first():
     frame = interface.transmitted.pop()
 
     # It should be passed through VK4MSL-10.
-    eq_(str(frame.header.repeaters), 'VK4MSL-10*,VK4RZB')
+    eq_(str(frame.header.repeaters), "VK4MSL-10*,VK4RZB")
 
 
 def test_disconnect():
@@ -179,14 +165,12 @@ def test_disconnect():
     interface.received_msg.emit(
         interface=interface,
         frame=AX25UnnumberedInformationFrame(
-            destination='VK4MSL-1',
-            source='VK4MSL-2',
-            repeaters=[
-                'VK4MSL-10',
-                'VK4RZB'
-            ],
-            pid=0xff, payload=b'testing'
-        )
+            destination="VK4MSL-1",
+            source="VK4MSL-2",
+            repeaters=["VK4MSL-10", "VK4RZB"],
+            pid=0xFF,
+            payload=b"testing",
+        ),
     )
 
     # This should have been digipeated
@@ -194,21 +178,19 @@ def test_disconnect():
     frame = interface.transmitted.pop()
 
     # It should be passed through VK4MSL-10.
-    eq_(str(frame.header.repeaters), 'VK4MSL-10*,VK4RZB')
+    eq_(str(frame.header.repeaters), "VK4MSL-10*,VK4RZB")
 
     # Disconnect, then send another message
     digipeater.disconnect(interface)
     interface.received_msg.emit(
         interface=interface,
         frame=AX25UnnumberedInformationFrame(
-            destination='VK4MSL-1',
-            source='VK4MSL-2',
-            repeaters=[
-                'VK4MSL-10',
-                'VK4RZB'
-            ],
-            pid=0xff, payload=b'testing 2'
-        )
+            destination="VK4MSL-1",
+            source="VK4MSL-2",
+            repeaters=["VK4MSL-10", "VK4RZB"],
+            pid=0xFF,
+            payload=b"testing 2",
+        ),
     )
 
     # This should not have been digipeated
@@ -221,19 +203,17 @@ def test_rx_selftodigi_alias():
     """
     interface = DummyAPRSInterface()
     digipeater = APRSDigipeater()
-    digipeater.addaliases('GATE')
+    digipeater.addaliases("GATE")
     digipeater.connect(interface)
     interface.received_msg.emit(
         interface=interface,
         frame=AX25UnnumberedInformationFrame(
-            destination='VK4MSL-1',
-            source='VK4MSL-2',
-            repeaters=[
-                'GATE',
-                'VK4RZB'
-            ],
-            pid=0xff, payload=b'testing'
-        )
+            destination="VK4MSL-1",
+            source="VK4MSL-2",
+            repeaters=["GATE", "VK4RZB"],
+            pid=0xFF,
+            payload=b"testing",
+        ),
     )
 
     # This should have been digipeated
@@ -241,7 +221,7 @@ def test_rx_selftodigi_alias():
     frame = interface.transmitted.pop()
 
     # It should be passed through VK4MSL-10.
-    eq_(str(frame.header.repeaters), 'VK4MSL-10*,VK4RZB')
+    eq_(str(frame.header.repeaters), "VK4MSL-10*,VK4RZB")
 
 
 def test_rx_selftodigi_downlink():
@@ -254,16 +234,17 @@ def test_rx_selftodigi_downlink():
     interface.received_msg.emit(
         interface=interface,
         frame=AX25UnnumberedInformationFrame(
-            destination='VK4MSL-1',
-            source='VK4MSL-2',
+            destination="VK4MSL-1",
+            source="VK4MSL-2",
             repeaters=[
-                'VK2RXX',   # Ordinarily, this should have the H bit set!
-                'VK4RZA*',
-                'VK4MSL-10',
-                'VK4RZB'
+                "VK2RXX",  # Ordinarily, this should have the H bit set!
+                "VK4RZA*",
+                "VK4MSL-10",
+                "VK4RZB",
             ],
-            pid=0xff, payload=b'testing'
-        )
+            pid=0xFF,
+            payload=b"testing",
+        ),
     )
 
     # This should have been digipeated
@@ -272,7 +253,7 @@ def test_rx_selftodigi_downlink():
 
     # It should be passed through VK4MSL-10.  H bits of prior repeaters
     # should be left intact.
-    eq_(str(frame.header.repeaters), 'VK2RXX,VK4RZA*,VK4MSL-10*,VK4RZB')
+    eq_(str(frame.header.repeaters), "VK2RXX,VK4RZA*,VK4MSL-10*,VK4RZB")
 
 
 def test_rx_exhausted():
@@ -285,13 +266,12 @@ def test_rx_exhausted():
     interface.received_msg.emit(
         interface=interface,
         frame=AX25UnnumberedInformationFrame(
-            destination='VK4MSL-1',
-            source='VK4MSL-2',
-            repeaters=[
-                'WIDE9-0'
-            ],
-            pid=0xff, payload=b'testing'
-        )
+            destination="VK4MSL-1",
+            source="VK4MSL-2",
+            repeaters=["WIDE9-0"],
+            pid=0xFF,
+            payload=b"testing",
+        ),
     )
 
     # This should have been dropped
@@ -308,19 +288,18 @@ def test_rx_lasthop():
     interface.received_msg.emit(
         interface=interface,
         frame=AX25UnnumberedInformationFrame(
-            destination='VK4MSL-1',
-            source='VK4MSL-2',
-            repeaters=[
-                'WIDE1-1'
-            ],
-            pid=0xff, payload=b'testing'
-        )
+            destination="VK4MSL-1",
+            source="VK4MSL-2",
+            repeaters=["WIDE1-1"],
+            pid=0xFF,
+            payload=b"testing",
+        ),
     )
 
     # This should have been digipeated
     eq_(len(interface.transmitted), 1)
     frame = interface.transmitted.pop()
-    eq_(str(frame.header.repeaters), 'VK4MSL-10*')
+    eq_(str(frame.header.repeaters), "VK4MSL-10*")
 
 
 def test_rx_nexthop():
@@ -333,19 +312,18 @@ def test_rx_nexthop():
     interface.received_msg.emit(
         interface=interface,
         frame=AX25UnnumberedInformationFrame(
-            destination='VK4MSL-1',
-            source='VK4MSL-2',
-            repeaters=[
-                'WIDE3-3'
-            ],
-            pid=0xff, payload=b'testing'
-        )
+            destination="VK4MSL-1",
+            source="VK4MSL-2",
+            repeaters=["WIDE3-3"],
+            pid=0xFF,
+            payload=b"testing",
+        ),
     )
 
     # This should have been digipeated
     eq_(len(interface.transmitted), 1)
     frame = interface.transmitted.pop()
-    eq_(str(frame.header.repeaters), 'VK4MSL-10*,WIDE3-2')
+    eq_(str(frame.header.repeaters), "VK4MSL-10*,WIDE3-2")
 
 
 def test_rx_hybridpath():
@@ -358,17 +336,15 @@ def test_rx_hybridpath():
     interface.received_msg.emit(
         interface=interface,
         frame=AX25UnnumberedInformationFrame(
-            destination='VK4MSL-1',
-            source='VK4MSL-2',
-            repeaters=[
-                'WIDE1-1',
-                'WIDE2-2'
-            ],
-            pid=0xff, payload=b'testing'
-        )
+            destination="VK4MSL-1",
+            source="VK4MSL-2",
+            repeaters=["WIDE1-1", "WIDE2-2"],
+            pid=0xFF,
+            payload=b"testing",
+        ),
     )
 
     # This should have been digipeated
     eq_(len(interface.transmitted), 1)
     frame = interface.transmitted.pop()
-    eq_(str(frame.header.repeaters), 'VK4MSL-10*,WIDE2-2')
+    eq_(str(frame.header.repeaters), "VK4MSL-10*,WIDE2-2")

@@ -55,7 +55,7 @@ class DummyLogger(object):
         self.log(logging.WARNING, msg, *args, **kwargs)
 
     def getChild(self, name):
-        return DummyLogger(self.name + '.' + name, parent=self)
+        return DummyLogger(self.name + "." + name, parent=self)
 
 
 class DummyTimeout(object):
@@ -68,7 +68,7 @@ class DummyTimeout(object):
         self.cancelled = False
 
     def cancel(self):
-        assert not self.cancelled, 'Cancel called twice!'
+        assert not self.cancelled, "Cancel called twice!"
         self.cancelled = True
 
 
@@ -105,7 +105,7 @@ class DummyStation(object):
 class DummyPeer(object):
     def __init__(self, station, address):
         self._station_ref = station
-        self._log = DummyLogger('peer')
+        self._log = DummyLogger("peer")
         self._loop = DummyIOLoop()
 
         self._max_retries = 2
@@ -147,10 +147,10 @@ class DummyPeer(object):
         self.transmit_calls.append((frame, callback))
 
     def _send_sabm(self):
-        self._transmit_frame('sabm')
+        self._transmit_frame("sabm")
 
     def _send_dm(self):
-        self._transmit_frame('dm')
+        self._transmit_frame("dm")
 
     def _send_xid(self, cr=False):
-        self._transmit_frame('xid:cr=%s' % cr)
+        self._transmit_frame("xid:cr=%s" % cr)

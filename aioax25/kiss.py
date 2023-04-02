@@ -18,19 +18,19 @@ import logging
 # Constants
 
 
-BYTE_FEND   = 0xc0
-BYTE_FESC   = 0xdb
-BYTE_TFEND  = 0xdc
-BYTE_TFESC  = 0xdd
+BYTE_FEND = 0xC0
+BYTE_FESC = 0xDB
+BYTE_TFEND = 0xDC
+BYTE_TFESC = 0xDD
 
-CMD_DATA    = 0x00
+CMD_DATA = 0x00
 CMD_TXDELAY = 0x01
-CMD_P       = 0x02
-CMD_SLOTTIME= 0x03
-CMD_TXTAIL  = 0x04
+CMD_P = 0x02
+CMD_SLOTTIME = 0x03
+CMD_TXTAIL = 0x04
 CMD_FDUPLEX = 0x05
-CMD_SETHW   = 0x06
-CMD_RETURN  = 0x0f
+CMD_SETHW = 0x06
+CMD_RETURN = 0x0F
 
 
 # States
@@ -46,6 +46,7 @@ class KISSDeviceState(Enum):
     - CLOSING: Close instruction just received.  Putting TNC back into
       TNC2-mode if requested then closing the port.
     """
+
     CLOSED = 0
     OPENING = 1
     OPEN = 2
@@ -114,7 +115,7 @@ class KISSCommand(object):
         """
         frame = bytearray(cls._unstuff_bytes(frame))
         port = frame[0] >> 4
-        cmd  = frame[0] & 0x0f
+        cmd = frame[0] & 0x0F
         subclass = cls._KNOWN_COMMANDS.get(cmd, cls)
         return subclass(port=port, cmd=cmd, payload=frame[1:])
 
@@ -124,9 +125,7 @@ class KISSCommand(object):
         self._payload = payload
 
     def __bytes__(self):
-        out = bytearray([
-            ((self._port & 0x0f) << 4) | (self._cmd & 0x0f)
-        ])
+        out = bytearray([((self._port & 0x0F) << 4) | (self._cmd & 0x0F)])
         if self._payload:
             out += self._payload
 
@@ -134,11 +133,11 @@ class KISSCommand(object):
         return bytes(self._stuff_bytes(out))
 
     def __str__(self):
-        return '%s{Port %d, Cmd 0x%02x, Payload %s}' % (
-                self.__class__.__name__,
-                self.port,
-                self.cmd,
-                b2a_hex(self.payload).decode()
+        return "%s{Port %d, Cmd 0x%02x, Payload %s}" % (
+            self.__class__.__name__,
+            self.port,
+            self.cmd,
+            b2a_hex(self.payload).decode(),
         )
 
     @property
@@ -158,16 +157,22 @@ class KISSCmdReturn(KISSCommand):
     """
     Emit a return command to the TNC.
     """
+
     def __init__(self):
         super(KISSCmdReturn, self).__init__(port=15, cmd=CMD_RETURN)
+
+
 KISSCommand._register(CMD_RETURN, KISSCmdReturn)
 
 
 class KISSCmdData(KISSCommand):
     def __init__(self, port, payload, cmd=CMD_DATA):
         assert cmd == CMD_DATA
-        super(KISSCmdData, self).__init__(port=port,
-                cmd=CMD_DATA, payload=payload)
+        super(KISSCmdData, self).__init__(
+            port=port, cmd=CMD_DATA, payload=payload
+        )
+
+
 KISSCommand._register(CMD_DATA, KISSCmdData)
 
 
@@ -179,10 +184,17 @@ class BaseKISSDevice(object):
     Base class for a KISS device.  This may have between 1 and 16 KISS
     ports hanging off it.
     """
-    def __init__(self, reset_on_close=True,
-            send_block_size=128, send_block_delay=0.1,
-            kiss_commands=['INT KISS', 'RESET'],
-            log=None, loop=None, **kwargs):
+
+    def __init__(
+        self,
+        reset_on_close=True,
+        send_block_size=128,
+        send_block_delay=0.1,
+        kiss_commands=["INT KISS", "RESET"],
+        log=None,
+        loop=None,
+        **kwargs
+    ):
         if log is None:
             log = logging.getLogger(self.__class__.__module__)
         if loop is None:
@@ -208,7 +220,7 @@ class BaseKISSDevice(object):
         data given may contain partial frames.
         """
         if self._log.isEnabledFor(logging.DEBUG):
-            self._log.debug('RECV RAW %r', b2a_hex(data).decode())
+            self._log.debug("RECV RAW %r", b2a_hex(data).decode())
 
         self._rx_buffer += data
         if self._state == KISSDeviceState.OPENING:
@@ -223,13 +235,12 @@ class BaseKISSDevice(object):
         rawframe = bytes(frame)
 
         if self._log.isEnabledFor(logging.DEBUG):
-            self._log.debug('XMIT FRAME %r', b2a_hex(rawframe).decode())
+            self._log.debug("XMIT FRAME %r", b2a_hex(rawframe).decode())
 
         if not self._tx_buffer.endswith(bytearray([BYTE_FEND])):
             self._tx_buffer += bytearray([BYTE_FEND])
 
-        self._tx_buffer += bytes(rawframe) \
-                         + bytearray([BYTE_FEND])
+        self._tx_buffer += bytes(rawframe) + bytearray([BYTE_FEND])
         self._loop.call_soon(self._send_data)
 
     def _receive_frame(self):
@@ -246,7 +257,7 @@ class BaseKISSDevice(object):
             self._rx_buffer = bytearray()
             return
 
-        self._log.debug('RECV FRAME start at %d', start)
+        self._log.debug("RECV FRAME start at %d", start)
 
         # Discard the proceeding junk
         self._rx_buffer = self._rx_buffer[start:]
@@ -260,23 +271,25 @@ class BaseKISSDevice(object):
             # Uhh huh, so frame is incomplete.
             return
 
-        self._log.debug('RECV FRAME end at %d', end)
+        self._log.debug("RECV FRAME end at %d", end)
 
         # Everything between those points is our frame.
         frame = self._rx_buffer[1:end]
         self._rx_buffer = self._rx_buffer[end:]
 
         if self._log.isEnabledFor(logging.DEBUG):
-            self._log.debug('RECEIVED FRAME %s, REMAINING %s',
-                    b2a_hex(frame).decode(),
-                    b2a_hex(self._rx_buffer).decode()
+            self._log.debug(
+                "RECEIVED FRAME %s, REMAINING %s",
+                b2a_hex(frame).decode(),
+                b2a_hex(self._rx_buffer).decode(),
             )
 
         # Two consecutive FEND bytes are valid, ignore these "empty" frames
         if len(frame) > 0:
             # Decode the frame
-            self._loop.call_soon(self._dispatch_rx_frame,
-                    KISSCommand.decode(frame))
+            self._loop.call_soon(
+                self._dispatch_rx_frame, KISSCommand.decode(frame)
+            )
 
         # If we just have a FEND, stop here.
         if bytes(self._rx_buffer) == bytearray([BYTE_FEND]):
@@ -294,35 +307,35 @@ class BaseKISSDevice(object):
             port = self._port[frame.port]
         except KeyError:
             # Port not defined.
-            self._log.debug('RECV FRAME dropped %s', frame)
+            self._log.debug("RECV FRAME dropped %s", frame)
             return
 
         # Dispatch this frame to the port.  Swallow exceptions so we
         # don't choke the IO loop.
-        self._log.debug('RECV FRAME dispatch %s', frame)
+        self._log.debug("RECV FRAME dispatch %s", frame)
         try:
             port._receive_frame(frame)
         except:
             logging.getLogger(self.__class__.__module__).exception(
-                    'Port %s failed to handle frame %s',
-                    port, frame
+                "Port %s failed to handle frame %s", port, frame
             )
 
     def _send_data(self):
         """
         Send the next block of data waiting in the buffer.
         """
-        data = self._tx_buffer[:self._send_block_size]
-        self._tx_buffer = self._tx_buffer[self._send_block_size:]
+        data = self._tx_buffer[: self._send_block_size]
+        self._tx_buffer = self._tx_buffer[self._send_block_size :]
 
         if self._log.isEnabledFor(logging.DEBUG):
-            self._log.debug('XMIT RAW %r', b2a_hex(data).decode())
+            self._log.debug("XMIT RAW %r", b2a_hex(data).decode())
 
         self._send_raw_data(data)
 
         # If we are closing, wait for this to be sent
-        if (self._state == KISSDeviceState.CLOSING) and \
-                (len(self._tx_buffer) == 0):
+        if (self._state == KISSDeviceState.CLOSING) and (
+            len(self._tx_buffer) == 0
+        ):
             self._close()
             return
 
@@ -330,8 +343,7 @@ class BaseKISSDevice(object):
             self._loop.call_later(self._send_block_delay, self._send_data)
 
     def _init_kiss(self):
-        assert self.state == KISSDeviceState.OPENING, \
-                'Device is not opening'
+        assert self.state == KISSDeviceState.OPENING, "Device is not opening"
 
         self._kiss_rem_commands = self._kiss_commands.copy()
         self._send_kiss_cmd()
@@ -346,13 +358,13 @@ class BaseKISSDevice(object):
             self._rx_buffer = bytearray()
             return
 
-        self._log.debug('Sending %r', command)
-        command = command.encode('US-ASCII')
+        self._log.debug("Sending %r", command)
+        command = command.encode("US-ASCII")
         self._rx_buffer = bytearray()
         for bv in command:
             self._send_raw_data(bytes([bv]))
             time.sleep(0.1)
-        self._send_raw_data(b'\r')
+        self._send_raw_data(b"\r")
         self._loop.call_later(0.5, self._check_open)
 
     def _check_open(self):
@@ -370,8 +382,8 @@ class BaseKISSDevice(object):
         except KeyError:
             pass
 
-        self._log.debug('OPEN new port %d', port)
-        p = KISSPort(self, port, log=self._log.getChild('port%d' % port))
+        self._log.debug("OPEN new port %d", port)
+        p = KISSPort(self, port, log=self._log.getChild("port%d" % port))
         self._port[port] = p
         return p
 
@@ -380,16 +392,14 @@ class BaseKISSDevice(object):
         return self._state
 
     def open(self):
-        assert self.state == KISSDeviceState.CLOSED, \
-                'Device is not closed'
-        self._log.debug('Opening device')
+        assert self.state == KISSDeviceState.CLOSED, "Device is not closed"
+        self._log.debug("Opening device")
         self._state = KISSDeviceState.OPENING
         self._open()
 
     def close(self):
-        assert self.state == KISSDeviceState.OPEN, \
-                'Device is not open'
-        self._log.debug('Closing device')
+        assert self.state == KISSDeviceState.OPEN, "Device is not open"
+        self._log.debug("Closing device")
         self._state = KISSDeviceState.CLOSING
         if self._reset_on_close:
             self._send(KISSCmdReturn())
@@ -411,14 +421,14 @@ class BaseTransportDevice(BaseKISSDevice):
             self._on_connect,
             self._receive,
             self._on_close,
-            self._log.getChild('protocol')
+            self._log.getChild("protocol"),
         )
 
-    async def _open_connection(self): # pragma: no cover
+    async def _open_connection(self):  # pragma: no cover
         """
         Open a connection to the underlying transport.
         """
-        raise NotImplementedError('Abstract function')
+        raise NotImplementedError("Abstract function")
 
     def _open(self):
         ensure_future(self._open_connection())
@@ -439,7 +449,7 @@ class BaseTransportDevice(BaseKISSDevice):
 
     def _on_close(self, exc=None):
         if exc is not None:
-            self._log.error('Closing port due to error %r', exc)
+            self._log.error("Closing port due to error %r", exc)
 
         self._transport = None
         self._state = KISSDeviceState.CLOSED
@@ -466,6 +476,7 @@ class SerialKISSDevice(BaseTransportDevice):
     :Keyword Arguments: These are passed (via ``BaseTransportDevice``) through
                         to ``BaseKISSDevice`` unchanged.
     """
+
     def __init__(self, device, baudrate, *args, **kwargs):
         super(SerialKISSDevice, self).__init__(*args, **kwargs)
         self._device = device
@@ -473,16 +484,19 @@ class SerialKISSDevice(BaseTransportDevice):
 
     async def _open_connection(self):
         await create_serial_connection(
-                self._loop,
-                self._make_protocol,
-                self._device,
-                baudrate=self._baudrate,
-                bytesize=EIGHTBITS,
-                parity=PARITY_NONE,
-                stopbits=STOPBITS_ONE,
-                timeout=None, xonxoff=False,
-                rtscts=False, write_timeout=None,
-                dsrdtr=False, inter_byte_timeout=None
+            self._loop,
+            self._make_protocol,
+            self._device,
+            baudrate=self._baudrate,
+            bytesize=EIGHTBITS,
+            parity=PARITY_NONE,
+            stopbits=STOPBITS_ONE,
+            timeout=None,
+            xonxoff=False,
+            rtscts=False,
+            write_timeout=None,
+            dsrdtr=False,
+            inter_byte_timeout=None,
         )
 
 
@@ -522,21 +536,39 @@ class TCPKISSDevice(BaseTransportDevice):
     :Keyword Arguments: These are passed (via ``BaseTransportDevice``) through
                         to ``BaseKISSDevice`` unchanged.
     """
-    def __init__(self, host, port, *args, ssl=None, family=0, proto=0, flags=0,
-            sock=None, local_addr=None, server_hostname=None, **kwargs):
+
+    def __init__(
+        self,
+        host,
+        port,
+        *args,
+        ssl=None,
+        family=0,
+        proto=0,
+        flags=0,
+        sock=None,
+        local_addr=None,
+        server_hostname=None,
+        **kwargs
+    ):
         super(TCPKISSDevice, self).__init__(*args, **kwargs)
 
         # Bundle up all the connection arguments together.
         self._conn_args = dict(
-                host=host, port=port, ssl=ssl, family=family,
-                proto=proto, flags=flags, sock=sock, local_addr=local_addr,
-                server_hostname=server_hostname
+            host=host,
+            port=port,
+            ssl=ssl,
+            family=family,
+            proto=proto,
+            flags=flags,
+            sock=sock,
+            local_addr=local_addr,
+            server_hostname=server_hostname,
         )
 
     async def _open_connection(self):
         await self._loop.create_connection(
-                self._make_protocol,
-                **self._conn_args
+            self._make_protocol, **self._conn_args
         )
 
 
@@ -556,6 +588,7 @@ class SubprocKISSDevice(BaseTransportDevice):
     :Keyword Arguments: These are passed (via ``BaseTransportDevice``) through
                         to ``BaseKISSDevice`` unchanged.
     """
+
     def __init__(self, command, *args, shell=False, **kwargs):
         super(SubprocKISSDevice, self).__init__(*args, **kwargs)
         self._command = command
@@ -570,19 +603,17 @@ class SubprocKISSDevice(BaseTransportDevice):
             self._on_connect,
             self._receive,
             self._on_close,
-            self._log.getChild('protocol')
+            self._log.getChild("protocol"),
         )
 
     async def _open_connection(self):
         if self._shell:
             await self._loop.subprocess_shell(
-                    self._make_protocol,
-                    ' '.join(self._command)
+                self._make_protocol, " ".join(self._command)
             )
         else:
             await self._loop.subprocess_exec(
-                    self._make_protocol,
-                    *self._command
+                self._make_protocol, *self._command
             )
 
     def _send_raw_data(self, data):
@@ -597,6 +628,7 @@ class KISSPort(object):
     A KISS port represents a port interface on a KISS device.  There can be
     a maximum of 16 ports per device, identified by a 4-bit integer.
     """
+
     def __init__(self, device, port, log):
         """
         Create a new port attached to the given device.
@@ -616,14 +648,14 @@ class KISSPort(object):
         """
         Send a raw AX.25 frame to the TNC via this port.
         """
-        self._log.debug('XMIT AX.25 %s', frame)
+        self._log.debug("XMIT AX.25 %s", frame)
         self._device._send(KISSCmdData(self.port, bytes(frame)))
 
     def _receive_frame(self, frame):
         """
         Receive and emit an incoming frame from the port.
         """
-        self._log.debug('Received frame %s', frame)
+        self._log.debug("Received frame %s", frame)
 
         if not isinstance(frame, KISSCmdData):
             # TNC is not supposed to send this!
@@ -640,6 +672,7 @@ class KISSProtocol(Protocol):
     KISSProtocol basically is a wrapper around asyncio's "Protocol"
     structure.
     """
+
     def __init__(self, on_connect, on_receive, on_close, log):
         super(KISSProtocol, self).__init__()
 
@@ -652,20 +685,20 @@ class KISSProtocol(Protocol):
         try:
             self._on_connect(transport)
         except:
-            self._log.exception('Failed to handle connection establishment')
+            self._log.exception("Failed to handle connection establishment")
             transport.close()
 
     def data_received(self, data):
         try:
             self._on_receive(data)
         except:
-            self._log.exception('Failed to handle incoming data')
+            self._log.exception("Failed to handle incoming data")
 
     def connection_lost(self, exc):
         try:
             self._on_close(exc)
         except:
-            self._log.exception('Failed to handle connection loss')
+            self._log.exception("Failed to handle connection loss")
 
 
 class KISSSubprocessProtocol(Protocol):
@@ -673,6 +706,7 @@ class KISSSubprocessProtocol(Protocol):
     KISSSubprocessProtocol is nearly identical to KISSProtocol but wraps
     SubprocessProtocol instead.
     """
+
     def __init__(self, on_connect, on_receive, on_close, log):
         super(KISSSubprocessProtocol, self).__init__()
 
@@ -685,28 +719,29 @@ class KISSSubprocessProtocol(Protocol):
         try:
             self._on_connect(transport)
         except:
-            self._log.exception('Failed to handle connection establishment')
+            self._log.exception("Failed to handle connection establishment")
             transport.close()
 
     def pipe_data_received(self, fd, data):
         try:
-            if fd == 1: # stdout
+            if fd == 1:  # stdout
                 self._on_receive(data)
             else:
-                self._log.debug('Data received on fd=%d: %r', fd, data)
+                self._log.debug("Data received on fd=%d: %r", fd, data)
         except:
             self._log.exception(
-                    'Failed to handle incoming data %r on fd=%d', data, fd
+                "Failed to handle incoming data %r on fd=%d", data, fd
             )
 
     def process_exited(self):
         try:
             self._on_close(None)
         except:
-            self._log.exception('Failed to handle process exit')
+            self._log.exception("Failed to handle process exit")
 
 
 # KISS device factory
+
 
 def make_device(type, **kwargs):
     """
@@ -760,11 +795,11 @@ def make_device(type, **kwargs):
     +----------------+-------------------------------------------------+
     """
 
-    if type == 'serial':
+    if type == "serial":
         return SerialKISSDevice(**kwargs)
-    elif type == 'subproc':
+    elif type == "subproc":
         return SubprocKISSDevice(**kwargs)
-    elif type == 'tcp':
+    elif type == "tcp":
         return TCPKISSDevice(**kwargs)
     else:
-        raise ValueError('Unrecognised type=%r' % (type,))
+        raise ValueError("Unrecognised type=%r" % (type,))

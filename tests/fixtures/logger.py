@@ -24,38 +24,44 @@ class DummyLogger(object):
             ex_val = None
             ex_tb = None
 
-        self.logrecords.append(dict(
-            method=log_method, args=log_args, kwargs=log_kwargs,
-            ex_type=ex_type, ex_val=ex_val, ex_tb=ex_tb
-        ))
+        self.logrecords.append(
+            dict(
+                method=log_method,
+                args=log_args,
+                kwargs=log_kwargs,
+                ex_type=ex_type,
+                ex_val=ex_val,
+                ex_tb=ex_tb,
+            )
+        )
 
     # Message logging endpoints
     def critical(self, *args, exc_info=False, **kwargs):
-        self._addrecord('critical', args, kwargs, exc_info)
+        self._addrecord("critical", args, kwargs, exc_info)
 
     def debug(self, *args, exc_info=False, **kwargs):
-        self._addrecord('debug', args, kwargs, exc_info)
+        self._addrecord("debug", args, kwargs, exc_info)
 
     def error(self, *args, exc_info=False, **kwargs):
-        self._addrecord('error', args, kwargs, exc_info)
+        self._addrecord("error", args, kwargs, exc_info)
 
     def exception(self, *args, **kwargs):
-        self._addrecord('exception', args, kwargs, True)
+        self._addrecord("exception", args, kwargs, True)
 
     def fatal(self, *args, exc_info=False, **kwargs):
-        self._addrecord('fatal', args, kwargs, exc_info)
+        self._addrecord("fatal", args, kwargs, exc_info)
 
     def info(self, *args, exc_info=False, **kwargs):
-        self._addrecord('info', args, kwargs, exc_info)
+        self._addrecord("info", args, kwargs, exc_info)
 
     def log(self, *args, exc_info=False, **kwargs):
-        self._addrecord('log', args, kwargs, exc_info)
+        self._addrecord("log", args, kwargs, exc_info)
 
     def warn(self, *args, exc_info=False, **kwargs):
-        self._addrecord('warn', args, kwargs, exc_info)
+        self._addrecord("warn", args, kwargs, exc_info)
 
     def warning(self, *args, exc_info=False, **kwargs):
-        self._addrecord('warning', args, kwargs, exc_info)
+        self._addrecord("warning", args, kwargs, exc_info)
 
     # Info endpoints
     def isEnabledFor(self, level):

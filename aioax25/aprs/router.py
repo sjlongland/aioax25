@@ -12,6 +12,7 @@ class APRSRouter(Router):
     """
     Route a APRS message frame according to the addressee field, if any.
     """
+
     def _get_destination(self, frame):
         if isinstance(frame, APRSMessageFrame):
             return frame.addressee

@@ -15,6 +15,7 @@ class Slot(BaseSlot):
     an exception handler.  It is the caller's responsibility to ensure the
     slot function handles its own exceptions.
     """
+
     def __init__(self, slot_fn, **kwargs):
         super(Slot, self).__init__(slot_fn)
         self._slot_kwargs = kwargs
@@ -26,7 +27,7 @@ class Slot(BaseSlot):
             super(Slot, self).__call__(**call_kwargs)
         except:
             logging.getLogger(self.__class__.__module__).exception(
-                    'Exception in slot %s', self.func
+                "Exception in slot %s", self.func
             )
 
 
@@ -34,6 +35,7 @@ class OneshotSlot(Slot):
     """
     Helper class that calls a slot exactly once.
     """
+
     def __init__(self, signal, slot_fn, **kwargs):
         self._signal = ref(signal)
         super(OneshotSlot, self).__init__(slot_fn, **kwargs)
@@ -50,6 +52,7 @@ class Signal(BaseSignal):
     Wrap the `signalslot.Signal` so that *all* "slots" get called, regardless
     of whether they return something or not, or throw exceptions.
     """
+
     def connect(self, slot, **kwargs):
         """
         Connect a slot to the signal.  This will wrap the given slot up in
@@ -70,8 +73,7 @@ class Signal(BaseSignal):
         Locate a slot connected to the signal.
         """
         for maybe_slot in super(Signal, self).slots:
-            if isinstance(maybe_slot, Slot) and \
-                    (maybe_slot.func is slot):
+            if isinstance(maybe_slot, Slot) and (maybe_slot.func is slot):
                 # Here it is
                 return maybe_slot
             elif maybe_slot is slot:

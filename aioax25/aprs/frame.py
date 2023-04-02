@@ -25,11 +25,11 @@ class APRSFrame(AX25UnnumberedInformationFrame):
         # Do not decode if not the APRS PID value
         if uiframe.pid != cls.PID_NO_L3:
             # Clearly not an APRS message
-            log.debug('Frame has wrong PID for APRS')
+            log.debug("Frame has wrong PID for APRS")
             return uiframe
 
         if len(uiframe.payload) == 0:
-            log.debug('Frame has no payload data')
+            log.debug("Frame has no payload data")
             return uiframe
 
         try:
@@ -38,21 +38,31 @@ class APRSFrame(AX25UnnumberedInformationFrame):
             handler_class = cls.DATA_TYPE_HANDLERS[type_code]
 
             # Decode the payload as text
-            payload = uiframe.payload.decode('US-ASCII')
+            payload = uiframe.payload.decode("US-ASCII")
 
             return handler_class.decode(uiframe, payload, log)
         except:
             # Not decodable, leave as-is
-            log.debug('Failed to decode as APRS', exc_info=1)
+            log.debug("Failed to decode as APRS", exc_info=1)
             return uiframe
 
-    def __init__(self, destination, source, payload, repeaters=None,
-            pf=False, cr=False, src_cr=None
+    def __init__(
+        self,
+        destination,
+        source,
+        payload,
+        repeaters=None,
+        pf=False,
+        cr=False,
+        src_cr=None,
     ):
         super(APRSFrame, self).__init__(
-                destination=destination,
-                source=source,
-                pid=self.PID_NO_L3, # APRS spec
-                payload=payload,
-                repeaters=repeaters,
-                pf=pf, cr=cr, src_cr=src_cr)
+            destination=destination,
+            source=source,
+            pid=self.PID_NO_L3,  # APRS spec
+            payload=payload,
+            repeaters=repeaters,
+            pf=pf,
+            cr=cr,
+            src_cr=src_cr,
+        )
