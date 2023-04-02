@@ -33,6 +33,9 @@ text = "GPL-2.0-or-later"
 name = "Stuart Longland VK4MSL"
 email = "me@vk4msl.id.au"
 
+[tool.black]
+line-length = 78
+
 [tool.pytest.ini_options]
 log_cli=true
 
