@@ -585,7 +585,7 @@ def test_encode_dm_frame():
         bytes(frame),
         "ac 96 68 84 ae 92 60"  # Destination
         "ac 96 68 9a a6 98 e1"  # Source
-        "0f",  # Control
+        "1f",  # Control
     )
 
 
@@ -622,7 +622,7 @@ def test_dm_copy():
         bytes(framecopy),
         "ac 96 68 84 ae 92 60"  # Destination
         "ac 96 68 9a a6 98 e1"  # Source
-        "0f",  # Control
+        "1f",  # Control
     )
 
 
