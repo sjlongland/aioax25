@@ -582,7 +582,7 @@ class AX25Peer(object):
             self._on_receive_srej(frame)
 
     def _on_receive_rr(self, frame):
-        if frame.header.pf:
+        if frame.pf:
             # Peer requesting our RR status
             self._log.debug("RR status requested from peer")
             self._on_receive_rr_rnr_rej_query()
@@ -596,7 +596,7 @@ class AX25Peer(object):
             self._send_next_iframe()
 
     def _on_receive_rnr(self, frame):
-        if frame.header.pf:
+        if frame.pf:
             # Peer requesting our RNR status
             self._log.debug("RNR status requested from peer")
             self._on_receive_rr_rnr_rej_query()
@@ -608,7 +608,7 @@ class AX25Peer(object):
             self._peer_busy = True
 
     def _on_receive_rej(self, frame):
-        if frame.header.pf:
+        if frame.pf:
             # Peer requesting rejected frame status.
             self._log.debug("REJ status requested from peer")
             self._on_receive_rr_rnr_rej_query()
@@ -624,7 +624,7 @@ class AX25Peer(object):
             self._send_next_iframe()
 
     def _on_receive_srej(self, frame):
-        if frame.header.pf:
+        if frame.pf:
             # AX.25 2.2 sect 4.3.2.4: "If the P/F bit in the SREJ is set to
             # '1', then I frames numbered up to N(R)-1 inclusive are considered
             # as acknowledged."
