@@ -417,6 +417,7 @@ class BaseTransportDevice(BaseKISSDevice):
         Return a Protocol instance that will handle the KISS traffic for the
         asyncio transport.
         """
+        self._log.debug("Constructing protocol object")
         return KISSProtocol(
             self._on_connect,
             self._receive,
@@ -431,6 +432,7 @@ class BaseTransportDevice(BaseKISSDevice):
         raise NotImplementedError("Abstract function")
 
     def _open(self):
+        self._log.debug("Awaiting KISS transport")
         ensure_future(self._open_connection())
 
     def _on_connect(self, transport):
@@ -483,6 +485,7 @@ class SerialKISSDevice(BaseTransportDevice):
         self._baudrate = baudrate
 
     async def _open_connection(self):
+        self._log.debug("Delegating to KISS serial device %r", self._device)
         await create_serial_connection(
             self._loop,
             self._make_protocol,
@@ -683,6 +686,7 @@ class KISSProtocol(Protocol):
 
     def connection_made(self, transport):
         try:
+            self._log.debug("Announcing connection: %r", transport)
             self._on_connect(transport)
         except:
             self._log.exception("Failed to handle connection establishment")
@@ -717,6 +721,7 @@ class KISSSubprocessProtocol(Protocol):
 
     def connection_made(self, transport):
         try:
+            self._log.debug("Announcing connection: %r", transport)
             self._on_connect(transport)
         except:
             self._log.exception("Failed to handle connection establishment")

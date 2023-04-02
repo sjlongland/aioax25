@@ -12,6 +12,9 @@ class DummyTransport(object):
     def __init__(self):
         self.closed = False
 
+    def __repr__(self):
+        return "<DummyTransport>"
+
     def close(self):
         assert self.closed is False, "Already closed"
         self.closed = True
@@ -48,8 +51,15 @@ def test_protocol_connection_made(logger):
 
     assert on_connect_calls == [((transport,), {})]
     assert transport.closed is False
-    assert logger.logrecords == []
+    assert logger.logrecords[1:] == []
     assert logger.children == {}
+
+    log = logger.logrecords[0]
+    assert log["ex_tb"] is None
+    assert log["ex_type"] is None
+    assert log["ex_val"] is None
+    assert log["args"][0] == "Announcing connection: %r"
+    assert log["args"][1] is transport
 
 
 def test_protocol_connection_made_err(logger):
@@ -80,9 +90,16 @@ def test_protocol_connection_made_err(logger):
 
     assert logger.children == {}
     assert len(logger.logrecords) > 0
-    assert logger.logrecords[1:] == []
+    assert logger.logrecords[2:] == []
 
     log = logger.logrecords[0]
+    assert log["ex_tb"] is None
+    assert log["ex_type"] is None
+    assert log["ex_val"] is None
+    assert log["args"][0] == "Announcing connection: %r"
+    assert log["args"][1] is transport
+
+    log = logger.logrecords[1]
     assert log.pop("ex_type", None) == TestError
     log.pop("ex_val", None)
     log.pop("ex_tb", None)
@@ -279,8 +296,15 @@ def test_subproc_protocol_connection_made(logger):
 
     assert on_connect_calls == [((transport,), {})]
     assert transport.closed is False
-    assert logger.logrecords == []
+    assert logger.logrecords[1:] == []
     assert logger.children == {}
+
+    log = logger.logrecords[0]
+    assert log["ex_tb"] is None
+    assert log["ex_type"] is None
+    assert log["ex_val"] is None
+    assert log["args"][0] == "Announcing connection: %r"
+    assert log["args"][1] is transport
 
 
 def test_subproc_protocol_connection_made_err(logger):
@@ -313,9 +337,16 @@ def test_subproc_protocol_connection_made_err(logger):
 
     assert logger.children == {}
     assert len(logger.logrecords) > 0
-    assert logger.logrecords[1:] == []
+    assert logger.logrecords[2:] == []
 
     log = logger.logrecords[0]
+    assert log["ex_tb"] is None
+    assert log["ex_type"] is None
+    assert log["ex_val"] is None
+    assert log["args"][0] == "Announcing connection: %r"
+    assert log["args"][1] is transport
+
+    log = logger.logrecords[1]
     assert log.pop("ex_type", None) == TestError
     log.pop("ex_val", None)
     log.pop("ex_tb", None)
