@@ -862,7 +862,7 @@ def test_accept_connected_noop():
 
 def test_accept_incoming_ua():
     """
-    Test calling .accept() with incoming connection sends UA.
+    Test calling .accept() with incoming connection sends UA then SABM.
     """
     station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = TestingAX25Peer(
@@ -888,11 +888,17 @@ def test_accept_incoming_ua():
 
     peer._send_ua = _send_ua
 
+    def _send_sabm():
+        actions.append("sent-sabm")
+
+    peer._send_sabm = _send_sabm
+
     # Try accepting a ficticious connection
     peer.accept()
 
-    assert peer._state == peer.AX25PeerState.CONNECTED
-    assert actions == ["stop-connect-timer", "sent-ua"]
+    assert peer._state is peer.AX25PeerState.INCOMING_CONNECTION
+    assert actions == ["stop-connect-timer", "sent-ua", "sent-sabm"]
+    assert peer._uaframe_handler == peer._on_connect_sabm_ua
 
 
 def test_reject_connected_noop():
