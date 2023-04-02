@@ -835,7 +835,7 @@ class AX25Peer(object):
             self._REJFrameClass = AX2516BitRejectFrame
             self._SREJFrameClass = AX2516BitSelectiveRejectFrame
         else:
-            self._log.debug("Initialising AX.25 2.0 mod8 connection")
+            self._log.debug("Initialising AX.25 2.0/2.2 mod8 connection")
             # Set the maximum outstanding frames variable
             self._max_outstanding = self._max_outstanding_mod8
 
