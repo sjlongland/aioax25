@@ -320,8 +320,9 @@ class AX25Peer(object):
             self._log.info("Accepting incoming connection")
             # Send a UA and set ourselves as connected
             self._stop_ack_timer()
-            self._set_conn_state(self.AX25PeerState.CONNECTED)
             self._send_ua()
+            self._uaframe_handler = self._on_connect_sabm_ua
+            self._send_sabm()
         else:
             self._log.info(
                 "Will not accept connection from peer now, "
@@ -772,6 +773,10 @@ class AX25Peer(object):
                 "Incoming connection time-out in state %s", self._state.name
             )
 
+    def _on_connect_sabm_ua(self):
+        self._log.info("Connection accepted by peer")
+        self._set_conn_state(self.AX25PeerState.CONNECTED)
+
     def _on_connect_response(self, response, **kwargs):
         # Handle the connection result.
         self._log.debug("Connection response: %r", response)
@@ -1185,7 +1190,8 @@ class AX25Peer(object):
                 repeaters=self.reply_path,
             )
         )
-        self._set_conn_state(self.AX25PeerState.CONNECTING)
+        if self._state is not self.AX25PeerState.INCOMING_CONNECTION:
+            self._set_conn_state(self.AX25PeerState.CONNECTING)
 
     def _send_xid(self, cr):
         self._transmit_frame(
