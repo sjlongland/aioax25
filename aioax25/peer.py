@@ -128,6 +128,7 @@ class AX25Peer(object):
         full_duplex,
         reply_path=None,
         locked_path=False,
+        max_segment_sz=64,  # TODO: figure out max segment size
     ):
         """
         Create a peer context for the station named by 'address'.
@@ -149,6 +150,7 @@ class AX25Peer(object):
         self._rr_delay = rr_delay
         self._rr_interval = rr_interval
         self._rnr_interval = rnr_interval
+        self._max_segment_sz = max_segment_sz
         self._locked_path = bool(locked_path)
         self._protocol = protocol
         self._log = log
@@ -359,6 +361,18 @@ class AX25Peer(object):
                 "currently in state %s.",
                 self._state.name,
             )
+
+    def send(self, payload, pid=AX25Frame.PID_NO_L3):
+        """
+        Send the given payload data to the remote station.
+        """
+        while payload:
+            block = payload[:self._max_segment_sz]
+            payload = payload[self._max_segment_sz:]
+
+            self._pending_data.append((pid, block))
+
+        self._send_next_iframe()
 
     def _cancel_idle_timeout(self):
         """
