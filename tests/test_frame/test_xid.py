@@ -46,13 +46,13 @@ def test_encode_xid():
         "80"  # Group Ident
         "00 16"  # Group length
         # First parameter: CoP
-        "02"  # Parameter ID
-        "02"  # Length
-        "00 21"  # Value
+        "02"
+        "02"
+        "00 21"  # Parameter ID  # Length  # Value
         # Second parameter: HDLC Optional Functions
-        "03"  # Parameter ID
-        "03"  # Length
-        "86 a8 02"  # Value
+        "03"
+        "03"
+        "86 a8 02"  # Parameter ID  # Length  # Value
         # Third parameter: I field receive size
         "06" "02" "04 00"
         # Fourth parameter: retries
@@ -261,12 +261,11 @@ def test_copy_xid():
         "80"  # Group Ident
         "00 06"  # Group length
         # First parameter
-        "12"  # Parameter ID
-        "02"  # Length
-        "34 56"  # Value
+        "12"
+        "02"
+        "34 56"  # Parameter ID  # Length  # Value
         # Second parameter
-        "34"  # Parameter ID
-        "00",  # Length (no value)
+        "34" "00",  # Parameter ID  # Length (no value)
     )
 
 
