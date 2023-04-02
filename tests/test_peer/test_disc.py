@@ -15,6 +15,9 @@ from .peer import TestingAX25Peer
 from ..mocks import DummyStation, DummyTimeout
 
 
+# DISC reception handling
+
+
 def test_peer_recv_disc():
     """
     Test when receiving a DISC whilst connected, the peer disconnects.
@@ -74,6 +77,9 @@ def test_peer_recv_disc():
     assert peer._pending_data == []
 
 
+# DISC transmission
+
+
 def test_peer_send_disc():
     """
     Test _send_disc correctly addresses and sends a DISC frame.
@@ -103,3 +109,49 @@ def test_peer_send_disc():
     assert str(frame.header.destination) == "VK4MSL"
     assert str(frame.header.source) == "VK4MSL-1"
     assert str(frame.header.repeaters) == "VK4MSL-2,VK4MSL-3"
+
+
+# DISC UA time-out handling
+
+
+def test_peer_ua_timeout_disconnecting():
+    """
+    Test _on_disc_ua_timeout cleans up the connection if no UA heard
+    from peer after DISC frame.
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = TestingAX25Peer(
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4MSL-2", "VK4MSL-3"),
+        full_duplex=True,
+    )
+    
+    peer._state = peer.AX25PeerState.DISCONNECTING
+    peer._ack_timeout_handle = "time-out handle"
+
+    peer._on_disc_ua_timeout()
+
+    assert peer._state is peer.AX25PeerState.DISCONNECTED
+    assert peer._ack_timeout_handle is None
+
+
+def test_peer_ua_timeout_notdisconnecting():
+    """
+    Test _on_disc_ua_timeout does nothing if not disconnecting.
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = TestingAX25Peer(
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4MSL-2", "VK4MSL-3"),
+        full_duplex=True,
+    )
+    
+    peer._state = peer.AX25PeerState.CONNECTED
+    peer._ack_timeout_handle = "time-out handle"
+
+    peer._on_disc_ua_timeout()
+
+    assert peer._state is peer.AX25PeerState.CONNECTED
+    assert peer._ack_timeout_handle == "time-out handle"
