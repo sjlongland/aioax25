@@ -15,9 +15,19 @@ from aioax25.frame import (
     AX25TestFrame,
     AX25SetAsyncBalancedModeFrame,
     AX25SetAsyncBalancedModeExtendedFrame,
+    AX258BitInformationFrame,
+    AX258BitReceiveReadyFrame,
+    AX258BitReceiveNotReadyFrame,
+    AX258BitRejectFrame,
+    AX258BitSelectiveRejectFrame,
+    AX2516BitInformationFrame,
+    AX2516BitReceiveReadyFrame,
+    AX2516BitReceiveNotReadyFrame,
+    AX2516BitRejectFrame,
+    AX2516BitSelectiveRejectFrame,
 )
 from .peer import TestingAX25Peer
-from ..mocks import DummyStation
+from ..mocks import DummyStation, DummyTimeout
 
 # Connection establishment
 
@@ -708,6 +718,111 @@ def test_on_receive_sabme_ax25_20_peer():
     )
 
     assert count == dict(send_dm=1)
+
+
+# Connection initialisation
+
+
+def test_init_connection_mod8():
+    """
+    Test _init_connection can initialise a standard mod-8 connection.
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = TestingAX25Peer(
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
+    )
+
+    # Set some dummy data in fields -- this should be cleared out or set
+    # to sane values.
+    ack_timer = DummyTimeout(None, None)
+    peer._send_state = 1
+    peer._send_seq = 2
+    peer._recv_state = 3
+    peer._recv_seq = 4
+    peer._ack_state = 5
+    peer._modulo = 6
+    peer._max_outstanding = 7
+    peer._IFrameClass = None
+    peer._RRFrameClass = None
+    peer._RNRFrameClass = None
+    peer._REJFrameClass = None
+    peer._SREJFrameClass = None
+    peer._pending_iframes = dict(comment="pending data")
+    peer._pending_data = ["pending data"]
+
+    peer._init_connection(extended=False)
+
+    # These should be set for a Mod-8 connection
+    assert peer._max_outstanding == 7
+    assert peer._modulo == 8
+    assert peer._IFrameClass is AX258BitInformationFrame
+    assert peer._RRFrameClass is AX258BitReceiveReadyFrame
+    assert peer._RNRFrameClass is AX258BitReceiveNotReadyFrame
+    assert peer._REJFrameClass is AX258BitRejectFrame
+    assert peer._SREJFrameClass is AX258BitSelectiveRejectFrame
+
+    # These should be initialised to initial state
+    assert peer._send_state == 0
+    assert peer._send_seq == 0
+    assert peer._recv_state == 0
+    assert peer._recv_seq == 0
+    assert peer._ack_state == 0
+    assert peer._pending_iframes == {}
+    assert peer._pending_data == []
+
+
+def test_init_connection_mod128():
+    """
+    Test _init_connection can initialise a mod-128 connection.
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = TestingAX25Peer(
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
+    )
+
+    # Set some dummy data in fields -- this should be cleared out or set
+    # to sane values.
+    ack_timer = DummyTimeout(None, None)
+    peer._send_state = 1
+    peer._send_seq = 2
+    peer._recv_state = 3
+    peer._recv_seq = 4
+    peer._ack_state = 5
+    peer._modulo = 6
+    peer._max_outstanding = 7
+    peer._IFrameClass = None
+    peer._RRFrameClass = None
+    peer._RNRFrameClass = None
+    peer._REJFrameClass = None
+    peer._SREJFrameClass = None
+    peer._pending_iframes = dict(comment="pending data")
+    peer._pending_data = ["pending data"]
+
+    peer._init_connection(extended=True)
+
+    # These should be set for a Mod-128 connection
+    assert peer._max_outstanding == 127
+    assert peer._modulo == 128
+    assert peer._IFrameClass is AX2516BitInformationFrame
+    assert peer._RRFrameClass is AX2516BitReceiveReadyFrame
+    assert peer._RNRFrameClass is AX2516BitReceiveNotReadyFrame
+    assert peer._REJFrameClass is AX2516BitRejectFrame
+    assert peer._SREJFrameClass is AX2516BitSelectiveRejectFrame
+
+    # These should be initialised to initial state
+    assert peer._send_state == 0
+    assert peer._send_seq == 0
+    assert peer._recv_state == 0
+    assert peer._recv_seq == 0
+    assert peer._ack_state == 0
+    assert peer._pending_iframes == {}
+    assert peer._pending_data == []
 
 
 # Connection acceptance and rejection handling
