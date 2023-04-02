@@ -13,9 +13,9 @@ being made between two stations which means it's impossible for a stateless
 decoder to fully decode an arbitrary AX.25 frame.
 
 Thankfully the control field is sent little-endian format, so the first byte we
-encounter is the least significant bits -- which is sufficient to identify whether
-the frame is an I, S or U frame: the least significant two bits carry this
-information.
+encounter is the least significant bits -- which is sufficient to identify
+whether the frame is an I, S or U frame: the least significant two bits carry
+this information.
 
 For this reason there are 3 sub-classes of this top-level class:
 
@@ -33,12 +33,12 @@ For this reason there are 3 sub-classes of this top-level class:
 Decoding is done by calling the AX25Frame.decode class method.  This takes two
 parameters:
 
-    - data: either raw bytes or an AX25Frame class.  The latter form is useful when
-      you've previously decoded a frame as a AX25RawFrame and need to further
-      dissect it as either a AX258BitFrame or AX2516BitFrame sub-class.
+    - data: either raw bytes or an AX25Frame class.  The latter form is useful
+      when you've previously decoded a frame as a AX25RawFrame and need to
+      further dissect it as either a AX258BitFrame or AX2516BitFrame sub-class.
 
-    - modulo128: by default is None, but if set to a boolean, will decode I or S
-      frames accordingly instead of just returning AX25RawFrame.
+    - modulo128: by default is None, but if set to a boolean, will decode I or
+      S frames accordingly instead of just returning AX25RawFrame.
 """
 
 import re
@@ -56,28 +56,30 @@ class AX25Frame(object):
     Base class for AX.25 frames.
     """
 
+    # fmt: off
     # The following are the same for 8 and 16-bit control fields.
-    CONTROL_I_MASK = 0b00000001
-    CONTROL_I_VAL = 0b00000000
+    CONTROL_I_MASK  = 0b00000001
+    CONTROL_I_VAL   = 0b00000000
     CONTROL_US_MASK = 0b00000011
-    CONTROL_S_VAL = 0b00000001
-    CONTROL_U_VAL = 0b00000011
+    CONTROL_S_VAL   = 0b00000001
+    CONTROL_U_VAL   = 0b00000011
 
     # PID codes
-    PID_ISO8208_CCITT = 0x01
+    PID_ISO8208_CCITT   = 0x01
     PID_VJ_IP4_COMPRESS = 0x06
-    PID_VJ_IP4 = 0x07
-    PID_SEGMENTATION = 0x08
-    PID_TEXNET = 0xC3
-    PID_LINKQUALITY = 0xC4
-    PID_APPLETALK = 0xCA
-    PID_APPLETALK_ARP = 0xCB
-    PID_ARPA_IP4 = 0xCC
-    PID_APRA_ARP = 0xCD
-    PID_FLEXNET = 0xCE
-    PID_NETROM = 0xCF
-    PID_NO_L3 = 0xF0
-    PID_ESCAPE = 0xFF
+    PID_VJ_IP4          = 0x07
+    PID_SEGMENTATION    = 0x08
+    PID_TEXNET          = 0xC3
+    PID_LINKQUALITY     = 0xC4
+    PID_APPLETALK       = 0xCA
+    PID_APPLETALK_ARP   = 0xCB
+    PID_ARPA_IP4        = 0xCC
+    PID_APRA_ARP        = 0xCD
+    PID_FLEXNET         = 0xCE
+    PID_NETROM          = 0xCF
+    PID_NO_L3           = 0xF0
+    PID_ESCAPE          = 0xFF
+    # fmt: on
 
     @classmethod
     def decode(cls, data, modulo128=None):
@@ -348,13 +350,13 @@ class AX2516BitFrame(AX25Frame):
 class AX25RawFrame(AX25Frame):
     """
     A representation of a raw AX.25 frame.  This class is intended to capture
-    partially decoded frame data in the case where we don't know whether a control
-    field is 8 or 16-bits wide.
+    partially decoded frame data in the case where we don't know whether a
+    control field is 8 or 16-bits wide.
 
-    It may be fed to the AX25Frame.decode function again with modulo128=False for
-    known 8-bit frames, or modulo128=True for known 16-bit frames.  For digipeating
-    applications, often no further dissection is necessary and so the frame can be
-    used as-is.
+    It may be fed to the AX25Frame.decode function again with modulo128=False
+    for known 8-bit frames, or modulo128=True for known 16-bit frames.  For
+    digipeating applications, often no further dissection is necessary and so
+    the frame can be used as-is.
     """
 
     def __init__(
@@ -978,16 +980,18 @@ class AX25FrameRejectFrame(AX25UnnumberedFrame):
     Not much effort has been made to decode the meaning of these bits.
     """
 
+    # fmt: off
     MODIFIER = 0b10000111
-    W_MASK = 0b00000001
-    X_MASK = 0b00000010
-    Y_MASK = 0b00000100
-    Z_MASK = 0b00001000
-    VR_MASK = 0b11100000
-    VR_POS = 5
-    CR_MASK = 0b00010000
-    VS_MASK = 0b00001110
-    VS_POS = 1
+    W_MASK   = 0b00000001
+    X_MASK   = 0b00000010
+    Y_MASK   = 0b00000100
+    Z_MASK   = 0b00001000
+    VR_MASK  = 0b11100000
+    VR_POS   = 5
+    CR_MASK  = 0b00010000
+    VS_MASK  = 0b00001110
+    VS_POS   = 1
+    # fmt: on
 
     @classmethod
     def decode(cls, header, control, data):
@@ -1252,7 +1256,8 @@ class AX25DisconnectModeFrame(AX25BaseUnnumberedFrame):
     """
     Disconnect mode frame.
 
-    This frame is used to indicate to the other station that it is disconnected.
+    This frame is used to indicate to the other station that it is
+    disconnected.
     """
 
     MODIFIER = 0b00001111
@@ -1430,16 +1435,18 @@ class AX25XIDClassOfProceduresParameter(AX25XIDParameter):
 
     PI = AX25XIDParameterIdentifier.ClassesOfProcedure
 
+    # fmt: off
     # Bit fields for this parameter:
-    BALANCED_ABM = 0b0000000000000001  # Should be 1
+    BALANCED_ABM       = 0b0000000000000001  # Should be 1
     UNBALANCED_NRM_PRI = 0b0000000000000010  # Should be 0
     UNBALANCED_NRM_SEC = 0b0000000000000100  # Should be 0
     UNBALANCED_ARM_PRI = 0b0000000000001000  # Should be 0
     UNBALANCED_ARM_SEC = 0b0000000000010000  # Should be 0
-    HALF_DUPLEX = 0b0000000000100000  # Should oppose FULL_DUPLEX
-    FULL_DUPLEX = 0b0000000001000000  # Should oppose HALF_DUPLEX
-    RESERVED_MASK = 0b1111111110000000  # Should be all zeros
-    RESERVED_POS = 7
+    HALF_DUPLEX        = 0b0000000000100000  # Should oppose FULL_DUPLEX
+    FULL_DUPLEX        = 0b0000000001000000  # Should oppose HALF_DUPLEX
+    RESERVED_MASK      = 0b1111111110000000  # Should be all zeros
+    RESERVED_POS       = 7
+    # fmt: on
 
     @classmethod
     def decode(cls, pv):
@@ -1564,31 +1571,33 @@ class AX25XIDHDLCOptionalFunctionsParameter(AX25XIDParameter):
 
     PI = AX25XIDParameterIdentifier.HDLCOptionalFunctions
 
+    # fmt: off
     # Bit fields for this parameter:
-    RESERVED1 = 0b000000000000000000000001  # Should be 0
-    REJ = 0b000000000000000000000010  # Negotiable
-    SREJ = 0b000000000000000000000100  # Negotiable
-    UI = 0b000000000000000000001000  # Should be 0
-    SIM_RIM = 0b000000000000000000010000  # Should be 0
-    UP = 0b000000000000000000100000  # Should be 0
-    BASIC_ADDR = 0b000000000000000001000000  # Should be 1
-    EXTD_ADDR = 0b000000000000000010000000  # Should be 0
-    DELETE_I_RESP = 0b000000000000000100000000  # Should be 0
-    DELETE_I_CMD = 0b000000000000001000000000  # Should be 0
-    MODULO8 = 0b000000000000010000000000  # Negotiable
-    MODULO128 = 0b000000000000100000000000  # Negotiable
-    RSET = 0b000000000001000000000000  # Should be 0
-    TEST = 0b000000000010000000000000  # Should be 1
-    RD = 0b000000000100000000000000  # Should be 0
-    FCS16 = 0b000000001000000000000000  # Should be 1
-    FCS32 = 0b000000010000000000000000  # Should be 0
-    SYNC_TX = 0b000000100000000000000000  # Should be 1
-    START_STOP_TX = 0b000001000000000000000000  # Should be 0
+    RESERVED1           = 0b000000000000000000000001  # Should be 0
+    REJ                 = 0b000000000000000000000010  # Negotiable
+    SREJ                = 0b000000000000000000000100  # Negotiable
+    UI                  = 0b000000000000000000001000  # Should be 0
+    SIM_RIM             = 0b000000000000000000010000  # Should be 0
+    UP                  = 0b000000000000000000100000  # Should be 0
+    BASIC_ADDR          = 0b000000000000000001000000  # Should be 1
+    EXTD_ADDR           = 0b000000000000000010000000  # Should be 0
+    DELETE_I_RESP       = 0b000000000000000100000000  # Should be 0
+    DELETE_I_CMD        = 0b000000000000001000000000  # Should be 0
+    MODULO8             = 0b000000000000010000000000  # Negotiable
+    MODULO128           = 0b000000000000100000000000  # Negotiable
+    RSET                = 0b000000000001000000000000  # Should be 0
+    TEST                = 0b000000000010000000000000  # Should be 1
+    RD                  = 0b000000000100000000000000  # Should be 0
+    FCS16               = 0b000000001000000000000000  # Should be 1
+    FCS32               = 0b000000010000000000000000  # Should be 0
+    SYNC_TX             = 0b000000100000000000000000  # Should be 1
+    START_STOP_TX       = 0b000001000000000000000000  # Should be 0
     START_STOP_FLOW_CTL = 0b000010000000000000000000  # Should be 0
-    START_STOP_TRANSP = 0b000100000000000000000000  # Should be 0
-    SREJ_MULTIFRAME = 0b001000000000000000000000  # Should be 0
-    RESERVED2_MASK = 0b110000000000000000000000  # Should be 00
-    RESERVED2_POS = 22
+    START_STOP_TRANSP   = 0b000100000000000000000000  # Should be 0
+    SREJ_MULTIFRAME     = 0b001000000000000000000000  # Should be 0
+    RESERVED2_MASK      = 0b110000000000000000000000  # Should be 00
+    RESERVED2_POS       = 22
+    # fmt: on
 
     @classmethod
     def decode(cls, pv):
