@@ -126,7 +126,7 @@ def test_peer_ua_timeout_disconnecting():
         repeaters=AX25Path("VK4MSL-2", "VK4MSL-3"),
         full_duplex=True,
     )
-    
+
     peer._state = peer.AX25PeerState.DISCONNECTING
     peer._ack_timeout_handle = "time-out handle"
 
@@ -147,7 +147,7 @@ def test_peer_ua_timeout_notdisconnecting():
         repeaters=AX25Path("VK4MSL-2", "VK4MSL-3"),
         full_duplex=True,
     )
-    
+
     peer._state = peer.AX25PeerState.CONNECTED
     peer._ack_timeout_handle = "time-out handle"
 
