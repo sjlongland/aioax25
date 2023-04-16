@@ -165,11 +165,11 @@ class AX25Peer(object):
         self._negotiated = False  # Set to True after XID negotiation
         self._connected = False  # Set to true on SABM UA
         self._last_act = 0  # Time of last activity
-        self._send_state=0  # AKA V(S)
+        self._send_state = 0  # AKA V(S)
         self._send_state_name = "V(S)"
         self._send_seq = 0  # AKA N(S)
         self._send_seq_name = "N(S)"
-        self._recv_state=0  # AKA V(R)
+        self._recv_state = 0  # AKA V(R)
         self._recv_state_name = "V(R)"
         self._recv_seq = 0  # AKA N(R)
         self._recv_seq_name = "N(R)"
@@ -676,7 +676,8 @@ class AX25Peer(object):
             if self._log.isEnabledFor(logging.DEBUG):
                 self._log.debug(
                     "Popped %s off pending queue, N(R)s pending: %s",
-                    frame, ", ".join(sorted(self._pending_iframes.keys()))
+                    frame,
+                    ", ".join(sorted(self._pending_iframes.keys())),
                 )
             self._update_state("_send_state", delta=1)
 
