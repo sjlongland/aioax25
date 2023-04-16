@@ -55,7 +55,10 @@ class Router(object):
 
         self._log.debug(
             "Binding callsign %r (regex %r) SSID %r to %r",
-            callsign, regex, ssid, callback
+            callsign,
+            regex,
+            ssid,
+            callback,
         )
         call_receivers.setdefault(ssid, []).append(callback)
 
@@ -79,7 +82,10 @@ class Router(object):
             ssid_receivers.remove(callback)
             self._log.debug(
                 "Unbound callsign %r (regex %r) SSID %r to %r",
-                callsign, regex, ssid, callback
+                callsign,
+                regex,
+                ssid,
+                callback,
             )
         except ValueError:
             return
