@@ -6,6 +6,7 @@ from aioax25.aprs.symbol import APRSSymbol, APRSSymbolTable, APRSOverlayType
 Symbol handling tests.
 """
 
+
 def test_sym_primary():
     """
     Test we can identify a primary symbol.
@@ -16,6 +17,7 @@ def test_sym_primary():
     assert sym.overlay_type is None
     assert sym.overlay is None
 
+
 def test_sym_secondary():
     """
     Test we can identify a secondary symbol.
@@ -25,6 +27,7 @@ def test_sym_secondary():
     assert sym.symbol == "u"
     assert sym.overlay_type is None
     assert sym.overlay is None
+
 
 def test_sym_secondary_numover_uncompressed():
     """
@@ -37,6 +40,7 @@ def test_sym_secondary_numover_uncompressed():
     assert sym.overlay_type == APRSOverlayType.NUM_UNCOMPRESSED
     assert sym.overlay == 3
 
+
 def test_sym_secondary_numover_compressed():
     """
     Test we can identify a secondary symbol with a numeric overlay.
@@ -48,6 +52,7 @@ def test_sym_secondary_numover_compressed():
     assert sym.overlay_type == APRSOverlayType.NUM_COMPRESSED
     assert sym.overlay == 3
 
+
 def test_sym_secondary_alphaover():
     """
     Test we can identify a secondary symbol with an alphabetic overlay.
@@ -58,12 +63,14 @@ def test_sym_secondary_alphaover():
     assert sym.overlay_type == APRSOverlayType.ALPHA
     assert sym.overlay == 3
 
+
 def test_sym_primary_tableident():
     """
     Test primary symbols' table identifies with "/"
     """
     sym = APRSSymbol(APRSSymbolTable.PRIMARY, "$")
     assert sym.tableident == "/"
+
 
 def test_sym_secondary_tableident():
     """
@@ -72,12 +79,14 @@ def test_sym_secondary_tableident():
     sym = APRSSymbol(APRSSymbolTable.SECONDARY, "u")
     assert sym.tableident == "\\"
 
+
 def test_sym_secondary_numover_uncompressed_tableident():
     """
     Test uncompressed numeric overlay is reported with digit.
     """
     sym = APRSSymbol(APRSSymbolTable.SECONDARY, "u", "3")
     assert sym.tableident == "3"
+
 
 def test_sym_secondary_numover_compressed_tableident():
     """
@@ -86,12 +95,14 @@ def test_sym_secondary_numover_compressed_tableident():
     sym = APRSSymbol(APRSSymbolTable.SECONDARY, "u", "d")
     assert sym.tableident == "d"
 
+
 def test_sym_secondary_alphaover_tableident():
     """
     Test alphabetic overlay is reported with upper letter.
     """
     sym = APRSSymbol(APRSSymbolTable.SECONDARY, "u", "D")
     assert sym.tableident == "D"
+
 
 def test_wrong_table():
     """
@@ -102,6 +113,7 @@ def test_wrong_table():
         assert False, "Should not have worked"
     except ValueError as e:
         assert str(e) == "Overlays only available on secondary table"
+
 
 def test_invalid_overlay():
     try:

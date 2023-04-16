@@ -3,16 +3,20 @@
 import logging
 
 import datetime
-from aioax25.aprs.datetime import DHMUTCTimestamp, DHMLocalTimestamp, \
-        HMSTimestamp, MDHMTimestamp, decode
+from aioax25.aprs.datetime import (
+    DHMUTCTimestamp,
+    DHMLocalTimestamp,
+    HMSTimestamp,
+    MDHMTimestamp,
+    decode,
+)
 
 """
 Time-stamp handling tests.
 """
 
 REF_DT = datetime.datetime(
-        2022, 2, 12, 22, 2, 23,
-        tzinfo=datetime.timezone.utc
+    2022, 2, 12, 22, 2, 23, tzinfo=datetime.timezone.utc
 )
 
 
@@ -77,8 +81,7 @@ def test_mdhmtimestamp_decode():
     """
     res = decode("02081932")
     assert isinstance(res, MDHMTimestamp)
-    assert (res.month, res.day, res.hour, res.minute) \
-            == (2, 8, 19, 32)
+    assert (res.month, res.day, res.hour, res.minute) == (2, 8, 19, 32)
 
 
 def test_too_short_decode():

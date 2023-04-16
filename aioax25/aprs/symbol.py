@@ -51,6 +51,7 @@ class APRSSymbol(object):
     """
     Representation of an APRS symbol.
     """
+
     def __init__(self, table, symbol, overlay=None):
         try:
             table = APRSSymbolTable(table)
@@ -72,15 +73,12 @@ class APRSSymbol(object):
         self.overlay = overlay
         self.overlay_type = overlay_type
 
-    def __repr__(self): # pragma: no cover
-        return (
-                '%s(table=%r, symbol=%r, overlay=%r)' \
-                    % (
-                        self.__class__.__name__,
-                        self.table,
-                        self.symbol,
-                        self.overlay
-                    )
+    def __repr__(self):  # pragma: no cover
+        return "%s(table=%r, symbol=%r, overlay=%r)" % (
+            self.__class__.__name__,
+            self.table,
+            self.symbol,
+            self.overlay,
         )
 
     @property

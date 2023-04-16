@@ -5,6 +5,7 @@ Unit handling.  Optionally wraps `pint`, otherwise we just
 assert numeric types and assume correct units.
 """
 
+
 def checknumeric(name, value, required=False):
     """
     Assert the value is a numeric value, or throw a TypeError.
@@ -34,11 +35,14 @@ try:
         else:
             # Pass through to handler
             return checknumeric(name, quantity, required=required)
-except ImportError: # pragma: no cover
+
+except ImportError:  # pragma: no cover
+
     class Quantity(object):
         """
         Dummy Quantity class work-alike for systems without `pint`.
         """
+
         def __init__(self, magnitude, units):
             self.magnitude = magnitude
             self.units = units
@@ -47,8 +51,10 @@ except ImportError: # pragma: no cover
             return "%r %s" % (self.magnitude, self.units)
 
         def __repr__(self):
-            return "Quantity(magnitude=%r, units=%r)" \
-                    % (self.magnitude, self.units)
+            return "Quantity(magnitude=%r, units=%r)" % (
+                self.magnitude,
+                self.units,
+            )
 
         def to(self, units, *a, **kwa):
             if units == self.units:
@@ -56,7 +62,7 @@ except ImportError: # pragma: no cover
                 return self
 
             raise NotImplementedError(
-                "Unit conversion is not implemented here.  "\
+                "Unit conversion is not implemented here.  "
                 "`pip install pint` if you want unit conversion."
             )
 
@@ -65,9 +71,8 @@ except ImportError: # pragma: no cover
             # Assert correct units!
             if quantity.units != units:
                 raise ValueError(
-                        "%s parameter must be in %s units (`pip install pint` " 
-                        "for unit conversion)"\
-                                % (name, units)
+                    "%s parameter must be in %s units (`pip install pint` "
+                    "for unit conversion)" % (name, units)
                 )
             return quantity.magnitude
         else:
