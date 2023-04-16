@@ -18,6 +18,7 @@ from .frame import (
     AX25SetAsyncBalancedModeFrame,
     AX25SetAsyncBalancedModeExtendedFrame,
     AX25ExchangeIdentificationFrame,
+    AX25UnnumberedFrame,
     AX25UnnumberedAcknowledgeFrame,
     AX25TestFrame,
     AX25DisconnectFrame,
@@ -213,6 +214,12 @@ class AX25Peer(object):
         self._frmrframe_handler = None
 
         # Signals:
+
+        # Fired when any frame is received from the peer
+        self.received_frame = Signal()
+
+        # Fired when any frame is sent to the peer
+        self.sent_frame = Signal()
 
         # Fired when an I-frame is received
         self.received_information = Signal()
@@ -463,6 +470,10 @@ class AX25Peer(object):
             self._log.debug("Dropping frame due to FRMR: %s", frame)
             return
 
+        # Is this a U frame?  I frames and S frames must be decoded elsewhere.
+        if isinstance(frame, AX25UnnumberedFrame):
+            self.received_frame.emit(frame=frame, peer=self)
+
         if isinstance(frame, AX25TestFrame):
             # TEST frame
             return self._on_receive_test(frame)
@@ -498,6 +509,7 @@ class AX25Peer(object):
                 frame = AX25Frame.decode(
                     frame, modulo128=(self._modulo == 128)
                 )
+                self.received_frame.emit(frame=frame, peer=self)
                 if isinstance(frame, AX25InformationFrameMixin):
                     # This is an I-frame
                     return self._on_receive_iframe(frame)
@@ -513,6 +525,7 @@ class AX25Peer(object):
                 self._log.debug(
                     "Received I or S frame in state %s", self._state.name
                 )
+                self.received_frame.emit(frame=frame, peer=self)
                 return self._send_dm()
 
     def _on_receive_iframe(self, frame):
@@ -1413,6 +1426,8 @@ class AX25Peer(object):
         )
 
     def _transmit_frame(self, frame, callback=None):
+        self.sent_frame.emit(frame=frame, peer=self)
+
         # Update the last activity timestamp
         self._last_act = self._loop.time()
 
