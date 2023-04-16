@@ -10,6 +10,7 @@ from .signal import Signal
 
 import weakref
 import enum
+import logging
 
 from .version import AX25Version
 from .frame import (
@@ -164,11 +165,16 @@ class AX25Peer(object):
         self._negotiated = False  # Set to True after XID negotiation
         self._connected = False  # Set to true on SABM UA
         self._last_act = 0  # Time of last activity
-        self._send_state = 0  # AKA V(S)
+        self._send_state=0  # AKA V(S)
+        self._send_state_name = "V(S)"
         self._send_seq = 0  # AKA N(S)
-        self._recv_state = 0  # AKA V(R)
+        self._send_seq_name = "N(S)"
+        self._recv_state=0  # AKA V(R)
+        self._recv_state_name = "V(R)"
         self._recv_seq = 0  # AKA N(R)
+        self._recv_seq_name = "N(R)"
         self._ack_state = 0  # AKA V(A)
+        self._ack_state_name = "V(A)"
         self._local_busy = False  # Local end busy, respond to
         # RR and I-frames with RNR.
         self._peer_busy = False  # Peer busy, await RR.
@@ -560,7 +566,7 @@ class AX25Peer(object):
         # "…it accepts the received I frame,
         # increments its receive state variable, and acts in one of the following
         # manners:…"
-        self._recv_state = (self._recv_state + 1) % self._modulo
+        self._update_state("_recv_state", delta=1)
 
         # TODO: the payload here may be a repeat of data already seen, or
         # for _future_ data (i.e. there's an I-frame that got missed in between
@@ -634,7 +640,7 @@ class AX25Peer(object):
             self._ack_outstanding((frame.nr - 1) % self._modulo)
             # AX.25 2.2 section 6.4.7 says we set V(S) to this frame's
             # N(R) and begin re-transmission.
-            self._send_state = frame.nr
+            self._update_state("_send_state", value=frame.nr)
             self._send_next_iframe()
 
     def _on_receive_srej(self, frame):
@@ -666,8 +672,13 @@ class AX25Peer(object):
         """
         self._log.debug("%d through to %d are received", self._send_state, nr)
         while self._send_state != nr:
-            self._pending_iframes.pop(self._send_state)
-            self._send_state = (self._send_state + 1) % self._modulo
+            frame = self._pending_iframes.pop(self._send_state)
+            if self._log.isEnabledFor(logging.DEBUG):
+                self._log.debug(
+                    "Popped %s off pending queue, N(R)s pending: %s",
+                    frame, ", ".join(sorted(self._pending_iframes.keys()))
+                )
+            self._update_state("_send_state", delta=1)
 
     def _on_receive_test(self, frame):
         self._log.debug("Received TEST response: %s", frame)
@@ -888,9 +899,9 @@ class AX25Peer(object):
         self._log.debug("Resetting the peer state")
 
         # Reset our state
-        self._send_state = 0  # AKA V(S)
+        self._update_state("_send_state", value=0)  # AKA V(S)
         self._send_seq = 0  # AKA N(S)
-        self._recv_state = 0  # AKA V(R)
+        self._update_state("_recv_state", value=0)  # AKA V(R)
         self._recv_seq = 0  # AKA N(R)
         self._ack_state = 0  # AKA V(A)
 
@@ -1405,7 +1416,7 @@ class AX25Peer(object):
 
         # "After the I frame is sent, the send state variable is incremented
         # by one."
-        self._send_state = (self._send_state + 1) % self._modulo
+        self._update_state("_send_state", delta=1)
 
     def _transmit_iframe(self, ns):
         """
@@ -1434,6 +1445,17 @@ class AX25Peer(object):
         # Reset the idle timer
         self._reset_idle_timeout()
         return self._station()._interface().transmit(frame, callback=None)
+
+    def _update_state(self, prop, delta=None, value=None):
+        if value is None:
+            value = getattr(self, prop)
+
+        if delta is not None:
+            value += delta
+            value %= self._modulo
+
+        self._log.debug("%s = %s", getattr(self, "%s_name" % prop), value)
+        setattr(self, prop, value)
 
 
 class AX25PeerHelper(object):
