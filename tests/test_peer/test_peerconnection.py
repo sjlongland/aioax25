@@ -287,9 +287,9 @@ def test_peerconn_on_negotiated_xid():
     assert callback is None
 
 
-def test_peerconn_receive_ua():
+def test_peerconn_check_connection_init():
     """
-    Test _on_receive_ua ends the helper
+    Test _check_connection_init finalises connection if both SABMs ACKed
     """
     station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = DummyPeer(station, AX25Address("VK4MSL"))
@@ -297,6 +297,10 @@ def test_peerconn_receive_ua():
 
     # Assume we're using modulo-8 mode
     peer._modulo128 = False
+
+    # Mark SABMs ACKed
+    helper._our_sabm_acked = True
+    helper._their_sabm_acked = True
 
     # Nothing should be set up
     assert helper._timeout_handle is None
@@ -315,8 +319,8 @@ def test_peerconn_receive_ua():
     done_evts = []
     helper.done_sig.connect(lambda **kw: done_evts.append(kw))
 
-    # Call _on_receive_ua
-    helper._on_receive_ua()
+    # Call _check_connection_init
+    helper._check_connection_init()
 
     # We should have initialised the connection
     assert count == dict(init=1)
@@ -326,9 +330,9 @@ def test_peerconn_receive_ua():
     assert done_evts == [{"response": "ack"}]
 
 
-def test_peerconn_receive_ua_mod128():
+def test_peerconn_check_connection_init_mod128():
     """
-    Test _on_receive_ua handles Mod128 mode
+    Test _check_connection_init finalises mod128 connections too
     """
     station = DummyStation(AX25Address("VK4MSL", ssid=1))
     peer = DummyPeer(station, AX25Address("VK4MSL"))
@@ -336,6 +340,10 @@ def test_peerconn_receive_ua_mod128():
 
     # Assume we're using modulo-128 mode
     peer._modulo128 = True
+
+    # Mark SABMs ACKed
+    helper._our_sabm_acked = True
+    helper._their_sabm_acked = True
 
     # Nothing should be set up
     assert helper._timeout_handle is None
@@ -354,8 +362,8 @@ def test_peerconn_receive_ua_mod128():
     done_evts = []
     helper.done_sig.connect(lambda **kw: done_evts.append(kw))
 
-    # Call _on_receive_ua
-    helper._on_receive_ua()
+    # Call _check_connection_init
+    helper._check_connection_init()
 
     # We should have initialised the connection
     assert count == dict(init=1)
@@ -363,6 +371,124 @@ def test_peerconn_receive_ua_mod128():
     # See that the helper finished
     assert helper._done is True
     assert done_evts == [{"response": "ack"}]
+
+
+def test_peerconn_check_connection_init_notoursabm():
+    """
+    Test _check_connection_init does nothing if our SABM not ACKed
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
+    helper = AX25PeerConnectionHandler(peer)
+
+    # Assume we're using modulo-8 mode
+    peer._modulo128 = False
+
+    # Mark their SABM ACKed, but not ours
+    helper._our_sabm_acked = False
+    helper._their_sabm_acked = True
+
+    # Nothing should be set up
+    assert helper._timeout_handle is None
+    assert not helper._done
+
+    # Stub peer _init_connection
+    count = dict(init=0)
+
+    def _init_connection(extended):
+        assert extended is False, "Should be in Modulo-8 mode"
+        count["init"] += 1
+
+    peer._init_connection = _init_connection
+
+    # Hook the done signal
+    done_evts = []
+    helper.done_sig.connect(lambda **kw: done_evts.append(kw))
+
+    # Call _check_connection_init
+    helper._check_connection_init()
+
+    # We should NOT have initialised the connection
+    assert count == dict(init=0)
+
+    # See that the helper is NOT finished
+    assert helper._done is False
+    assert done_evts == []
+
+
+def test_peerconn_check_connection_init_nottheirsabm():
+    """
+    Test _check_connection_init does nothing if their SABM not ACKed
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
+    helper = AX25PeerConnectionHandler(peer)
+
+    # Assume we're using modulo-8 mode
+    peer._modulo128 = False
+
+    # Mark our SABM ACKed, but not theirs
+    helper._our_sabm_acked = True
+    helper._their_sabm_acked = False
+
+    # Nothing should be set up
+    assert helper._timeout_handle is None
+    assert not helper._done
+
+    # Stub peer _init_connection
+    count = dict(init=0)
+
+    def _init_connection(extended):
+        assert extended is False, "Should be in Modulo-8 mode"
+        count["init"] += 1
+
+    peer._init_connection = _init_connection
+
+    # Hook the done signal
+    done_evts = []
+    helper.done_sig.connect(lambda **kw: done_evts.append(kw))
+
+    # Call _check_connection_init
+    helper._check_connection_init()
+
+    # We should NOT have initialised the connection
+    assert count == dict(init=0)
+
+    # See that the helper is NOT finished
+    assert helper._done is False
+    assert done_evts == []
+
+
+def test_peerconn_receive_ua():
+    """
+    Test _on_receive_ua marks the SABM as ACKed
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = DummyPeer(station, AX25Address("VK4MSL"))
+    helper = AX25PeerConnectionHandler(peer)
+
+    # Nothing should be set up
+    assert helper._timeout_handle is None
+    assert not helper._done
+
+    # Stub helper _check_connection_init
+    count = dict(check=0)
+
+    def _check_connection_init():
+        count["check"] += 1
+
+    helper._check_connection_init = _check_connection_init
+
+    assert helper._our_sabm_acked is False
+
+    # Call _on_receive_ua
+    helper._on_receive_ua()
+
+    # Our SABM should be marked as ACKed
+    assert helper._our_sabm_acked is True
+
+    # We should have checked the ACK status
+    assert count == dict(check=1)
 
 
 def test_peerconn_receive_sabm():
@@ -378,26 +504,24 @@ def test_peerconn_receive_sabm():
     assert not helper._done
 
     # Stub peer _send_ua
-    count = dict(send_ua=0)
+    count = dict(send_ua=0, check=0)
 
     def _send_ua():
         count["send_ua"] += 1
 
     peer._send_ua = _send_ua
 
-    # Hook the done signal
-    done_evts = []
-    helper.done_sig.connect(lambda **kw: done_evts.append(kw))
+    # Stub helper _check_connection_init
+    def _check_connection_init():
+        count["check"] += 1
+
+    helper._check_connection_init = _check_connection_init
 
     # Call _on_receive_sabm
     helper._on_receive_sabm()
 
-    # We should have ACKed the SABM
-    assert count == dict(send_ua=1)
-
-    # See that the helper finished
-    assert helper._done is True
-    assert done_evts == [{"response": "ack"}]
+    # We should have ACKed the SABM and checked the connection status
+    assert count == dict(send_ua=1, check=1)
 
 
 def test_peerconn_receive_frmr():

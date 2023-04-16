@@ -368,8 +368,8 @@ class AX25Peer(object):
         Send the given payload data to the remote station.
         """
         while payload:
-            block = payload[:self._max_segment_sz]
-            payload = payload[self._max_segment_sz:]
+            block = payload[: self._max_segment_sz]
+            payload = payload[self._max_segment_sz :]
 
             self._pending_data.append((pid, block))
 
@@ -1481,6 +1481,8 @@ class AX25PeerConnectionHandler(AX25PeerHelper):
             peer, peer._ack_timeout
         )
         self._retries = peer._max_retries
+        self._our_sabm_acked = False
+        self._their_sabm_acked = False
 
     def _go(self):
         if self.peer._negotiated:
@@ -1536,15 +1538,31 @@ class AX25PeerConnectionHandler(AX25PeerHelper):
 
     def _on_receive_ua(self):
         # Peer just acknowledged our connection
-        self._log.debug("UA received, connection established")
-        self.peer._init_connection(self.peer._modulo128)
-        self._finish(response="ack")
+        self._log.debug("UA received")
+        self._our_sabm_acked = True
+        self._check_connection_init()
 
     def _on_receive_sabm(self):
-        # Peer was connecting to us, we'll treat this as a UA.
-        self._log.debug("SABM received, connection established")
+        # Peer sent us a SABM.
+        self._log.debug("SABM received, sending UA")
         self.peer._send_ua()
-        self._finish(response="ack")
+        self._their_sabm_acked = True
+        self._check_connection_init()
+
+    def _check_connection_init(self):
+        self._log.debug(
+            "UA status: ours=%s theirs=%s",
+            self._our_sabm_acked,
+            self._their_sabm_acked,
+        )
+        if not self._our_sabm_acked:
+            self._log.debug("Waiting for peer to send UA for our SABM")
+        elif not self._their_sabm_acked:
+            self._log.debug("Waiting for peer's SABM to us")
+        else:
+            self._log.info("Connection is established")
+            self.peer._init_connection(self.peer._modulo128)
+            self._finish(response="ack")
 
     def _on_receive_frmr(self):
         # Peer just rejected our connect frame, begin FRMR recovery.
