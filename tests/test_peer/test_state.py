@@ -24,6 +24,7 @@ def test_state_unchanged():
     )
 
     state_changes = []
+
     def _on_state_change(**kwargs):
         state_changes.append(kwargs)
 
@@ -49,6 +50,7 @@ def test_state_changed():
     )
 
     state_changes = []
+
     def _on_state_change(**kwargs):
         state_changes.append(kwargs)
 
