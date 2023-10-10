@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aioax25"
+dynamic = ["version"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Environment :: No Input/Output (Daemon)",
+    "Framework :: AsyncIO",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Communications :: Ham Radio"
+]
+description = "Asynchronous AX.25 interface in pure Python using asyncio"
+dependencies = [
+    "pyserial",
+    "pyserial_asyncio",
+    "signalslot"
+]
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.license]
+text = "GPL-2.0-or-later"
+
+[[project.authors]]
+name = "Stuart Longland VK4MSL"
+email = "me@vk4msl.id.au"
+
+[tool.pytest.ini_options]
+log_cli=true
+
+[tool.setuptools.dynamic]
+version = {attr = "aioax25.__version__"}
