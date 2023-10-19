@@ -144,7 +144,10 @@ def test_rr_frame_str():
 
     assert (
         str(frame)
-        == "VK4MSL>VK4BWI: N(R)=6 P/F=False AX258BitReceiveReadyFrame"
+        == (
+            "AX258BitReceiveReadyFrame VK4MSL>VK4BWI: N(R)=6 P/F=False "
+            "Code=0x00"
+        )
     )
 
 

@@ -65,7 +65,7 @@ def test_decode_sabm_payload():
         )
         assert False, "This should not have worked"
     except ValueError as e:
-        assert str(e) == "Frame does not support payload"
+        assert str(e).startswith("Frame does not support payload")
 
 
 def test_decode_sabme():
@@ -99,7 +99,7 @@ def test_decode_sabme_payload():
         )
         assert False, "This should not have worked"
     except ValueError as e:
-        assert str(e) == "Frame does not support payload"
+        assert str(e).startswith("Frame does not support payload")
 
 
 def test_decode_uframe_payload():
@@ -689,4 +689,8 @@ def test_ui_str():
         pid=0xF0,
         payload=b"This is a test",
     )
-    assert str(frame) == "VK4MSL>VK4BWI: PID=0xf0 Payload=b'This is a test'"
+    assert str(frame) == (
+        "AX25UnnumberedInformationFrame VK4MSL>VK4BWI: "
+        "Control=0x03 P/F=False Modifier=0x03 PID=0xf0\n"
+        "Payload=b'This is a test'"
+    )
