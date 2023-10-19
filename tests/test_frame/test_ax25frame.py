@@ -11,6 +11,7 @@ from aioax25.frame import (
     AX258BitInformationFrame,
     AX2516BitInformationFrame,
 )
+
 from ..hex import from_hex, hex_cmp
 
 # Basic frame operations
@@ -343,8 +344,9 @@ def test_rr_frame_str():
         destination="VK4BWI", source="VK4MSL", nr=6
     )
 
-    assert str(frame) == (
-        "VK4MSL>VK4BWI: N(R)=6 P/F=False AX258BitReceiveReadyFrame"
+    assert (
+        str(frame)
+        == "VK4MSL>VK4BWI: N(R)=6 P/F=False AX258BitReceiveReadyFrame"
     )
 
 
