@@ -72,7 +72,8 @@ def test_iframe_str():
     )
 
     assert str(frame) == (
-        "VK4MSL>VK4BWI: N(R)=6 P/F=True N(S)=2 PID=0xff "
+        "AX258BitInformationFrame VK4MSL>VK4BWI: "
+        "N(R)=6 P/F=True N(S)=2 PID=0xff\n"
         "Payload=b'Testing 1 2 3'"
     )
 

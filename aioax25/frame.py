@@ -192,7 +192,11 @@ class AX25Frame(object):
         return bytes(self._encode())
 
     def __str__(self):
-        return str(self._header)
+        return "%s %s:\nPayload=%r" % (
+            self.__class__.__name__,
+            self.header,
+            self.frame_payload
+        )
 
     @property
     def timestamp(self):
@@ -281,6 +285,14 @@ class AX258BitFrame(AX25Frame):
             deadline=deadline,
         )
 
+    def __str__(self):
+        return "%s %s: Control=0x%02x\nPayload=%r" % (
+            self.__class__.__name__,
+            self.header,
+            self.control,
+            self.payload
+        )
+
     @property
     def control(self):
         return self._control
@@ -331,6 +343,14 @@ class AX2516BitFrame(AX25Frame):
             src_cr=src_cr,
             timestamp=timestamp,
             deadline=deadline,
+        )
+
+    def __str__(self):
+        return "%s %s: Control=0x%04x\nPayload=%r" % (
+            self.__class__.__name__,
+            self.header,
+            self.control,
+            self.payload
         )
 
     @property
@@ -475,6 +495,15 @@ class AX25UnnumberedFrame(AX258BitFrame):
         self._pf = bool(pf)
         self._modifier = int(modifier) & self.MODIFIER_MASK
 
+    def __str__(self):
+        return "%s %s: Control=0x%02x P/F=%s Modifier=0x%02x" % (
+            self.__class__.__name__,
+            self.header,
+            self.control,
+            self.pf,
+            self.modifier,
+        )
+
     @property
     def _control(self):
         """
@@ -608,7 +637,8 @@ class AX25InformationFrameMixin(object):
         )
 
     def __str__(self):
-        return "%s: N(R)=%d P/F=%s N(S)=%d PID=0x%02x Payload=%r" % (
+        return "%s %s: N(R)=%d P/F=%s N(S)=%d PID=0x%02x\nPayload=%r" % (
+            self.__class__.__name__,
             self.header,
             self.nr,
             self.pf,
@@ -724,11 +754,12 @@ class AX25SupervisoryFrameMixin(object):
         )
 
     def __str__(self):
-        return "%s: N(R)=%d P/F=%s %s" % (
+        return "%s %s: N(R)=%d P/F=%s Code=0x%02x" % (
+            self.__class__.__name__,
             self.header,
             self.nr,
             self.pf,
-            self.__class__.__name__,
+            self.code,
         )
 
     def _copy(self):
@@ -935,8 +966,15 @@ class AX25UnnumberedInformationFrame(AX25UnnumberedFrame):
         )
 
     def __str__(self):
-        return "%s: PID=0x%02x Payload=%r" % (
+        return (
+            "%s %s: Control=0x%02x P/F=%s Modifier=0x%02x "
+            "PID=0x%02x\nPayload=%r"
+        ) % (
+            self.__class__.__name__,
             self.header,
+            self.control,
+            self.pf,
+            self.modifier,
             self.pid,
             self.payload,
         )
@@ -1160,7 +1198,11 @@ class AX25BaseUnnumberedFrame(AX25UnnumberedFrame):
     @classmethod
     def decode(cls, header, control, data):
         if len(data):
-            raise ValueError("Frame does not support payload")
+            raise ValueError(
+                "Frame does not support payload"
+                " (header=%s control=0x%02x data=%s)"
+                % (header, control, data.hex())
+            )
 
         return cls(
             destination=header.destination,
