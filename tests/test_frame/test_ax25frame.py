@@ -193,7 +193,7 @@ def test_ui_str():
         pid=0xF0,
         payload=b"This is a test",
     )
-    assert str(frame) == "VK4MSL>VK4BWI: PID=0xf0 Payload=b'This is a test'"
+    assert str(frame) == ("VK4MSL>VK4BWI: PID=0xf0 Payload=b'This is a test'")
 
 
 def test_ui_tnc2():
@@ -344,9 +344,8 @@ def test_rr_frame_str():
         destination="VK4BWI", source="VK4MSL", nr=6
     )
 
-    assert (
-        str(frame)
-        == "VK4MSL>VK4BWI: N(R)=6 P/F=False AX258BitReceiveReadyFrame"
+    assert str(frame) == (
+        "VK4MSL>VK4BWI: N(R)=6 P/F=False " "AX258BitReceiveReadyFrame"
     )
 
 
@@ -434,7 +433,8 @@ def test_iframe_str():
     )
 
     assert str(frame) == (
-        "VK4MSL>VK4BWI: N(R)=6 P/F=True N(S)=2 PID=0xff "
+        "VK4MSL>VK4BWI: "
+        "N(R)=6 P/F=True N(S)=2 PID=0xff "
         "Payload=b'Testing 1 2 3'"
     )
 
