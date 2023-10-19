@@ -99,7 +99,7 @@ def test_decode_sabme_payload():
         )
         assert False, "This should not have worked"
     except ValueError as e:
-        eq_(str(e), "Frame does not support payload")
+        assert str(e) == "Frame does not support payload"
 
 
 def test_decode_uframe_payload():
