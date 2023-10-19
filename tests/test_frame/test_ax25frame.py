@@ -12,7 +12,6 @@ from aioax25.frame import (
     AX2516BitInformationFrame,
 )
 
-from ..nosecompat import eq_
 from ..hex import from_hex, hex_cmp
 
 # Basic frame operations
@@ -31,7 +30,7 @@ def test_decode_incomplete():
         )
         assert False, "This should not have worked"
     except ValueError as e:
-        eq_(str(e), "Insufficient packet data")
+        assert str(e) == "Insufficient packet data"
 
 
 def test_decode_iframe():
@@ -76,8 +75,8 @@ def test_decode_rawframe():
     )
     frame = AX25Frame.decode(rawframe)
     assert isinstance(frame, AX25UnnumberedInformationFrame)
-    eq_(frame.pid, 0xF0)
-    eq_(frame.payload, b"This is a test")
+    assert frame.pid == 0xF0
+    assert frame.payload == b"This is a test"
 
 
 def test_frame_timestamp():
@@ -87,7 +86,7 @@ def test_frame_timestamp():
     frame = AX25RawFrame(
         destination="VK4BWI", source="VK4MSL", timestamp=11223344
     )
-    eq_(frame.timestamp, 11223344)
+    assert frame.timestamp == 11223344
 
 
 def test_frame_deadline():
@@ -97,7 +96,7 @@ def test_frame_deadline():
     frame = AX25RawFrame(
         destination="VK4BWI", source="VK4MSL", deadline=11223344
     )
-    eq_(frame.deadline, 11223344)
+    assert frame.deadline == 11223344
 
 
 def test_frame_deadline_ro_if_set_constructor():
@@ -110,9 +109,9 @@ def test_frame_deadline_ro_if_set_constructor():
     try:
         frame.deadline = 99887766
     except ValueError as e:
-        eq_(str(e), "Deadline may not be changed after being set")
+        assert str(e) == "Deadline may not be changed after being set"
 
-    eq_(frame.deadline, 11223344)
+    assert frame.deadline == 11223344
 
 
 def test_frame_deadline_ro_if_set():
@@ -129,9 +128,9 @@ def test_frame_deadline_ro_if_set():
     try:
         frame.deadline = 99887766
     except ValueError as e:
-        eq_(str(e), "Deadline may not be changed after being set")
+        assert str(e) == "Deadline may not be changed after being set"
 
-    eq_(frame.deadline, 44556677)
+    assert frame.deadline == 44556677
 
 
 def test_encode_raw():
@@ -180,7 +179,7 @@ def test_raw_str():
     frame = AX25RawFrame(
         destination="VK4BWI", source="VK4MSL", payload=b"\xabThis is a test"
     )
-    eq_(str(frame), "VK4MSL>VK4BWI")
+    assert str(frame) == "VK4MSL>VK4BWI"
 
 
 def test_ui_str():
@@ -194,7 +193,7 @@ def test_ui_str():
         pid=0xF0,
         payload=b"This is a test",
     )
-    eq_(str(frame), "VK4MSL>VK4BWI: PID=0xf0 Payload=b'This is a test'")
+    assert str(frame) == "VK4MSL>VK4BWI: PID=0xf0 Payload=b'This is a test'"
 
 
 def test_ui_tnc2():
@@ -208,7 +207,7 @@ def test_ui_tnc2():
         pid=0xF0,
         payload=b"This is a test",
     )
-    eq_(frame.tnc2, "VK4MSL>VK4BWI:This is a test")
+    assert frame.tnc2 == "VK4MSL>VK4BWI:This is a test"
 
 
 # Supervisory frame tests
@@ -230,7 +229,7 @@ def test_sframe_payload_reject():
         )
         assert False, "Should not have worked"
     except ValueError as e:
-        eq_(str(e), "Supervisory frames do not support payloads.")
+        assert str(e) == "Supervisory frames do not support payloads."
 
 
 def test_16bs_truncated_reject():
@@ -248,7 +247,7 @@ def test_16bs_truncated_reject():
         )
         assert False, "Should not have worked"
     except ValueError as e:
-        eq_(str(e), "Insufficient packet data")
+        assert str(e) == "Insufficient packet data"
 
 
 def test_8bs_rr_frame():
@@ -264,7 +263,7 @@ def test_8bs_rr_frame():
         modulo128=False,
     )
     assert isinstance(frame, AX258BitReceiveReadyFrame)
-    eq_(frame.nr, 2)
+    assert frame.nr == 2
 
 
 def test_16bs_rr_frame():
@@ -280,7 +279,7 @@ def test_16bs_rr_frame():
         modulo128=True,
     )
     assert isinstance(frame, AX2516BitReceiveReadyFrame)
-    eq_(frame.nr, 46)
+    assert frame.nr == 46
 
 
 def test_16bs_rr_encode():
@@ -296,7 +295,7 @@ def test_16bs_rr_encode():
         "ac 96 68 9a a6 98 e1"  # Source
         "01 5d",  # Control
     )
-    eq_(frame.control, 0x5D01)
+    assert frame.control == 0x5D01
 
 
 def test_8bs_rej_decode_frame():
@@ -314,8 +313,8 @@ def test_8bs_rej_decode_frame():
     assert isinstance(
         frame, AX258BitRejectFrame
     ), "Did not decode to REJ frame"
-    eq_(frame.nr, 0)
-    eq_(frame.pf, False)
+    assert frame.nr == 0
+    assert frame.pf == False
 
 
 def test_16bs_rej_decode_frame():
@@ -333,8 +332,8 @@ def test_16bs_rej_decode_frame():
     assert isinstance(
         frame, AX2516BitRejectFrame
     ), "Did not decode to REJ frame"
-    eq_(frame.nr, 0)
-    eq_(frame.pf, False)
+    assert frame.nr == 0
+    assert frame.pf == False
 
 
 def test_rr_frame_str():
@@ -345,9 +344,9 @@ def test_rr_frame_str():
         destination="VK4BWI", source="VK4MSL", nr=6
     )
 
-    eq_(
-        str(frame),
-        "VK4MSL>VK4BWI: N(R)=6 P/F=False AX258BitReceiveReadyFrame",
+    assert (
+        str(frame)
+        == "VK4MSL>VK4BWI: N(R)=6 P/F=False AX258BitReceiveReadyFrame"
     )
 
 
@@ -390,10 +389,10 @@ def test_8bit_iframe_decode():
     assert isinstance(
         frame, AX258BitInformationFrame
     ), "Did not decode to 8-bit I-Frame"
-    eq_(frame.nr, 6)
-    eq_(frame.ns, 2)
-    eq_(frame.pid, 0xFF)
-    eq_(frame.payload, b"This is a test")
+    assert frame.nr == 6
+    assert frame.ns == 2
+    assert frame.pid == 0xFF
+    assert frame.payload == b"This is a test"
 
 
 def test_16bit_iframe_decode():
@@ -414,10 +413,10 @@ def test_16bit_iframe_decode():
     assert isinstance(
         frame, AX2516BitInformationFrame
     ), "Did not decode to 16-bit I-Frame"
-    eq_(frame.nr, 6)
-    eq_(frame.ns, 2)
-    eq_(frame.pid, 0xFF)
-    eq_(frame.payload, b"This is a test")
+    assert frame.nr == 6
+    assert frame.ns == 2
+    assert frame.pid == 0xFF
+    assert frame.payload == b"This is a test"
 
 
 def test_iframe_str():
@@ -434,10 +433,9 @@ def test_iframe_str():
         payload=b"Testing 1 2 3",
     )
 
-    eq_(
-        str(frame),
+    assert str(frame) == (
         "VK4MSL>VK4BWI: N(R)=6 P/F=True N(S)=2 PID=0xff "
-        "Payload=b'Testing 1 2 3'",
+        "Payload=b'Testing 1 2 3'"
     )
 
 
