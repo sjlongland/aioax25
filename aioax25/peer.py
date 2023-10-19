@@ -334,8 +334,8 @@ class AX25Peer(object):
             # Send a UA and set ourselves as connected
             self._stop_ack_timer()
             self._send_ua()
-            self._uaframe_handler = self._on_connect_sabm_ua
-            self._send_sabm()
+            self._log.info("Connection accepted")
+            self._set_conn_state(self.AX25PeerState.CONNECTED)
         else:
             self._log.info(
                 "Will not accept connection from peer now, "
@@ -797,10 +797,6 @@ class AX25Peer(object):
             self._log.debug(
                 "Incoming connection time-out in state %s", self._state.name
             )
-
-    def _on_connect_sabm_ua(self):
-        self._log.info("Connection accepted by peer")
-        self._set_conn_state(self.AX25PeerState.CONNECTED)
 
     def _on_connect_response(self, response, **kwargs):
         # Handle the connection result.
