@@ -1,0 +1,1995 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html class=" qlapaijau idc0_349"><head><script src="index_files/analytics.js" type="text/javascript"></script>
+<script type="text/javascript">window.addEventListener('DOMContentLoaded',function(){var v=archive_analytics.values;v.service='wb';v.server_name='wwwb-app211.us.archive.org';v.server_ms=175;archive_analytics.send_pageview({});});</script>
+<script type="text/javascript" src="index_files/bundle-playback.js" charset="utf-8"></script>
+<script type="text/javascript" src="index_files/wombat.js" charset="utf-8"></script>
+<script>window.RufflePlayer=window.RufflePlayer||{};window.RufflePlayer.config={"autoplay":"on","unmuteOverlay":"hidden"};</script>
+<script type="text/javascript" src="index_files/ruffle.js"></script>
+<script type="text/javascript">
+  __wm.init("http://web.archive.org/web");
+  __wm.wombat("https://tapr.org/pub_ax25.html","20190831185324","http://web.archive.org/","web","//web-static.archive.org/_static/",
+	      "1567277604");
+</script>
+<link rel="stylesheet" type="text/css" href="index_files/banner-styles.css">
+<link rel="stylesheet" type="text/css" href="index_files/iconochive.css">
+<!-- End Wayback Rewrite JS Include -->
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>AX.25 Amateur Packet-Radio Link-Layer Protocol</title>
+<link rel="stylesheet" href="index_files/tapr_sub.css" type="text/css" media="">
+
+<meta name="AUTHOR" content="TAPR Webmaster, Site Design by Greg Jones, WD5IVD">
+<meta name="DESCRIPTION" content="AX.25 Amateur Packet-Radio Link-Layer Protocol Version 2.0, October 1984; AX.25 Link-Layer Protocol Specification">
+<meta name="KeyWords" content="TAPR, amateur radio, digital communications, AX.25, AX.25 Link-Layer Protocol Specification, AX.25 version 2.0, ARRL, ISO 3309, CCITT X.25, packet radio">
+<meta name="Copyright" content="� 1994-2005 Tucson Amateur Packet Radio, Corp.">
+
+</head>
+<body><!-- BEGIN WAYBACK TOOLBAR INSERT -->
+<script>__wm.rw(0);</script>
+<div id="wm-ipp-base" style="display: block; direction: ltr; height: 1px;" lang="en">
+</div><div id="wm-ipp-print">The Wayback Machine - http://web.archive.org/web/20190831185324/https://tapr.org/pub_ax25.html</div>
+<script type="text/javascript">//<![CDATA[
+__wm.bt(700,27,25,2,"web","https://tapr.org/pub_ax25.html","20190831185324",1996,"//web-static.archive.org/_static/",["//web-static.archive.org/_static/css/banner-styles.css?v=S1zqJCYt","//web-static.archive.org/_static/css/iconochive.css?v=qtvMKcIJ"], false);
+  __wm.rw(1);
+//]]></script>
+<!-- END WAYBACK TOOLBAR INSERT -->
+  
+
+<!-- INCLUDE MASTHEAD HTML -->
+<div id="masthead"> 
+  <a href="http://web.archive.org/web/20190831185324/https://tapr.org/index.html"><img src="index_files/tapr-logo.png" alt="" width="95" height="110" border="0"></a>
+   <div id="utility"> 
+    <a href="http://web.archive.org/web/20190831185324/https://tapr.org/tapr_showcart.php">Order Cart</a> | <a href="http://web.archive.org/web/20190831185324/https://tapr.org/contact_us.html">Contact Us</a> | <a href="http://web.archive.org/web/20190831185324/https://tapr.org/index.html">Home</a> | <a href="http://web.archive.org/web/20190831185324/https://tapr.org/tapr_sigs.html">SIGs</a>  | 
+
+<a href="http://web.archive.org/web/20190831185324/https://tapr.org/mem_portal.html">Login</a>
+<!--
+<a href="https://secure.tapr.org/np/clients/tapr/login.jsp">Login</a>
+-->
+  </div> 
+    <div id="globalLink">
+	  <a href="http://web.archive.org/web/20190831185324/https://tapr.org/organization.html" class="glink">Organization</a>
+	  <a href="http://web.archive.org/web/20190831185324/https://tapr.org/organization.html#membership" class="glink">Membership</a>
+	  <a href="http://web.archive.org/web/20190831185324/https://tapr.org/publications.html" class="glink">Publications</a>
+	  <a href="http://web.archive.org/web/20190831185324/https://tapr.org/kits.html" class="glink">Kits</a>
+	  <a href="http://web.archive.org/web/20190831185324/https://tapr.org/software.html" class="glink">Software</a>
+	  <a href="http://web.archive.org/web/20190831185324/https://tapr.org/products.php" class="glink">Products</a><br> 
+	  <a href="http://web.archive.org/web/20190831185324/https://tapr.org/conferences.html" class="glink">Conferences</a>
+	  <a href="http://web.archive.org/web/20190831185324/https://tapr.org/packetradio.html" class="glink">Packet Radio</a>
+	  <a href="http://web.archive.org/web/20190831185324/https://tapr.org/aprs.html" class="glink">APRS/GPS</a>
+	  <a href="http://web.archive.org/web/20190831185324/https://tapr.org/dsp.html" class="glink">DSP</a>
+	  <a href="http://web.archive.org/web/20190831185324/https://tapr.org/spread_spectrum.html" class="glink">Spread Spectrum</a>
+	  <a href="http://web.archive.org/web/20190831185324/https://tapr.org/archives.html" class="glink">Archives</a>
+  </div> 
+    <!--end globalLinks--> 
+   <!-- end globalNav --> 
+</div> 
+<!-- end masthead --> 
+
+<!-- PAGE -->
+<div id="pagecell1"> 
+  <!--pagecell1--> 
+  <img alt="" src="index_files/tl_curve_white.gif" id="tl" width="6" height="6"> <img alt="" src="index_files/tr_curve_white.gif" id="tr" width="6" height="6"> 
+  <div id="pageName"> 
+    <a href="http://web.archive.org/web/20190831185324/https://tapr.org/publications.html">Publications</a>: <h2>AX.25 Amateur Packet-Radio Link-Layer Protocol</h2>
+  </div> 
+  
+  <div id="pageNav"> 
+    <div id="sectionLinks"> 
+<h2>Books</h2>
+<a href="http://web.archive.org/web/20190831185324/https://tapr.org/pub_wdcdat.html">Wireless Digital Communications: Design and Theory</a>
+<a href="http://web.archive.org/web/20190831185324/https://tapr.org/pub_ssupdate.html">TAPR Spread Spectrum Update</a>
+<a href="http://web.archive.org/web/20190831185324/https://tapr.org/pub_PacketRadioBook.html">TAPR Packet Radio: What? Why? How?</a>
+<a href="http://web.archive.org/web/20190831185324/https://tapr.org/psr.html">TAPR PSR All Issues</a>
+<h2>CDs / DVDs</h2>
+<a href="http://web.archive.org/web/20190831185324/https://tapr.org/cdromdcc.html">TAPR/ARRL DCC Proceeding CDs</a>
+<a href="http://web.archive.org/web/20190831185324/https://tapr.org/pub_dvd.html">TAPR/ARRL DCC Video</a>
+<h2>Electronic - Free</h2>
+<a href="http://web.archive.org/web/20190831185324/https://tapr.org/ohl.html">OHL - Open Hardware License</a>
+<a href="http://web.archive.org/web/20190831185324/https://tapr.org/pub_ax25.html">AX.25 Protocol</a>
+<a href="http://web.archive.org/web/20190831185324/https://tapr.org/pub_9600.html">TAPR 9600</a>
+<h2>Proceedings</h2>
+<a href="http://web.archive.org/web/20190831185324/https://tapr.org/pub_dcc.html">Digital Communications Conference</a>
+<a href="http://web.archive.org/web/20190831185324/https://tapr.org/pub_95meeting.html">TAPR 1995 Annual Meeting</a>
+<a href="http://web.archive.org/web/20190831185324/https://tapr.org/pub_94meeting.html">TAPR 1994 Annual Meeting</a>
+<h2>Out of Print</h2>
+<a href="http://web.archive.org/web/20190831185324/https://tapr.org/pub_NOSIntro.html">NOSIntro</a>
+<a href="http://web.archive.org/web/20190831185324/https://tapr.org/pub_bbssysop.html">TAPR BBS Sysop Guide</a>
+    </div> 
+  </div> 
+  <div id="content"> 
+    <div class="feature"> 
+	  <!-- FEATURE ARTICLE GOES HERE -->
+
+
+
+<h5>AX.25 Amateur Packet-Radio Link-Layer Protocol</h5>
+<h4>Version 2.2, 1998</h4>
+<img src="index_files/pdf2.gif" width="32" height="31" align="middle"> <a href="http://web.archive.org/web/20190831185324/https://tapr.org/pdf/AX25.2.2.pdf">Ver 2.2 Rev: 1998</a> (pdf format 3.0, 1.6M)<br>
+
+<p>
+</p><hr>
+<p>
+
+</p><h5>AX.25 Amateur Packet-Radio Link-Layer Protocol</h5>
+<h4>Version 2.0, October 1984</h4>
+<ul>
+<center>
+<hr width="50%">
+PID Table Updated November, 1997.
+<hr width="50%">
+</center>
+</ul>
+<p>
+
+<a name="2"></a>
+</p><h1>2  AX.25 Link-Layer Protocol Specification</h1>
+
+<a name="2.1"></a>
+<h2>2.1  Scope and Field of Operation</h2>
+
+In  order  to  provide  a  mechanism  for  the   reliable
+transport  of  data  between  two  signaling  terminals,  it   is
+necessary  to define a protocol that can accept and deliver  data
+over a variety of types of communications links.  The AX.25 Link-
+Layer  Protocol is designed to provide this service,  independent
+of any other level that may or may not exist.
+
+<p> This protocol conforms to ISO Recommendations 3309,  4335
+(including DAD 1&amp;2) and 6256 high-level data link control  (HDLC)
+and  uses  some terminology found in these  documents.   It  also
+conforms with ANSI X3.66, which describes ADCCP, balanced mode.
+
+</p><p> This  protocol  follows,  in principle,  the  CCITT  X.25
+Recommendation,  with the exception of an extended address  field
+and  the addition of the Unnumbered Information (UI)  frame.   It
+also follows the principles of CCITT Recommendation Q.921  (LAPD)
+in the use of multiple links, distinguished by the address field,
+on a single shared channel.
+
+</p><p> As  defined,  this  protocol will work  equally  well  in
+either half- or full-duplex Amateur Radio environments.
+
+</p><p> This protocol has been designed to work equally well  for
+direct  connections between two individual  amateur  packet-radio
+stations or an individual station and a multiport controller.
+
+</p><p> This  protocol allows for the establishment of more  than
+one  link-layer  connection  per  device, if  the  device  is  so
+capable.
+
+</p><p> This  protocol  does not  prohibit  self-connections.   A
+self-connection  is considered to be when a device establishes  a
+link  to  itself using its own address for both  the  source  and
+destination of the frame.
+
+</p><p> Most  link-layer  protocols assume that one  primary  (or
+master)  device  (generally  called  a  DCE,  or  data   circuit-
+terminating equipment) is connected to one or more secondary  (or
+slave)  device(s)  (usually  called a DTE,  or  data  terminating
+equipment).   This type of unbalanced operation is not  practical
+in a shared-RF Amateur Radio environment.  Instead, AX.25 assumes
+that  both  ends  of  the link are of  the  same  class,  thereby
+eliminating  the two different classes of devices.  The term  DXE
+is  used in this protocol specification to describe the  balanced
+type of device found in amateur packet radio.
+
+<a name="2.2"></a>
+</p><h2>2.2  Frame Structure</h2>
+
+Link  layer packet radio transmissions are sent in  small
+blocks of data, called frames.  Each frame is made up of  several
+smaller groups, called fields.  Fig.1 shows the three basic types
+of  frames.  Note that the first bit to be transmitted is on  the
+left side.
+
+<p>
+</p><center>
+
+<a name="fig 1a"></a>
+<table cellpadding="8" border="1">
+<tbody><tr><th colspan="5" align="left">First Bit Sent</th></tr>
+<tr><th>Flag</th><th>Address</th><th>Control</th><th>FCS</th><th>Flag</th></tr>
+<tr><td>01111110</td><td>112/560 Bits</td><td>8 Bits</td><td>16 Bits</td><td>01111110</td></tr>
+</tbody><caption>Fig. 1A -- U and S frame construction</caption>
+</table>
+
+<p>
+
+<a name="fig 1b"></a>
+</p><table cellpadding="8" border="1">
+<tbody><tr><th colspan="7" align="left">First Bit Sent</th></tr>
+<tr><th>Flag</th><th>Address</th><th>Control</th><th>PID</th><th>Info.</th><th>FCS</th><th>Flag</th></tr>
+<tr><td>01111110</td><td>112/560 Bits</td><td>8 Bits</td><td>8 Bits</td><td>N*8 Bits</td><td>16 Bits</td><td>01111110</td></tr>
+</tbody><caption>Fig. 1B -- Information frame construction</caption>
+</table>
+
+</center>
+
+<p> Each field is made up of an integral number of octets (or
+bytes), and serves a specific function as outlined below.
+
+<a name="2.2.1"></a>
+</p><h4>2.2.1  Flag Field</h4>
+
+The flag field is one octet long.  Since the flag is used
+to  delimit  frames, it occurs at both the beginning and  end  of
+each  frame.  Two frames may share one flag, which  would  denote
+the  end of the first frame, and the start of the next frame.   A
+flag consists of a zero followed by six ones followed by  another
+zero,  or  01111110 (7E hex).  As a result of bit  stuffing  (see
+<a href="#2.2.6">2.2.6</a>,  below),  this sequence is not allowed
+to  occur  anywhere else inside a complete frame.
+
+<a name="2.2.2"></a>
+<h4>2.2.2  Address Field</h4>
+
+The address field is used to identify both the source  of
+the  frame and its destination.  In addition, the  address  field
+contains  the  command/response information  and  facilities  for
+level 2 repeater operation.
+
+<p> The encoding of the address field is described in
+<a href="#2.2.13">2.2.13</a>.
+
+<a name="2.2.3"></a>
+</p><h4>2.2.3  Control Field</h4>
+
+The  control field is used to identify the type of  frame
+being  passed  and  control several attributes  of  the  level  2
+connection.   It  is  one octet in length, and  its  encoding  is
+discussed in
+<a href="#2.3.2.1">2.3.2.1</a>, below.
+
+<a name="2.2.4"></a>
+<h4>2.2.4  PID Field</h4>
+
+The  Protocol  Identifier  (PID) field  shall  appear  in
+information  frames (I and UI) only.  It identifies what kind  of
+layer 3 protocol, if any, is in use.
+
+<p> The PID itself is not included as part of the octet count
+of the information field.  The encoding of the PID is as follows:
+
+</p><p>
+</p><center>
+
+
+<a name="PID encoding"></a>
+<table cellpadding="8" border="1">
+    <tbody><tr>
+	<th>HEX</th>
+	<th align="center">
+	    <tt>M&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;L<br>
+	    S&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S<br>
+	    B&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;B</tt></th>
+	<th>Translation</th>
+    </tr>
+    <tr>
+	<td>0x01</td>
+	<td><tt>00000001</tt>
+	</td><td>ISO 8208/CCITT X.25 PLP
+    </td></tr>
+    <tr>
+	<td>0x06</td>
+	<td><tt>00000110</tt>
+	</td><td>Compressed TCP/IP packet. Van Jacobson (RFC 1144)
+    </td></tr>
+    <tr>
+	<td>0x07</td>
+	<td><tt>00000111</tt>
+	</td><td>Uncompressed TCP/IP packet. Van Jacobson (RFC 1144)
+    </td></tr>
+    <tr>
+	<td>0x08</td>
+	<td><tt>00001000</tt>
+	</td><td>Segmentation fragment
+    </td></tr>
+    <tr>
+	<td align="center">**</td>
+	<td><tt>yy01yyyy</tt></td>
+	<td>AX.25 layer 3 implemented.
+    </td></tr>
+    <tr>
+	<td align="center">**</td>
+	<td><tt>yy10yyyy</tt>
+	</td><td>AX.25 layer 3 implemented.
+    </td></tr>
+    <tr>
+	<td>0xC3</td>
+	<td><tt>11000011</tt>
+	</td><td>TEXNET datagram protocol
+    </td></tr>
+    <tr>
+	<td>0xC4</td>
+	<td><tt>11000100</tt>
+	</td><td>Link Quality Protocol
+    </td></tr>
+    <tr>
+	<td>0xCA</td>
+	<td><tt>11001010</tt>
+	</td><td>Appletalk
+    </td></tr>
+    <tr>
+	<td>0xCB</td>
+	<td><tt>11001011</tt>
+	</td><td>Appletalk ARP
+    </td></tr>
+    <tr>
+	<td>0xCC</td>
+	<td><tt>11001100</tt>
+	</td><td>ARPA Internet Protocol
+    </td></tr>
+    <tr>
+	<td>0xCD</td>
+	<td><tt>11001101</tt>
+	</td><td>ARPA Address resolution
+    </td></tr>
+    <tr>
+	<td>0xCE</td>
+	<td><tt>11001110</tt>
+	</td><td>FlexNet
+    </td></tr>
+    <tr>
+	<td>0xCF</td>
+	<td><tt>11001111</tt>
+	</td><td>NET/ROM
+    </td></tr>
+    <tr>
+	<td>0xF0</td>
+	<td><tt>11110000</tt>
+	</td><td>No layer 3 protocol implemented.
+    </td></tr>
+    <tr>
+	<td>0xFF</td>
+	<td><tt>11111111</tt>
+	</td><td>Escape character.  Next octet contains more Level 3
+	protocol information.
+    </td></tr>
+</tbody></table>
+</center>
+
+<p> <i>Where:</i><br>
+A <tt>y</tt> indicates all combinations used.
+
+</p><p> <b>Note:</b><br>
+All  forms  of  <tt>yy11yyyy</tt> and <tt>yy00yyyy</tt>  other  than  those
+listed  above  are  reserved  at this time  for  future  level  3
+protocols.   The  assignment of these formats is  up  to  amateur
+agreement.   It  is  recommended that the  creators  of  level  3
+protocols   contact  the  ARRL  Ad  Hoc  Committee   on   Digital
+Communications for suggested encodings.
+
+<a name="2.2.5"></a>
+</p><h4>2.2.5  Information Field</h4>
+
+The  information field is used to convey user  data  from
+one  end of the link to the other.  I fields are allowed in  only
+three  types of frames:  the I frame, the UI frame, and the  FRMR
+frame.   The  I  field can be up to 256 octets  long,  and  shall
+contain  an integral number of octets.  These  constraints  apply
+prior to the insertion of zero bits as specified in
+<a href="#2.2.6">2.2.6</a>, below.
+Any  information  in the I field shall be passed along  the  link
+transparently,  except  for the zero-bit  insertion  (see
+<a href="#2.2.6">2.2.6</a>)
+necessary  to prevent flags from accidentally appearing in the  I
+field.
+
+<a name="2.2.6"></a>
+<h4>2.2.6  Bit Stuffing</h4>
+
+In  order to assure that the flag bit sequence  mentioned
+above  doesn't appear accidentally anywhere else in a frame,  the
+sending  station  shall monitor the bit sequence for a  group  of
+five  or more contiguous one bits.  Any time five contiguous  one
+bits  are sent the sending station shall insert a zero bit  after
+the  fifth  one  bit.   During frame  reception,  any  time  five
+contiguous  one  bits  are  received,  a  zero  bit   immediately
+following five one bits shall be discarded.
+
+<a name="2.2.7"></a>
+<h4>2.2.7  Frame-Check Sequence</h4>
+
+The  frame-check sequence (FCS) is a  sixteen-bit  number
+calculated  by  both the sender and receiver of a frame.   It  is
+used  to  insure that the frame was not corrupted by  the  medium
+used to get the frame from the sender to the receiver.  It  shall
+be calculated in accordance with ISO 3309 (HDLC) Recommendations.
+
+<a name="2.2.8"></a>
+<h4>2.2.8  Order of Bit Transmission</h4>
+
+With  the  exception of the FCS field, all fields  of  an
+AX.25 frame shall be sent with each octet's least-significant bit
+first.  The FCS shall be sent most-significant bit first.
+
+<a name="2.2.9"></a>
+<h4>2.2.9  Invalid Frames</h4>
+
+Any frame consisting of less than 136 bits (including the
+opening  and closing flags), not bounded by opening  and  closing
+flags, or not octet aligned (an integral number of octets), shall
+be  considered  an  invalid frame by the link  layer.   See  also
+<a href="#2.4.4.4">2.4.4.4</a>, below.
+
+<a name="2.2.10"></a>
+<h4>2.2.10  Frame Abort</h4>
+
+If a frame must be prematurely aborted, at least  fifteen
+contiguous ones shall be sent with no bit stuffing added.
+
+<a name="2.2.11"></a>
+<h4>2.2.11  Interframe Time Fill</h4>
+
+Whenever   it  is  necessary  for  a  DXE  to  keep   its
+transmitter  on  while  not actually  sending  frames,  the  time
+between frames should be filled with contiguous flags.
+
+<a name="2.2.12"></a>
+<h4>2.2.12  Link Channel States</h4>
+
+Not applicable.
+
+<a name="2.2.13"></a>
+<h4>2.2.13  Address-Field Encoding</h4>
+
+The  address  field of all frames shall be  encoded  with
+both the destination and source amateur call signs for the frame.
+Except  for the Secondary Station Identifier (SSID), the  address
+field  should  be made up of upper-case alpha and  numeric  ASCII
+characters only.  If level 2 amateur "repeaters" are to be  used,
+their call signs shall also be in the address field.
+
+<p> The  HDLC address field is extended beyond one  octet  by
+assigning  the  least-significant  bit of each  octet  to  be  an
+"extension bit".  The extension bit of each octet is set to zero,
+to indicate the next octet contains more address information,  or
+one,  to  indicate  this is the last octet of  the  HDLC  address
+field.   To make room for this extension bit, the  amateur  Radio
+call sign information is shifted one bit left.
+
+<a name="2.2.13.1"></a>
+</p><h5>2.2.13.1  Nonrepeater Address-Field Encoding</h5>
+
+If  level  2 repeaters are not being  used,  the  address
+field is encoded as shown in Fig. 2.  The destination address  is
+the call sign and SSID of the amateur radio station to which  the
+frame is addressed, while the source address contains the amateur
+call  sign  and SSID of the station that sent the  frame.   These
+call signs are the call signs of the two ends of a level 2  AX.25
+link only.
+
+<p>
+</p><center>
+
+<a name="fig 2"></a>
+<table cellpadding="8" border="1">
+<tbody><tr><th colspan="14" align="left"> First Octet Sent</th></tr>
+<tr><th colspan="14" align="center"> Address Field of Frame</th></tr>
+<tr><th colspan="7" align="center"> Destination Address
+</th><th colspan="7" align="center"> Source Address</th></tr>
+<tr><td>A1 </td><td>A2 </td><td>A3 </td><td>A4 </td><td>A5 </td><td>A6 </td><td>A7
+</td><td>A8 </td><td>A9 </td><td>A10 </td><td>A11 </td><td>A12 </td><td>A13 </td><td>A14</td></tr>
+</tbody><caption> Fig. 2 -- Nonrepeater Address-Field Encoding </caption>
+</table>
+
+</center>
+
+<p> A1  through A14 are the fourteen octets that make up  the
+two  address  subfields of the address  field.   The  destination
+subaddress is seven octets long (A1 thru A7), and is sent  first.
+This  address sequence provides the receivers of frames  time  to
+check  the  destination address subfield to see if the  frame  is
+addressed to them while the rest of the frame is being  received.
+The  source  address subfield is then sent in octets  A8  through
+A14.   Both  of these subfields are encoded in the  same  manner,
+except  that  the last octet of the address field  has  the  HDLC
+address extension bit set.
+
+</p><p>There  is  an octet at the end of each  address  subfield
+that contains the Secondary Station Identifier (SSID).  The  SSID
+subfield  allows an Amateur Radio operator to have more than  one
+packet-radio station operating under the same call sign.  This is
+useful when an amateur wants to put up a repeater in addition  to
+a regular station, for example.  The C bits (see
+<a href="#2.4.1.2">2.4.1.2</a>, below)
+and H bit (see
+<a href="#2.2.13.2">2.2.13.2</a>, below)
+are also contained in this octet,
+along with two bits which are reserved for future use.
+
+</p><p>Fig.  3A shows a typical AX.25 frame in  the  nonrepeater
+mode of operation.
+
+</p><p></p><center>
+
+<a name="fig 3a"></a>
+<table cellpadding="8" border="1">
+<tbody><tr><th>Octet</th><th>ASCII</th><th>Bin.Data</th><th>Hex Data</th></tr>
+<tr><td>Flag</td><td></td><td><tt>01111110</tt></td><td>7E</td></tr>
+<tr><td>A1</td><td>K</td><td><tt>10010110</tt></td><td>96</td></tr>
+<tr><td>A2</td><td>8</td><td><tt>01110000</tt></td><td>70</td></tr>
+<tr><td>A3</td><td>M</td><td><tt>10011010</tt></td><td>9A</td></tr>
+<tr><td>A4</td><td>M</td><td><tt>10011010</tt></td><td>9A</td></tr>
+<tr><td>A5</td><td>O</td><td><tt>10011110</tt></td><td>9E</td></tr>
+<tr><td>A6</td><td>space</td><td><tt>01000000</tt></td><td>40</td></tr>
+<tr><td>A7</td><td>SSID</td><td><tt>11100000</tt></td><td>E0</td></tr>
+<tr><td>A8</td><td>W</td><td><tt>10101110</tt></td><td>AE</td></tr>
+<tr><td>A9</td><td>B</td><td><tt>10000100</tt></td><td>84</td></tr>
+<tr><td>A10</td><td>4</td><td><tt>01100100</tt></td><td>68</td></tr>
+<tr><td>A11</td><td>J</td><td><tt>10010100</tt></td><td>94</td></tr>
+<tr><td>A12</td><td>F</td><td><tt>10001100</tt></td><td>8C</td></tr>
+<tr><td>A13</td><td>I</td><td><tt>10010010</tt></td><td>92</td></tr>
+<tr><td>A14</td><td>SSID</td><td><tt>01100001</tt></td><td>61</td></tr>
+<tr><td>Control</td><td>I</td><td><tt>00111110</tt></td><td>3E</td></tr>
+<tr><td>PID</td><td>none</td><td><tt>11110000</tt></td><td>F0</td></tr>
+<tr><td>FCS</td><td>part 1</td><td><tt>xxxxxxxx</tt></td><td>HH</td></tr>
+<tr><td>FCS</td><td>part 2</td><td><tt>xxxxxxxx</tt></td><td>HH</td></tr>
+<tr><td>Flag</td><td></td><td><tt>01111110</tt></td><td>7E</td></tr>
+<tr><th colspan="2">Bit position</th><td><tt>76543210</tt></td><td></td></tr>
+</tbody><caption>Fig. 3A -- Nonrepeater AX.25 frame</caption>
+</table></center>
+
+<p> The frame shown is an I frame, not going through a  level
+2 repeater, from WB4JFI (SSID=0) to K8MMO (SSID=0), with no level
+3  protocol.   The P/F bit is set; the  receive  sequence  number
+(N(R)) is 1; the send sequence number (N(S)) is 7.
+
+<a name="2.2.13.1.1"></a>
+</p><h4>2.2.13.1.1  Destination Subfield Encoding</h4>
+
+Fig.  3 shows how an amateur call sign is placed  in  the
+destination address subfield, occupying octets A1 thru A7.
+
+<p></p><center>
+
+<a name="fig 3"></a>
+<table cellpadding="8" border="1">
+<tbody><tr><th>Octet</th><th>ASCII</th><th>Bin.Data</th><th>Hex Data</th></tr>
+<tr><td>A1</td><td>W</td><td><tt>10101110</tt></td><td>AE</td></tr>
+<tr><td>A2</td><td>B</td><td><tt>10000100</tt></td><td>84</td></tr>
+<tr><td>A3</td><td>4</td><td><tt>01101000</tt></td><td>68</td></tr>
+<tr><td>A4</td><td>J</td><td><tt>10010100</tt></td><td>94</td></tr>
+<tr><td>A5</td><td>F</td><td><tt>10001100</tt></td><td>8C</td></tr>
+<tr><td>A6</td><td>I</td><td><tt>10010010</tt></td><td>92</td></tr>
+<tr><td>A7</td><td>SSID</td><td><tt>CRRSSID0</tt></td><td></td></tr>
+<tr><th colspan="2">Bit Position</th><td><tt>76543210</tt></td><td></td></tr>
+</tbody><caption>Fig. 3 -- Destination Field Encoding</caption>
+</table>
+
+</center>
+
+<p><i>Where:</i></p><ol compact="compact">
+<li>The top octet (A1) is the first octet sent, with  bit
+    0  of each octet being the first bit sent, and bit  7
+    being the last bit sent.
+</li><li>The  first (low-order or bit 0) bit of each octet  is
+    the HDLC address extension bit, which is set to  zero
+    on all but the last octet in the address field, where
+    it is set to one.
+</li><li>The  bits marked "r" are reserved bits.  They may  be
+    used in an agreed-upon manner in individual networks.
+    When not implemented, they should be set to one.
+</li><li>The  bit marked "C" is used as  the  command/response
+    bit of an AX.25 frame, as outlined in
+<a href="#2.4.1.2">2.4.1.2</a> below.
+</li><li>The  characters of the call sign should  be  standard
+    seven-bit  ASCII  (upper  case only)  placed  in  the
+    leftmost seven bits of the octet to make room for the
+    address  extension  bit.  If the call  sign  contains
+    fewer  than six characters, it should be padded  with
+    ASCII spaces between the last call sign character and
+    the SSID octet.
+</li><li>The  0000  SSID is reserved for  the  first  personal
+    AX.25 station. This establishes one standard SSID for
+    "normal" stations to use for the first station.
+</li></ol>
+
+<a name="2.2.13.2"></a>
+<h5>2.2.13.2  Level 2 Repeater-Address Encoding</h5>
+
+If  a  frame  is to go through  level  2  amateur  packet
+repeater(s), there is an additional address subfield appended  to
+the end of the address field.  This additional subfield  contains
+the call sign(s) of the repeater(s) to be used.  This allows more
+than one repeater to share the same RF channel.  If this subfield
+exists,  the  last octet of the source subfield has  its  address
+extension  bit  set to zero, indicating that  more  address-field
+data  follows.  The repeater-address subfield is encoded  in  the
+same  manner  as the destination and  source  address  subfields,
+except for the most-significant bit in the last octet, called the
+"H" bit.  The H bit is used to indicate whether a frame has  been
+repeated or not.
+
+<p>In  order  to provide some method of  indicating  when  a
+frame has been repeated, the H bit is set to zero on frames going
+to  a repeater.  The repeater will set the H bit to one when  the
+frame  is retransmitted.  Stations should monitor the H bit,  and
+discard  any frames going to the repeater (uplink frames),  while
+operating  through  a repeater.  Fig. 4 shows how  the  repeater-
+address subfield is encoded.  Fig. 4A is an example of a complete
+frame after being repeated.
+
+</p><p>
+</p><center>
+
+<a name="fig 4"></a>
+<table cellpadding="8" border="1">
+<tbody><tr><th>Octet</th><th>ASCII</th><th>Bin.Data</th><th>Hex Data</th></tr>
+<tr><td>A15</td><td>W</td><td><tt>10101110</tt></td><td>AE</td></tr>
+<tr><td>A16</td><td>B</td><td><tt>10000100</tt></td><td>84</td></tr>
+<tr><td>A17</td><td>4</td><td><tt>01101000</tt></td><td>68</td></tr>
+<tr><td>A18</td><td>J</td><td><tt>10010100</tt></td><td>94</td></tr>
+<tr><td>A19</td><td>F</td><td><tt>10001100</tt></td><td>8C</td></tr>
+<tr><td>A20</td><td>I</td><td><tt>10010010</tt></td><td>92</td></tr>
+<tr><td>A21</td><td>SSID</td><td><tt>HRRSSID1</tt></td><td></td></tr>
+<tr><th colspan="2" align="right">Bit Order  --&gt;</th><td><tt>76543210</tt></td></tr>
+</tbody><caption>Fig. 4 -- Repeater-address encoding</caption>
+</table>
+</center>
+
+<i>Where</i>:
+<ol compact="compact">
+<li>The  top octet is the first octet sent, with bit  0  being
+sent first and bit 7 sent last of each octet.
+</li><li>As  with  the  source and  destination  address  subfields
+discussed  above, bit 0 of each octet is the HDLC  address
+extension  bit, which is set to zero on all but  the  last
+address octet, where it is set to one.
+</li><li>The  "R"  bits are reserved in the same manner as  in  the
+source and destination subfields.
+</li><li>The  "H" bit is the has-been-repeated bit.  It is  set  to
+zero  whenever a frame has not been repeated, and  set  to
+one by the repeater when the frame has been repeated.
+</li></ol>
+
+<p></p><center>
+
+<a name="fig 4a"></a>
+<table cellpadding="8" border="1">
+<tbody><tr><th>Octet</th><th>ASCII</th><th>Bin.Data</th><th>Hex Data</th></tr>
+<tr><td>Flag</td><td></td><td><tt>01111110</tt></td><td>7E</td></tr>
+<tr><td>A1</td><td>K</td><td><tt>10010110</tt></td><td>96</td></tr>
+<tr><td>A2</td><td>8</td><td><tt>01110000</tt></td><td>70</td></tr>
+<tr><td>A3</td><td>M</td><td><tt>10011010</tt></td><td>9A</td></tr>
+<tr><td>A4</td><td>M</td><td><tt>10011010</tt></td><td>9A</td></tr>
+<tr><td>A5</td><td>O</td><td><tt>10011110</tt></td><td>9E</td></tr>
+<tr><td>A6</td><td>space</td><td><tt>01000000</tt></td><td>40</td></tr>
+<tr><td>A7</td><td>SSID</td><td><tt>11100000</tt></td><td>E0</td></tr>
+<tr><td>A8</td><td>W</td><td><tt>10101110</tt></td><td>AE</td></tr>
+<tr><td>A9</td><td>B</td><td><tt>10000100</tt></td><td>84</td></tr>
+<tr><td>A10</td><td>4</td><td><tt>01100100</tt></td><td>68</td></tr>
+<tr><td>A11</td><td>J</td><td><tt>10010100</tt></td><td>94</td></tr>
+<tr><td>A12</td><td>F</td><td><tt>10001100</tt></td><td>8C</td></tr>
+<tr><td>A13</td><td>I</td><td><tt>10010010</tt></td><td>92</td></tr>
+<tr><td>A14</td><td>SSID</td><td><tt>01100000</tt></td><td>60</td></tr>
+<tr><td>A15</td><td>W</td><td><tt>10101110</tt></td><td>AE</td></tr>
+<tr><td>A16</td><td>B</td><td><tt>10000100</tt></td><td>84</td></tr>
+<tr><td>A17</td><td>4</td><td><tt>01101000</tt></td><td>68</td></tr>
+<tr><td>A18</td><td>J</td><td><tt>10010100</tt></td><td>94</td></tr>
+<tr><td>A19</td><td>F</td><td><tt>10001100</tt></td><td>8C</td></tr>
+<tr><td>A20</td><td>I</td><td><tt>10010010</tt></td><td>92</td></tr>
+<tr><td>A21</td><td>SSID</td><td><tt>11100011</tt></td><td>E3</td></tr>
+<tr><td>Control</td><td>I</td><td><tt>00111110</tt></td><td>3E</td></tr>
+<tr><td>PID</td><td>none</td><td><tt>11110000</tt></td><td>F0</td></tr>
+<tr><td>FCS</td><td>part 1</td><td><tt>xxxxxxxx</tt></td><td>HH</td></tr>
+<tr><td>FCS</td><td>part 2</td><td><tt>xxxxxxxx</tt></td><td>HH</td></tr>
+<tr><td>Flag</td><td></td><td><tt>01111110</tt></td><td>7E</td></tr>
+<tr><th colspan="2">Bit position</th><td><tt>76543210</tt></td><td></td></tr>
+</tbody><caption> Fig. 4A -- AX.25 frame in repeater mode </caption>
+</table>
+
+</center>
+
+<p>The  above frame is the same as <a href="#fig 3a">Fig. 3A</a>,
+except  for  the
+addition of a repeater-address subfield (WB4JFI, SSID=1).  The  H
+bit is set, indicating this is from the output of the repeater.
+
+<a name="2.2.13.3"></a>
+</p><h5>2.2.13.3 Multiple Repeater Operation</h5>
+
+The  link-layer AX.25 protocol allows  operation  through
+more  than  one  repeater, creating  a  primitive  frame  routing
+mechanism.   Up to eight repeaters may be used by  extending  the
+repeater-address subfield.  When there is more than one  repeater
+address,  the repeater address immediately following  the  source
+address  subfield  will be considered the address  of  the  first
+repeater  of  a multiple-repeater chain.  As a  frame  progresses
+through  a chain of repeaters, each successive repeater will  set
+the  H bit (has-been-repeated bit) in its SSID octet,  indicating
+that  the  frame has been successfully repeated through  it.   No
+other  changes  to the frame are made (except for  the  necessary
+recalculation of the FCS).  The destination station can determine
+the  route  the frame took to each it by  examining  the  address
+field.
+
+<p>The  number of repeater addresses is variable.   All  but
+the last repeater address will have the address extension bits of
+all  octets  set to zero, as will all but the  last  octet  (SSID
+octet) of the last repeater address.  The last octet of the  last
+repeater address will have the address extension bit set to  one,
+indicating the end of the address field.
+
+</p><p>It should be noted that various timers (see
+<a href="#2.4.7">2.4.7</a>, below)
+may  have  to be adjusted to accommodate  the  additional  delays
+encountered  when a frame must pass through  a  multiple-repeater
+chain,  and  the return acknowledgement must travel  through  the
+same path before reaching the source device.
+
+</p><p>It  is anticipated that multiple-repeater operation is  a
+temporary method of interconnecting stations over large distances
+until  such  time that a layer 3 protocol is in use.   Once  this
+layer 3 protocol becomes operational, repeater chaining should be
+phased out.
+
+<a name="2.3"></a>
+</p><h2>2.3  Elements of Procedure</h2>
+
+<a name="2.3.1"></a>
+<h4>2.3.1</h4>
+     The  elements of procedure are defined in terms  of  actions
+that occur on receipt of frames.
+
+<a name="2.3.2"></a>
+<h4>2.3.2  Control-Field Formats and State Variables</h4>
+
+<a name="2.3.2.1"></a>
+<h5>2.3.2.1  Control-Field Formats</h5>
+
+The control field is responsible for identifying the type
+of  frame  being sent, and is also used to  convey  commands  and
+responses  from  one  end of the link to the other  in  order  to
+maintain proper link control.
+
+<p>The  control  fields  used in AX.25 use  the  CCITT  X.25
+control fields for balanced operation (LAPB), with an  additional
+control field taken from ADCCP to allow connectionless and round-
+table operation.
+
+</p><p>There are three general types of AX.25 frames.  They  are
+the Information frame (I frame), the Supervisory frame (S frame),
+and  the  Unnumbered  frame (U frame).  Fig. 5  shows  the  basic
+format  of  the  control field associated  with  these  types  of
+frames.
+
+</p><p></p><center>
+
+<a name="fig 5"></a>
+<table cellpadding="8" border="1">
+<tbody><tr><th rowspan="2" align="center"> Control-Field<br>Type
+</th><th colspan="8" align="center">Control-Field Bits</th></tr>
+<tr><td align="center">7</td><td align="center">6</td><td align="center">5</td><td align="center">4
+</td><td align="center">3</td><td align="center">2</td><td align="center">1</td><td align="center">0</td></tr>
+<tr><th>I Frame</th><td colspan="3" align="center">N(R)</td><td align="center">P
+</td><td colspan="3" align="center">N(S)</td><td>0</td></tr>
+<tr><th>S Frame</th><td colspan="3" align="center">N(R)</td><td>P/F</td><td>S</td><td>S</td><td>0</td><td>1</td></tr>
+<tr><th>U Frame</th><td>M</td><td>M</td><td>M</td><td>P/F</td><td>M</td><td>M</td><td>1</td><td>1</td></tr>
+</tbody><caption>Fig. 5 -- Control-field formats</caption>
+</table></center>
+
+<p><i>Where</i>:
+</p><ol compact="compact">
+<li>Bit 0 is the first bit sent and bit 7 is the last bit
+    sent of the control field.
+</li><li>N(S) is the send sequence number (bit 1 is the LSB).
+</li><li>N(R)  is  the receive sequence number (bit 5  is  the
+    LSB).
+</li><li>The  "S" bits are the supervisory function bits,  and
+    their encoding is discussed in <a href="#2.3.4.2">2.3.4.2</a>.
+</li><li>The  "M" bits are the unnumbered frame modifier  bits
+    and their encoding is discussed in <a href="#2.3.4.3">2.3.4.3</a>.
+</li><li>The  P/F bit is the Poll/Final bit.  Its function  is
+    described in <a href="#2.3.3">2.3.3</a>.  The distinction between  command
+    and response, and therefore the distinction between P
+    bit and F bit, is made by addressing rules  discussed
+    in <a href="#2.4.1.2">2.4.1.2</a>.
+</li></ol>
+
+<a name="2.3.2.1.1"></a>
+<h4>2.3.2.1.1  Information-Transfer Format</h4>
+
+All I frames have bit 0 of the control field set to zero.
+N(S)  is  the sender's send sequence number  (the  send  sequence
+number  of  this frame).  N(R) is the sender's  receive  sequence
+number (the sequence number of the next expected received frame).
+These numbers are described in <a href="#2.3.2.4">2.3.2.4</a>.
+In addition, the P/F bit
+is to be used as described in <a href="#2.4.2">2.4.2</a>.
+
+
+<a name="2.3.2.1.2"></a>
+<h4>2.3.2.1.2  Supervisory Format</h4>
+
+Supervisory  frames  are denoted by having bit 0  of  the
+control  field set to one, and bit 1 of the control field set  to
+zero.   S  frames  provide  supervisory  link  control  such   as
+acknowledging or requesting retransmission of I frames, and link-
+level window control.  Since S frames do not have an  information
+field,  the  sender's send variable and  the  receiver's  receive
+variable are not incremented for S frames.  In addition, the  P/F
+bit is used as described in
+<a href="#2.4.2">2.4.2</a>.
+
+<a name="2.3.2.1.3"></a>
+<h4>2.3.2.1.3  Unnumbered Format</h4>
+
+Unnumbered frames are distinguished by having both bits 0
+and 1 of the control field set to one.  U frames are  responsible
+for  maintaining additional control over the link beyond what  is
+accomplished  with  S  frames.  They  are  also  responsible  for
+establishing  and  terminating link connections.  U  frames  also
+allow  for the transmission and reception of information  outside
+of   the  normal  flow  control.   Some  U  frames  may   contain
+information and PID fields.  The P/F bit is used as described  in
+<a href="#2.4.2">2.4.2</a>.
+
+<a name="2.3.2.2"></a>
+<h5>2.3.2.2  Control-Field Parameters</h5>
+
+<a name="2.3.2.3"></a>
+<h5>2.3.2.3  Sequence Numbers</h5>
+
+Every  AX.25  I  frame shall be  assigned,  modulo  8,  a
+sequential  number  from  0 to 7.  This will allow  up  to  seven
+outstanding I frames per level 2 connection at a time.
+
+<a name="2.3.2.4"></a>
+<h5>2.3.2.4  Frame Variables and Sequence Numbers</h5>
+
+<a name="2.3.2.4.1"></a>
+<h4>2.3.2.4.1  Send State Variable V(S)</h4>
+
+The send state variable is a variable that is internal to
+the  DXE  and  is never sent.  It contains  the  next  sequential
+number  to  be assigned to the next transmitted  I  frame.   This
+variable is updated upon the transmission of each I frame.
+
+<a name="2.3.2.4.1"></a>
+<h4>2.3.2.4.2  Send Sequence Number N(S)</h4>
+
+The send sequence number is found in the control field of
+all  I  frames.  It contains the sequence number of the  I  frame
+being sent.  Just prior to the transmission of the I frame,  N(S)
+is updated to equal the send state variable.
+
+
+<a name="2.3.2.4.3"></a>
+<h4>2.3.2.4.3 Receive State Variable V(R)</h4>
+
+The receive state variable is a variable that is internal
+to the DXE.  It contains the sequence number of the next expected
+received I frame.  This variable is updated upon the reception of
+an  error-free  I  frame whose send sequence  number  equals  the
+present received state variable value.
+
+<a name="2.3.2.4.4"></a>
+<h4>2.3.2.4.4  Received Sequence Number N(R)</h4>
+
+The  received sequence number is in both I and S  frames.
+Prior  to  sending an I or S frame, this variable is  updated  to
+equal  that  of  the received  state  variable,  thus  implicitly
+acknowledging  the  proper  reception of all  frames  up  to  and
+including N(R)-1.
+
+<a name="2.3.3"></a>
+<h4>2.3.3  Functions of Poll/Final (P/F) Bit</h4>
+
+The  P/F bit is used in all types of frames.  It is  used
+in  a  command  (poll) mode to request an immediate  reply  to  a
+frame.   The  reply  to this poll is  indicated  by  setting  the
+response  (final)  bit  in  the  appropriate  frame.   Only   one
+outstanding  poll condition per direction is allowed at  a  time.
+The procedure for P/F bit operation is described in
+<a href="#2.4.2">2.4.2</a>.
+
+<a name="2.3.4"></a>
+<h4>2.3.4  Control Field Coding for Commands and Responses</h4>
+
+The following commands and responses, indicated by  their
+control field encoding, are to be use by the DXE:
+
+<a name="2.3.4.1"></a>
+<h5>2.3.4.1  Information Command Frame Control Field</h5>
+
+The  function  of  the  information  (I)  command  is  to
+transfer   across  a  data  link  sequentially  numbered   frames
+containing an information field.
+
+<p>The  information-frame control field is encoded as  shown
+in  Fig. 6.  These frames are sequentially numbered by  the  N(S)
+subfield to maintain control of their passage over the link-layer
+connection.
+
+</p><p></p><center>
+
+<a name-"fig="" 6"=""><table cellpadding="8" border="1">
+<tbody><tr><th colspan="8" align="center">Control Field Bits</th></tr>
+<tr><th>7</th><th>6</th><th>5</th><th>4</th><th>3</th><th>2</th><th>1</th><th>0</th></tr>
+<tr><td colspan="3" align="center"> N(R)
+</td><td>P</td><td colspan="3" align="center"> N(S) </td><td>0</td></tr>
+</tbody><caption>Fig. 6 -- I frame control field</caption>
+</table>
+
+</a></center><a name-"fig="" 6"="">
+
+</a><a name="2.3.4.2"></a>
+<h5>2.3.4.2  Supervisory Frame Control Field</h5>
+
+The supervisory frame control fields are encoded as shown
+in Fig. 7.
+
+<p></p><center>
+
+<a name-"fig="" 7"=""><table cellpadding="8" border="1">
+<tbody><tr><th colspan="2" rowspan="2" align="center">Control Field Type
+</th><th colspan="8" align="center">Control Field Bits</th></tr>
+<tr><th>7</th><th>6</th><th>5</th><th>4</th><th>3</th><th>2</th><th>1</th><th>0</th></tr>
+<tr><td>Receive Ready</td><td>RR
+</td><td colspan="3" align="center">N(R)</td><td>P/F</td><td>0</td><td>0</td><td>0</td><td>1</td></tr>
+<tr><td>Receive Not Ready</td><td>RNR
+</td><td colspan="3" align="center">N(R)</td><td>P/F</td><td>0</td><td>1</td><td>0</td><td>1</td></tr>
+<tr><td>Reject</td><td>REJ
+</td><td colspan="3" align="center">N(R)</td><td>P/F</td><td>1</td><td>0</td><td>0</td><td>1</td></tr>
+</tbody><caption>
+Fig. 7 -- S frame control fields
+</caption>
+</table>
+
+<p>
+
+</p><table width="75%" border="1">
+<caption> The Frame identifiers: </caption>
+<tbody><tr><td width="25%">C or SABM</td><td>Layer 2 Connect Request</td></tr>
+<tr><td>D or DISC</td><td>Layer 2 Disconnect Request</td></tr>
+<tr><td>I </td><td>Information Frame</td></tr>
+<tr><td>RR </td><td>Receive Ready. System Ready To Receive</td></tr>
+<tr><td>RNR or NR</td><td>Receive Not Ready. TNC Buffer Full</td></tr>
+<tr><td>RJ or REJ</td><td>Reject Frame. Out of Sequence or Duplicate</td></tr>
+<tr><td>FRMR </td><td>Frame Reject. Fatal Error</td></tr>
+<tr><td>UI </td><td>Unnumbered Information Frame. "Unproto"</td></tr>
+<tr><td>DM </td><td>Disconnect Mode. System Busy or Disconnected.</td></tr>
+</tbody></table>
+
+</a></center><a name-"fig="" 7"="">
+
+</a><a name="2.3.4.2.1"></a>
+<h4>2.3.4.2.1  Receive Ready (RR) Command and Response</h4>
+
+Receive Ready is used to do the following:
+<ol compact="compact">
+<li>to  indicate  that the sender of the RR is  now  able  to
+       receive more I frames.
+</li><li>to  acknowledge  properly  received I frames  up  to,  and
+       including N(R)-1, and
+</li><li>to clear a previously set busy condition created by an RNR
+       command having been sent.
+</li></ol>
+<p>The status of the DXE at the other end of the link can be
+requested  by  sending a RR command frame with the P-bit  set  to
+one.
+
+<a name="2.3.4.2.2"></a>
+</p><h4>2.3.4.2.2  Receive Not Ready (RNR) Command and Response</h4>
+
+Receive Not Ready is used to indicate to the sender of  I
+frames  that  the receiving DXE is temporarily  busy  and  cannot
+accept any more I frames.  Frames up to N(R)-1 are  acknowledged.
+Any I frames numbered N(R) and higher that might have been caught
+between states and not acknowledged when the RNR command was sent
+are not acknowledged.
+
+<p>The RNR condition can be cleared by the sending of a  UA,
+RR, REJ, or SABM frame.
+
+</p><p>The status of the DXE at the other end of the link can be
+requested  by sending a RNR command frame with the P bit  set  to
+one.
+
+<a name="2.3.4.2.3"></a>
+</p><h4>2.3.4.2.3  Reject (REJ) Command and Response</h4>
+
+The  reject frame is used to request retransmission of  I
+frames  starting  with N(R).  Any frames that were  sent  with  a
+sequence number of N(R)-1 or less are acknowledged.  Additional I
+frames may be appended to the retransmission of the N(R) frame if
+there are any.
+
+<p>Only  one  reject  frame condition  is  allowed  in  each
+direction  at  a time.  The reject condition is  cleared  by  the
+proper  reception of I frames up to the I frame that  caused  the
+reject condition to be initiated.
+
+</p><p>The status of the DXE at the other end of the link can be
+requested  by sending a REJ command frame with the P bit  set  to
+one.
+
+<a name="2.3.4.3"></a>
+</p><h5>2.3.4.3  Unnumbered Frame Control Fields</h5>
+
+Unnumbered  frame control fields are either  commands  or
+responses.
+
+<p>Fig.  8 shows the layout of U frames  implemented  within
+this protocol.
+
+
+</p><p></p><center>
+
+<a name="fig 8"></a>
+<table cellpadding="8" border="1">
+<tbody><tr><th colspan="3" rowspan="2" align="center">Control Field Type
+</th><th colspan="8" align="center">Control Field Bits</th></tr>
+<tr><th>7</th><th>6</th><th>5</th><th>4</th><th>3</th><th>2</th><th>1</th><th>0</th></tr>
+<tr><td>Set Asynchronous Balanced Mode</td><td>SABM</td><td>Res
+</td><td>0</td><td>0</td><td>1</td><td>P</td><td>1</td><td>1</td><td>1</td><td>1</td></tr>
+<tr><td>Disconnect</td><td>DISC</td><td>Cmd
+</td><td>0</td><td>1</td><td>0</td><td>P</td><td>0</td><td>0</td><td>1</td><td>1</td></tr>
+<tr><td>Disconnected Mode</td><td>DM</td><td>Res
+</td><td>0</td><td>0</td><td>0</td><td>F</td><td>1</td><td>1</td><td>1</td><td>1</td></tr>
+<tr><td>Unnumbered Acknowledge</td><td>UA</td><td>Res
+</td><td>0</td><td>1</td><td>1</td><td>F</td><td>0</td><td>0</td><td>1</td><td>1</td></tr>
+<tr><td>Frame Reject</td><td>FRMR</td><td>Res
+</td><td>1</td><td>0</td><td>0</td><td>F</td><td>0</td><td>1</td><td>1</td><td>1</td></tr>
+<tr><td>Unnumbered Information</td><td>UI</td><td>Either
+</td><td>0</td><td>0</td><td>0</td><td>P/F</td><td>0</td><td>0</td><td>1</td><td>1</td></tr>
+</tbody><caption>
+Fig. 8 -- U frame control fields
+</caption>
+</table>
+
+</center>
+
+<a name="2.3.4.3.1"></a>
+<h4>2.3.4.3.1  Set Asynchronous Balanced Mode (SABM) Command</h4>
+
+The  SABM  command  is  used  to  place  2  DXEs  in  the
+asynchronous balanced mode.  This is a balanced mode of operation
+known as LAPB where both devices are treated as equals.
+
+<p>Information fields are not allowed in SABM commands.  Any
+outstanding  I frames left when the SABM command is  issued  will
+remain unacknowledged.
+
+</p><p>The  DXE  confirms  reception and acceptance  of  a  SABM
+command   by  sending  a  UA  response  frame  at  the   earliest
+opportunity.   If  the  DXE is not capable of  accepting  a  SABM
+command, it should respond with a DM frame if possible.
+
+<a name="2.3.4.3.2"></a>
+</p><h4>2.3.4.3.2  Disconnect (DISC) Command</h4>
+
+The  DISC  command is used to terminate  a  link  session
+between  two  stations.  No information field is permitted  in  a
+DISC command frame.
+
+<p>Prior  to  acting on the DISC frame,  the  receiving  DXE
+confirms acceptance of the DISC by issuing a UA response frame at
+its  earliest opportunity.  The DXE sending the DISC  enters  the
+disconnected state when it receives the UA response.
+
+</p><p>Any  unacknowledged  I frames left when this  command  is
+acted upon will remain unacknowledged.
+
+<a name="2.3.4.3.3"></a>
+</p><h4>2.3.4.3.3  Frame Reject (FRMR) Response</h4>
+
+<a name="2.3.4.3.3.1"></a>
+<h4>2.3.4.3.3.1</h4>
+
+<p>The FRMR response frame is sent to report that the  receiver
+of  a frame cannot successfully process that frame and  that  the
+error condition is not correctable by sending the offending frame
+again.  Typically this condition will appear when a frame without
+an  FCS  error  has  been received  with  one  of  the  following
+conditions:
+
+</p><ol compact="compact">
+<li>The  reception of an invalid or not implemented  command  or
+     response frame.
+</li><li>The reception of an I frame whose information field  exceeds
+     the agreed-upon length.
+(See <a href="#2.4.7.3">2.4.7.3</a>, below.)
+</li><li>The  reception  of an improper N(R).  This  usually  happens
+     when the N(R) frame has already been sent and  acknowledged,
+     or when N(R) is out of sequence with what was expected.
+</li><li>The reception of a frame with an information field where one
+     is  not  allowed, or the reception of a U or S  frame  whose
+     length is incorrect.  Bits W and Y described in
+<a href="#2.3.4.3.3.2">2.3.4.3.3.2</a>
+     should both be set to one to indicate this condition.
+</li><li>The reception of a supervisory frame with the F bit set
+     to  one,  except  during a  timer  recovery  condition  (see
+     <a href="#2.4.4.9">2.4.4.9</a>),
+or except as a reply to a command frame sent  with
+     the  P  bit  set to one. Bit W  (described  in
+<a href="#2.3.4.3.3.2">2.3.4.3.3.2</a>)
+     should be set to one.
+</li><li>The reception of an unexpected UA or DM response frame.  Bit
+     W should be set to one.
+</li><li>The reception of a frame with an invalid N(S).  Bit W should be
+     set to one.
+</li></ol>
+
+<p>An  invalid N(R) is defined as one which points to  an  I
+frame  that previously has been transmitted and acknowledged,  or
+an  I  frame which has not been transmitted and is not  the  next
+sequential I frame pending transmission.
+
+</p><p>An  invalid N(S) is defined as an N(S) that is  equal  to
+the  last transmitted N(R)+k and is equal to the  received  state
+variable  V(R),  where  k is the maximum  number  of  outstanding
+information frames as defined in <a href="#2.4.7.4">2.4.7.4</a> below.
+
+</p><p>An  invalid  or not implemented command  or  response  is
+defined  as a frame with a control field that is unknown  to  the
+receiver of this frame.
+
+<a name="2.3.4.3.3.2"></a>
+</p><h4>2.3.4.3.3.2</h4>
+When a FRMR frame is sent, an information field is added  to
+the  frame that contains additional information indicating  where
+the  problem  occurred.  This information field is  three  octets
+long and is shown in Fig. 9.
+
+<p></p><center>
+<table cellpadding="4" border="1">
+<tbody><tr><th colspan="24" align="center">Information Field Bits</th></tr>
+<tr><td>23</td><td>22</td><td>21</td><td>20</td><td>19</td><td>18</td><td>17</td><td>16
+</td><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8
+</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr>
+<tr><td>0</td><td>0</td><td>0</td><td>0</td><td>Z</td><td>Y</td><td>X</td><td>W
+</td><td colspan="3" align="center">V(R)</td><td>C<br>R
+</td><td colspan="3" align="center">V(S)</td><td>0
+</td><td colspan="8" align="center">Rejected Frame<br>Control Field</td></tr>
+</tbody><caption>
+Fig. 9 -- FRMR frame information field
+</caption>
+</table>
+
+</center>
+
+<p><i>Where</i>:
+</p><ol compact="compact">
+<li>The rejected frame control field carries the control  field
+      of  the frame that caused the reject condition.  It  is  in
+      bits 0-7 of the information field.
+</li><li>V(S)  is  the  current send state variable  of  the  device
+      reporting the rejection (bit 9 is the low bit).
+</li><li>The  CR bit is set to zero to indicate the  rejected  frame
+      was a command, or one if it was a response.
+</li><li>V(R)  is the current receive state variable of  the  device
+      reporting rejection (bit 13 is the low bit).
+</li><li>If W is set to 1, the control field received was invalid or
+      not implemented.
+</li><li>If  X  is  set  to 1, the  frame  that  caused  the  reject
+      condition  was considered invalid because it was a U  or  S
+      frame  that had an information field that is  not  allowed.
+      Bit W must be set to 1 in addition to the X bit.
+</li><li>If  Y is set to 1, the control field received and  returned
+      in   bits   exceeded  the  maximum   allowed   under   this
+      recommendation in <a href="#2.4.7.3">2.4.7.3</a>, below.
+</li><li>If  A is set to 1, the control field received and  returned
+      in bits 1 to 8 contained an invalid N(R).
+</li><li>Bits 8, and 20 to 23 are set to 0.
+</li></ol>
+
+
+<a name="2.3.4.3.4"></a>
+<h4>2.3.4.3.4  Unnumbered Acknowledge (UA) Response</h4>
+
+The  UA  response  frame  is  sent  to  acknowledge   the
+reception  and  acceptance of a SABM or DISC  command  frame.   A
+received command is not actually processed until the UA  response
+frame  is  sent.  Information fields are not permitted  in  a  UA
+frame.
+
+
+<a name="2.3.4.3.5"></a>
+<h4>2.3.4.3.5  Disconnected Mode (DM) Response</h4>
+
+The  disconnected  mode response is sent whenever  a  DXE
+receives  a  frame  other  than a SABM or UI  frame  while  in  a
+disconnected  mode.   It  is  also sent to  request  a  set  mode
+command,  or  to indicate it cannot accept a  connection  at  the
+moment.  The DM response does not have an information field.
+
+<p>Whenever a SABM frame is a received, and it is determined
+that  a  connection is not possible, a DM frame  shall  be  sent.
+This  will  indicate  that the called  station  cannot  accept  a
+connection at that time.
+
+</p><p>While a DXE is in the disconnected mode, it will  respond
+to  any command other than a SABM or UI frame with a DM  response
+with the P/F bit set to 1.
+
+
+<a name="2.3.4.3.6"></a>
+</p><h4>2.3.4.3.6  Unnumbered Information (UI) Frame</h4>
+
+<p>The   Unnumbered  Information  frame  contains  PID   and
+information fields and is used to pass information along the link
+outside the normal information controls.  This allows information
+fields  to go back and forth on the link bypassing flow  control.
+Since   these  frames  are  not  acknowledgeable,  if  one   gets
+obliterated, there is no way to recover it.  A received UI  frame
+with  the  P bit set shall cause a response  to  be  transmitted.
+This response shall be a DM frame when in the disconnected  state
+or  a  RR  (or  RNR, if appropriate)  frame  in  the  information
+transfer state.
+
+<a name="2.3.5"></a>
+</p><h4>2.3.5  Link Error Reporting and Recovery</h4>
+
+There are several link-layer errors that are  recoverable
+without  terminating the connection.  These error situations  may
+occur  as  a  result  of  malfunctions  within  the  DXE,  or  if
+transmission errors occur.
+
+<a name="2.3.5.1"></a>
+<h5>2.3.5.1 DXE Busy Condition</h5>
+
+When  a  DXE  becomes temporarily  unable  to  receive  I
+frames,  such  as when receive buffers are full, it will  send  a
+Receive Not Ready (RNR) frame.  This informs the other DXE   that
+this  DXE  cannot handle any more I frames at the  moment.   This
+condition is usually cleared by the sending of a UA, RR, REJ,  or
+SABM command frame.
+
+
+<a name="2.3.5.2"></a>
+<h5>2.3.5.2 Send Sequence Number Error</h5>
+
+If the send sequence number, N(S), of an otherwise error-
+free  received frame does not match the receive  state  variable,
+V(R),  a  send sequence error has occurred, and  the  information
+field will be discarded.  The receiver will not acknowledge  this
+frame, or any other I frames, until N(S) matches V(R).
+
+<p>The  control  field of the erroneous I frame(s)  will  be
+accepted so that link supervisory functions such as checking  the
+P/F  bit can still be performed.  Because of this  updating,  the
+retransmitted I frame may have an updated P bit and N(R).
+
+
+<a name="2.3.5.3"></a>
+</p><h5>2.3.5.3 Reject (REJ) Recovery</h5>
+
+REJ  is  used  to request a retransmission  of  I  frames
+following  the  detection  of a N(S) sequence  error.   Only  one
+outstanding  "sent  REJ" condition is allowed at  a  time.   This
+condition  is  cleared  when  the  requested  I  frame  has  been
+received.
+
+<p>A DXE receiving the REJ command will clear the  condition
+by  resending all outstanding I frames (up to the  window  size),
+starting with the one indicated in N(R) of the REJ frame.
+
+
+<a name="2.3.5.4"></a>
+</p><h5>2.3.5.4 Time-out Error Recovery</h5>
+
+
+<a name="2.3.5.4.1"></a>
+<h4>2.3.5.4.1 T1 Timer Recovery</h4>
+
+If  a DXE, due to a transmission error, does not  receive
+(or  receives and discards) a single I frame or the last I  frame
+in  a sequence of I frames, it will not detect  a  send-sequence-
+number  error,  and therefore will not transmit a REJ.   The  DXE
+which transmitted the unacknowledged I frame(s) shall,  following
+the  completion of time-out period T1, take appropriate  recovery
+action  to determine when I frame retransmission should begin  as
+described  in <a href="#2.4.4.9">2.4.4.9</a>, below.  This condition is cleared  by  the
+reception of an acknowledgement for the sent frame(s), or by  the
+link being reset.  See <a href="#2.4.6">2.4.6</a>.
+
+
+<a name="2.3.5.4.2"></a>
+<h4>2.3.5.4.2 Timer T3 Recovery</h4>
+
+Timer  T3 is used to assure the link is still  functional
+during  periods of low information transfer.  Whenever T1 is  not
+running  (no  outstanding I frames), T3 is used  to  periodically
+poll  the  other DXE of a link.  When T3 times out, a RR  or  RNR
+frame  is transmitted as a command and with the P bit  set.   The
+waiting  acknowledgement  procedure  (<a href="#2.4.4.9">2.4.4.9</a>,  below)  is   then
+executed.
+
+
+<a name="2.3.5.5"></a>
+<h5>2.3.5.5 Invalid Frame or FCS Error</h5>
+
+If  an invalid frame is received, or a frame is  received
+with  an FCS error, that frame will be discarded with  no  action
+taken.
+
+
+<a name="2.3.5.6"></a>
+<h5>2.3.5.6 Frame Rejection Condition</h5>
+
+A  frame  rejection condition occurs  when  an  otherwise
+error-free  frame  has been received with one of  the  conditions
+listed in <a href="#2.3.4.3.3">2.3.4.3.3</a> above.
+
+<p>Once  a  rejection  error occurs, no more  I  frames  are
+accepted  (except for the examination of the P/F bit)  until  the
+error is resolved.  The error condition is reported to the  other
+DXE by sending a FRMR response frame.  See <a href="#2.4.5">2.4.5</a>.
+
+
+<a name="2.4"></a>
+</p><h2>2.4 Description of AX.25 Procedures</h2>
+
+The  following  describes the procedures used  to  setup,
+use, and disconnect a balanced link between two DXE stations.
+
+
+<a name="2.4.1"></a>
+<h4>2.4.1 Address Field Operation</h4>
+
+
+<a name="2.4.1.1"></a>
+<h5>2.4.1.1 Address Information</h5>
+
+All   transmitted  frames  shall  have   address   fields
+conforming  to  <a href="#2.2.13">2.2.13</a>, above.  All frames shall  have  both  the
+destination device and the source device addresses in the address
+field,  with the destination address coming first.   This  allows
+many links to share the same RF channel.  The destination address
+is  always  the address of the station(s) to receive  the  frame,
+while the source address contains the address of the device  that
+sent the frame.
+
+<p>The destination address can be a group name or club  call
+sign if the point-to-multipoint operation is allowed.   Operation
+with  destination addresses other than actual amateur call  signs
+is a subject for further study.
+
+
+<a name="2.4.1.2"></a>
+</p><h5>2.4.1.2 Command/Response Procedure</h5>
+
+AX.25  Version 2.0 has implemented  the  command/response
+information   in  the  address  field.   In  order  to   maintain
+compatibility    with   previous   versions   of    AX.25,    the
+command/response information is conveyed using two bits.
+
+<p>An  upward-compatible AX.25 DXE can determine whether  it
+is  communicating  with  a DXE using an  older  version  of  this
+protocol by testing the command/response bit information  located
+in  bit 7 of the SSID octets of both the destination  and  source
+address subfields.  If both C bits are set to zero, the device is
+using  the  older protocol.  The newer version  of  the  protocol
+always has one of these two bits set to one and the other set  to
+zero, depending on whether the frame is a command or a response.
+
+</p><p>The  command/response  information is  encoded  into  the
+address field as shown in Fig. 10.
+
+</p><p>
+</p><center>
+
+<a name="fig 10"></a>
+<table cellpadding="8" border="1">
+<tbody><tr><th>Frame Type</th><th>Dest. SSID C-Bit</th><th>Source SSID C-Bit</th></tr>
+<tr><td>Previous versions</td><td align="center">0</td><td align="center">0</td></tr>
+<tr><td>Command (V.2.0)</td><td align="center">1</td><td align="center">0</td></tr>
+<tr><td>Response (V.2.0)</td><td align="center">0</td><td align="center">1</td></tr>
+<tr><td>Previous versions</td><td align="center">1</td><td align="center">1</td></tr>
+</tbody><caption>Fig. 10 -- Command/Response encoding</caption>
+</table>
+
+</center>
+
+<p>Since  all  frames  are  considered  either  commands  or
+responses, a device shall always have one of the bits set to one,
+and the other bit set to zero.
+
+</p><p>The  use  of the command/response  information  in  AX.25
+allows  S frames to be either commands or responses.   This  aids
+maintenance   of  proper  control  over  the  link   during   the
+information transfer state.
+
+
+<a name="2.4.2"></a>
+</p><h4>2.4.2  P/F Bit Procedures</h4>
+
+The next response frame returned by the DXE to a SABM  or
+DISC command with the P bit set to 1 will be a UA or DM  response
+with the F bit set to 1.
+
+<p>The next response frame returned to an I frame with the P
+bit  set  to 1, received during the information  transfer  state,
+will be a RR, RNR, or REJ response with the F bit set to 1.
+
+</p><p>The next response frame returned to a supervisory command
+frame  with the P bit set to 1, received during  the  information
+transfer state, will be a RR, RNR, or REJ response frame with the
+F bit set to 1.
+
+</p><p>The  next  response frame returned to a S  or  I  command
+frame  with  the  P bit set to 1, received  in  the  disconnected
+state, will be a DM response frame with the F bit set to 1.
+
+</p><p>The  P  bit  is used in  conjunction  with  the  time-out
+recovery condition discussed in <a href="#2.3.5.4">2.3.5.4</a>, above.
+
+</p><p>When not used, the P/F bit is set to zero.
+
+
+<a name="2.4.3"></a>
+</p><h4>2.4.3 Procedures For Link Set-Up and Disconnection</h4>
+
+
+<a name="2.4.3.1"></a>
+<h5>2.4.3.1 LAPB Link Connection Establishment</h5>
+
+When  one DXE wishes to connect to another DXE,  it  will
+send  a SABM command frame to that device and start  timer  (T1).
+If  the other DXE is there and able to connect, it  will  respond
+with  a UA response frame, and reset both of its  internal  state
+variables  (V(S)  and V(R)).  The reception of  the  UA  response
+frame  at  the  other  end will  cause  the  DXE  requesting  the
+connection  to  cancel the T1 timer and set  its  internal  state
+variables to 0.
+
+<p>If the other DXE doesn't respond before T1 times out, the
+device requesting the connection will re-send the SABM frame, and
+start  T1  running  again.  The DXE should  continue  to  try  to
+establish  a  connection  until it has  tried  unsuccessfully  N2
+times.  N2 is defined in <a href="#2.4.7.2">2.4.7.2</a>, below.
+
+</p><p>If,  upon  reception of a SABM command, the  DXE  decides
+that  it  cannot enter the indicated state, it should send  a  DM
+frame.
+
+</p><p>When  receiving a DM response, the DXE sending  the  SABM
+should  cancel  its  T1 timer, and  not  enter  the  information-
+transfer state.
+
+</p><p>The  DXE sending a SABM command will ignore  and  discard
+any  frames except SABM, DISC, UA, and DM frames from  the  other
+DXE.
+
+</p><p>Frames  other  than UA and DM in response to  a  received
+SABM  will  be  sent  only after the link is set  up  and  if  no
+outstanding SABM exists.
+
+<a name="2.4.3.2"></a>
+</p><h5>2.4.3.2 Information-Transfer Phase</h5>
+
+After establishing a link connection, the DXE will  enter
+the  information-transfer  state.  In this state,  the  DXE  will
+accept  and  transmit I and S frames according to  the  procedure
+outlined in <a href="#2.4.4">2.4.4</a>, below.
+
+<p>When  receiving a SABM command while in the  information-
+transfer  state,  the  DXE will follow  the  resetting  procedure
+outlined in <a href="#2.4.6">2.4.6</a> below.
+
+<a name="2.4.3.3"></a>
+</p><h5>2.4.3.3 Link Disconnection</h5>
+
+<a name="2.4.3.3.1"></a>
+<h4>2.4.3.3.1 </h4>
+     While  in  the information-transfer state,  either  DXE  may
+indicate a request to disconnect the link by transmitting a  DISC
+command frame and starting timer T1 (see <a href="#2.4.7">2.4.7</a>).
+
+<a name="2.4.3.3.2"></a>
+<h4>2.4.3.3.2 </h4>
+     A DXE, upon receiving a valid DISC command, shall send a  UA
+response  frame  and enter the disconnected state.  A  DXE,  upon
+receiving  a  UA  or DM response to a sent  DISC  command,  shall
+cancel timer T1, and enter the disconnected state.
+
+<a name="2.4.3.3.3"></a>
+<h4>2.4.3.3.3 </h4>
+If  a UA or DM response is not correctly received before  T1
+times out, the DISC frame should be sent again and T1  restarted.
+If  this happens N2 times, the DXE should enter the  disconnected
+state.
+
+<a name="2.4.3.4"></a>
+<h5>2.4.3.4 Disconnected State</h5>
+
+<a name="2.4.3.4.1"></a>
+<h4>2.4.3.4.1 </h4>
+A  DXE  in  the disconnected state  shall  monitor  received
+commands  and react upon the reception of a SABM as described  in
+<a href="#2.4.3.1">2.4.3.1</a> above and will transmit a DM frame
+in response to a  DISC command.
+
+<a name="2.4.3.4.2"></a>
+<h4>2.4.3.4.2 </h4>
+In the disconnected state, a DXE may initiate a link  set-up
+as outlined in connection establishment above (<a href="#2.4.3.1">2.4.3.1</a>).  It  may
+also  respond  to  the  reception  of  a  SABM  and  establish  a
+connection, or it may ignore the SABM and send a DM instead.
+
+<a name="2.4.3.4.3"></a>
+<h4>2.4.3.4.3 </h4>
+Any  DXE receiving a command frame other than a SABM  or  UI
+frame  with the P bit set to one should respond with a  DM  frame
+with  the  F  bit  set to one.  The  offending  frame  should  be
+ignored.
+
+<a name="2.4.3.4.4"></a>
+<h4>2.4.3.4.4 </h4>
+When  the DXE enters the disconnected state after  an  error
+condition  or if an internal error has resulted in the DXE  being
+in  the  disconnected  state, the DXE  should  indicate  this  by
+sending  a  DM response rather than a DISC frame and  follow  the
+link  disconnection procedure outlined in <a href="#2.4.3.3.3">2.4.3.3.3</a>, above.   The
+DXE  may then try to re-establish the link using the link  set-up
+procedure outlined in <a href="#2.4.3.1">2.4.3.1</a>, above.
+
+<a name="2.4.3.5"></a>
+<h5>2.4.3.5 Collision Recovery</h5>
+
+<a name="2.4.3.5.1"></a>
+<h4>2.4.3.5.1 Collisions in a Half-Duplex Environment</h4>
+
+Collisions  of  frames in a half-duplex  environment  are
+taken  care  of  by  the  retry  nature  of  the  T1  timer   and
+retransmission count variable.  No other special action needs  to
+be taken.
+
+<a name="2.4.3.5.2"></a>
+<h4>2.4.3.5.2 Collisions of Unnumbered Commands</h4>
+
+If sent and received SABM or DISC command frames are  the
+same,  both  DXEs  should  send a UA  response  at  the  earliest
+opportunity, and both devices should enter the indicated state.
+
+<p>If sent and received SABM or DISC commands are different,
+both  DXEs should enter the disconnected state and transmit a  DM
+frame at the earliest opportunity.
+
+<a name="2.4.3.5.3"></a>
+</p><h4>2.4.3.5.3 Collision of a DM with a SABM or DISC</h4>
+
+When  an  unsolicited  DM  response  frame  is  sent,   a
+collision  between it and a SABM or DISC may occur.  In order  to
+prevent  this  DM from being misinterpreted, all  unsolicited  DM
+frames  should  be transmitted with the F bit set to  zero.   All
+SABM  and DISC frames should be sent with the P bit set  to  one.
+This will prevent any confusion when a DM frame is received.
+
+<a name="2.4.3.6"></a>
+<h5>2.4.3.6 Connectionless Operation</h5>
+
+In  Amateur  Radio,  there  is  an  additional  type   of
+operation  that is not feasible using level 2 connections.   This
+operation  is  the  round table, where several  amateurs  may  be
+engaged  in one conversation.  This type of operation  cannot  be
+accommodated by AX.25 link-layer connections.
+
+<p>The   way   round-table  activity   is   implemented   is
+technically  outside  the AX.25 connection, but still  using  the
+AX.25 frame structure.
+
+</p><p>AX.25 uses a special frame for this operation, called the
+Unnumbered  Information (UI) frame.  When this type of  operation
+is  used,  the  destination  address  should  have  a  code  word
+installed  in  it to prevent the users of that  particular  round
+table from seeing all frames going through the shared RF  medium.
+An example of this is if a group of amateurs are in a round-table
+discussion  about  packet  radio, they could put  PACKET  in  the
+destination  address,  so  they would receive  frames  only  from
+others in the same discussion.  An added advantage of the use  of
+AX.25  in this manner is that the source of each frame is in  the
+source  address  subfield,  so  software  could  be  written   to
+automatically display who is making what comments.
+
+</p><p>Since  this  mode  is connectionless, there  will  be  no
+requests for retransmissions of bad frames.  Collisions will also
+occur, with the potential of losing the frames that collided.
+
+<a name="2.4.4"></a>
+</p><h4>2.4.4 Procedures for Information Transfer</h4>
+
+Once  a  connection  has been  established,  as  outlined
+above, both devices are able to accept I, S, and U frames.
+
+<a name="2.4.4.1"></a>
+<h5>2.4.4.1 Sending I Frames</h5>
+
+Whenever  a DXE has an I frame to transmit, it will  send
+the  I frame with N(S) of the control field equal to its  current
+send  state  variable V(S).  Once the I frame is sent,  the  send
+state  variable  is  incremented  by one.  If  timer  T1  is  not
+running, it should be started.  If timer T1 is running, it should
+be restarted.
+
+<p>The DXE should not transmit any more I frames if its send
+state variable equals the last received N(R) from the other  side
+of  the link plus seven.  If it were to send more I  frames,  the
+flow control window would be exceed, and errors could result.
+
+</p><p>If  a  DXE is in a busy condition, it may  still  send  I
+frames as long as the other device is not also busy.
+
+</p><p>If  a  DXE is in the frame-rejection mode, it  will  stop
+sending I frames.
+
+<a name="2.4.4.2"></a>
+</p><h5>2.4.4.2 Receiving I Frames</h5>
+
+<a name="2.4.4.2.1"></a>
+<h4>2.4.4.2.1 </h4>
+If  a DXE receives a valid I frame (one with a  correct  FCS
+and  whose  send sequence number equals  the  receiver's  receive
+state variable) and is not in the busy condition, it will  accept
+the  received I frame, increment its receive state variable,  and
+act in one of the following manners:
+
+<ol compact="compact">
+<li> If it has an I frame to send, that I frame may be sent with the
+     transmitted N(R) equal to its receive state variable V(R) (thus
+     acknowledging the received frame).  Alternately, the device may
+     send a RR frame with N(R) equal to V(R), and then send the I
+     frame.
+</li><li> If there are no outstanding I frames, the receiving device will
+     send a RR frame with N(R) equal to V(R).  The receiving DXE may
+     wait a small period of time before sending the RR frame to be sure
+     additional I frames are not being transmitted.
+</li></ol>
+
+<a name="2.4.4.2.2"></a>
+<h4>2.4.4.2.2 </h4>
+If  the  DXE  is  in a busy condition,  it  may  ignore  any
+received  I  frames without reporting this condition  other  than
+repeating the indication of the busy condition.
+
+<p>If  a busy condition exists, the DXE receiving  the  busy
+condition   indication  should  poll  the  sender  of  the   busy
+indication periodically until the busy condition disappears.
+
+</p><p>A  DXE may poll the busy DXE periodically with RR or  RNR
+frames with the P bit set to one.
+
+</p><p>The  reception  of  I  frames  that  contain  zero-length
+information  fields  shall be reported to the next level  but  no
+information field will be transferred.
+
+<a name="2.4.4.3"></a>
+</p><h5>2.4.4.3 Reception of Out of Sequence Frames</h5>
+
+When  an I frame is received with a correct FCS, but  its
+send sequence number, N(S), does not match the current receiver's
+receive  state  variable, the frame should be discarded.   A  REJ
+frame  shall be sent with a receive sequence number equal to  one
+higher (modulo 8) than the last correctly received I frame if  an
+uncleared  N(S) sequence error condition has not been  previously
+established.   The  received state variable and poll bit  of  the
+discarded  frame should be checked and acted upon, if  necessary,
+before discarding the frame.
+
+<a name="2.4.4.4"></a>
+<h5>2.4.4.4 Reception of Incorrect Frames</h5>
+
+When  a  DXE receives a frame with an incorrect  FCS,  an
+invalid  frame, or a frame with an improper address,  that  frame
+shall be discarded.
+
+<a name="2.4.4.5"></a>
+<h5>2.4.4.5 Receiving Acknowledgement</h5>
+
+Whenever an I or S frame is correctly received, even in a
+busy condition, the N(R) of the received frame should be  checked
+to  see if it includes an acknowledgement of outstanding  sent  I
+frames.   The T1 timer should be cancelled if the received  frame
+actually  acknowledges previously unacknowledged frames.  If  the
+T1  timer is cancelled and there are still some frames that  have
+been sent that are not acknowledged, T1 should be started  again.
+If  the T1 timer runs out before an acknowledgement is  received,
+the  device  should proceed to the  retransmission  procedure  in
+<a href="#2.4.4.9">2.4.4.9</a>.
+
+<a name="2.4.4.6"></a>
+<h5>2.4.4.6 Receiving Reject</h5>
+
+Upon receiving a REJ frame, the transmitting DXE will set
+its  send  state variable to the same value as  the  REJ  frame's
+received sequence number in the control field.  The DXE will then
+retransmit  any  I  frame(s) outstanding at  the  next  available
+opportunity conforming to the following:
+
+<ol compact="compact">
+<li> If the DXE is not transmitting at the time, and the  channel
+     is  open,  the  device  may commence  to  retransmit  the  I
+     frame(s) immediately.
+</li><li>If   the   DXE  is  operating  on  a   full-duplex   channel
+     transmitting  a UI or S frame when it receives a REJ  frame,
+     it may finish sending the UI or S frame and then  retransmit
+     the I frame(s).
+ </li><li>If   the   DXE  is  operating  in  a   full-duplex   channel
+     transmitting  another I frame when it receives a REJ  frame,
+     it  may  abort  the  I  frame  it  was  sending  and   start
+     retransmission of the requested I frames immediately.
+</li><li> The DXE may send just the one I frame outstanding, or it may
+     send  more than the one indicated if more I frames  followed
+     the  first  one not acknowledged, provided the total  to  be
+     sent does not exceed the flow-control window (7 frames).
+</li></ol>
+
+<p>If the DXE receives a REJ frame with the poll bit set, it
+should  respond with either a RR or RNR frame with the final  bit
+set before retransmitting the outstanding I frame(s).
+
+<a name="2.4.4.7"></a>
+</p><h5>2.4.4.7 Receiving a RNR Frame</h5>
+
+Whenever  a  DXE  receives a RNR  frame,  it  shall  stop
+transmission  of  I  frames until the  busy  condition  has  been
+cleared.   If timer T1 runs out after the RNR was  received,  the
+waiting  acknowledgement  procedure  listed  in  <a href="#2.4.4.9">2.4.4.9</a>,  below,
+should  be  performed.  The poll bit may be used  in  conjunction
+with  S  frames  to test for a change in  the  condition  of  the
+busied-out DXE.
+
+<a name="2.4.4.8"></a>
+<h5>2.4.4.8 Sending a Busy Indication</h5>
+
+Whenever a DXE enters a busy condition, it will  indicate
+this  by sending a RNR response at the next  opportunity.   While
+the  DXE is in the busy condition, it may receive and  process  S
+frames,  and if a received S frame has the P bit set to one,  the
+DXE should send a RNR frame with the F bit set to one at the next
+possible  opportunity.   To  clear the busy  condition,  the  DXE
+should  send either a RR or REJ frame with the received  sequence
+number equal to the current receive state variable, depending  on
+whether the last received I frame was properly received or not.
+
+<a name="2.4.4.9"></a>
+<h5>2.4.4.9 Waiting Acknowledgement</h5>
+
+If timer T1 runs out waiting the acknowledgement from the
+other DXE for an I frame transmitted, the DXE will restart  timer
+T1  and transmit an appropriate supervisory command frame (RR  or
+RNR)  with  the  P  bit set.  If the  DXE  receives  correctly  a
+supervisory  response frame with the F bit set and with  an  N(R)
+within  the  range from the last N(R) received to the  last  N(S)
+sent  plus  one, the DXE will restart timer T1 and will  set  its
+send  state  variable  V(S) to the received N(R).   It  may  then
+resume   with   I  frame  transmission  or   retransmission,   as
+appropriate.  If, on the other hand, the DXE receives correctly a
+supervisory response frame with the F bit not set, or an I  frame
+or  supervisory command frame, and with an N(R) within the  range
+from  the last N(R) received to the last N(S) sent plus one,  the
+DXE will not restart timer T1, but will use the received N(R)  as
+an  indication of acknowledgement of transmitted I frames  up  to
+and including I frame numbered N(R)-1.
+
+<p>If timer T1 runs out before a supervisory response  frame
+with  the  F  bit set is received, the  DXE  will  retransmit  an
+appropriate supervisory command frame (RR or RNR) with the P  bit
+set.  After N2 attempts to get a supervisory response frame  with
+the  F bit set from the other DXE, the DXE will initiate  a  link
+resetting procedure as described in <a href="#2.4.6">2.4.6</a>, below.
+
+<a name="2.4.5"></a>
+</p><h4>2.4.5 Frame Rejection Conditions</h4>
+
+A  DXE  shall initiate the frame-reset procedure  when  a
+frame  is received with the correct FCS and address field  during
+the information-transfer state with one or more of the conditions
+in <a href="#2.3.4.3.3">2.3.4.3.3</a>, above.
+
+<p>Under these conditions, the DXE will ask the other DXE to
+reset  the  link by transmitting a FRMR response as  outlined  in
+<a href="#2.4.6.3">
+2.4.6.3</a>, below.
+
+</p><p>After sending the FRMR frame, the sending DXE will  enter
+the  frame reject condition.  This condition is cleared when  the
+DXE that sent the FRMR frame receives a SABM or DISC command,  or
+a DM response frame.  Any other command received while the DXE is
+in the frame reject state will cause another FRMR to be sent  out
+with the same information field as originally sent.
+
+</p><p>In  the  frame rejection condition, additional  I  frames
+will not be transmitted, and received I frames and S frames  will
+be discarded by the DXE.
+
+</p><p>The DXE that sent the FRMR frame shall start the T1 timer
+when  the  FRMR is sent.  If no SABM or DISC  frame  is  received
+before the timer runs out, the FRMR frame shall be retransmitted,
+and   the  T1  timer  restarted  as  described  in  the   waiting
+acknowledgement section (<a href="#2.4.4.9">2.4.4.9</a>) above.  If the FRMR is sent  N2
+times without success, the link shall be reset.
+
+<a name="2.4.6"></a>
+</p><h4>2.4.6 Resetting Procedure</h4>
+
+<a name="2.4.6.1"></a>
+<h5>2.4.6.1 </h5>
+The   resetting  procedure  is  used  to   initialize   both
+directions  of  data  flow  after  a  nonrecoverable  error   has
+occurred.   This resetting procedure is used in the  information-
+transfer state of an AX.25 link only.
+
+<a name="2.4.6.2"></a>
+<h5>2.4.6.2 </h5>
+A DXE shall initiate a reset procedure whenever it  receives
+an unexpected UA response frame or an unsolicited response  frame
+with  the  F bit set to one.  A DXE may also initiate  the  reset
+procedure  upon receipt of a FRMR frame.  Alternatively, the  DXE
+may  respond to a FRMR by terminating the connection with a  DISC
+frame.
+
+<a name="2.4.6.3"></a>
+<h5>2.4.6.3 </h5>
+A  DXE  shall  reset the link by sending a  SABM  frame  and
+starting  timer  T1.  Upon receiving a SABM frame  from  the  DXE
+previously connected to, the receiver of a SABM frame should send
+a  UA  frame back at the earliest opportunity, set its  send  and
+receive  state  variables,  V(S) and V(R), to zero  and  stop  T1
+unless it has sent a SABM or DISC itself.  If the UA is correctly
+received by the initial DXE, it resets its send and receive state
+variables, V(S) and V(R), and stops timer T1.  Any busy condition
+that previously existed will also be cleared.
+
+<p>If  a  DM response is received, the DXE  will  enter  the
+disconnected  state  and  stop timer T1.  If timer  T1  runs  out
+before  a UA or DM response frame is received, the SABM  will  be
+retransmitted  and timer T1 restarted.  If timer T1 runs  out  N2
+times,  the  DXE  will  enter the  disconnected  state,  and  any
+previously existing link conditions will be cleared.
+
+     </p><p>Other  commands  or  responses received by  the  DXE  before
+completion of the reset procedure will be discarded.
+
+<a name="2.4.6.4"></a>
+</p><h5>2.4.6.4 </h5>
+One  DXE  may request that the other DXE reset the  link  by
+sending  a  DM response frame.  After the DM frame is  sent,  the
+sending DXE will then enter the disconnected state.
+
+<a name="2.4.7"></a>
+<h4>2.4.7 List of System Defined Parameters</h4>
+
+<a name="2.4.7.1"></a>
+<h5>2.4.7.1 Timers</h5>
+
+To   maintain  the  integrity  of  the  AX.25   level   2
+connection, use of these timers is recommended.
+
+<a name="2.4.7.1.1"></a>
+<h4>2.4.7.1.1 Acknowledgement Timer T1</h4>
+
+The  first timer, T1, is used to make sure a DXE  doesn't
+wait  forever  for a response to a frame it  sends.   This  timer
+cannot be expressed in absolute time, since the time required  to
+send frames varies greatly with the signaling rate used at  level
+1.   T1  should take at least twice the amount of time  it  would
+take  to send maximum length frame to the other DXE, and get  the
+proper response frame back from the other DXE.  This would  allow
+time for the other DXE to do some processing before responding.
+
+<p>If  level  2 repeaters are to be used, the  value  of  T1
+should be adjusted according to the number of repeaters the frame
+is being transferred through.
+
+<a name="2.4.7.1.2"></a>
+</p><h4>2.4.7.1.2 Response Delay Timer T2</h4>
+
+The  second timer, T2, may be implemented by the  DXE  to
+specify  a maximum amount of delay to be introduced  between  the
+time an I frame is received, and the time the resulting  response
+frame is sent.  This delay may be introduced to allow a receiving
+DXE to wait a short period of time to determine if there is  more
+than  one frame being sent to it.  If more frames  are  received,
+the  DXE can acknowledge them at once (up to seven), rather  than
+acknowledge  each individual frame.  The use of timer T2  is  not
+mandatory,  but  is recommended to  improve  channel  efficiency.
+Note  that, on full-duplex channels, acknowledgements should  not
+be delayed beyond k/2 frames to achieve maximum throughput.   The
+k parameter is defined in <a href="#2.4.7.4">2.4.7.4</a>, below.
+
+<a name="2.4.7.1.3"></a>
+<h4>2.4.7.1.3 Inactive Link Timer T3</h4>
+
+The third timer, T3, is used whenever T1 isn't running to
+maintain  link integrity.  It is recommended that whenever  there
+are  no  outstanding  unacknowledged I  frames  or  P-bit  frames
+(during  the information-transfer state), a RR or RNR frame  with
+the  P  bit set to one be sent every T3 time units to  query  the
+status  of the other DXE.  The period of T3 is  locally  defined,
+and  depends greatly on level 1 operation.  T3 should be  greater
+than T1, and may be very large on channels of high integrity.
+
+<a name="2.4.7.2"></a>
+<h5>2.4.7.2 Maximum Number of Retries (N2)</h5>
+
+The maximum number of retries is used in conjunction with
+the T1 timer.
+
+<a name="2.4.7.3"></a>
+<h5>2.4.7.3 Maximum Number of Octets in an I Field (N1)</h5>
+
+The maximum number of octets allowed in the I field  will
+be 256.  There shall also be an integral number of octets.
+
+<a name="2.4.7.4"></a>
+<h5>2.4.7.4 Maximum Number of I Frames Outstanding (k)</h5>
+
+The  maximum number of outstanding I frames at a time  is
+seven.
+
+
+<hr>
+This document was originally downloaded from the
+<a href="http://web.archive.org/web/20190831185324/https://tapr.org/software_library.php">TAPR archives</a> and 
+<a href="http://web.archive.org/web/20190831185324/https://tapr.org/software_library.php">FTP site</a>,
+as <i>ax25.doc</i>.
+HTML markup was done by Bill Buthod, N5RRS.  Last updated: 27 Dec 1997
+
+
+
+  <!-- DO NOT EDIT BELOW THIS LINE -->    
+  </div> <!-- Feature --> 
+  </div> <!-- Content --> 
+
+<!-- INCLUDE FOOTER HTML -->
+    <div id="siteInfo">
+<a href="http://web.archive.org/web/20190831185324/https://tapr.org/index.html"><img src="index_files/tapr-80px-logo.gif" alt="" width="75" height="77" border="0"></a>
+<a href="http://web.archive.org/web/20190831185324/https://tapr.org/organization.html">About Us</a> | <a href="http://web.archive.org/web/20190831185324/https://tapr.org/privacy_policy.html">Privacy Policy</a> | <a href="http://web.archive.org/web/20190831185324/https://tapr.org/contact_us.html">Contact Us</a> | 
+©2005-2019 Tucson Amateur Packet Radio Corp unless otherwise noted.
+<p>
+</p><p>
+</p></div>
+
+<!-- (c) 2005, 2014. Authorize.Net is a registered trademark of CyberSource Corporation --> 
+<div style="margin:auto;" class="AuthorizeNetSeal">
+<script type="text/javascript" language="javascript">
+var ANS_customer_id="c4c5ba6c-c2cc-4249-80b1-77e341f57c1b";
+</script> 
+<script type="text/javascript" language="javascript" src="index_files/seal.js">
+</script><style type="text/css">
+div.AuthorizeNetSeal{text-align:center;margin:0;padding:0;width:90px;font:normal 9px arial,helvetica,san-serif;line-height:10px;}
+div.AuthorizeNetSeal a{text-decoration:none;color:black;}
+div.AuthorizeNetSeal a:visited{color:black;}
+div.AuthorizeNetSeal a:active{color:black;}
+div.AuthorizeNetSeal a:hover{text-decoration:underline;color:black;}
+div.AuthorizeNetSeal a img{border:0px;margin:0px;text-decoration:none;}
+</style>
+<a href="http://web.archive.org/web/20190831185324/https://verify.authorize.net/anetseal/?pid=c4c5ba6c-c2cc-4249-80b1-77e341f57c1b&amp;rurl=https%3A//tapr.org/pub_ax25.html" onmouseover="window.status='http://web.archive.org/web/20190831185324/http://www.authorize.net/'; return true;" onmouseout="window.status=''; return true;" onclick="window.open('http://web.archive.org/web/20190831185324/https://verify.authorize.net/anetseal/?pid=c4c5ba6c-c2cc-4249-80b1-77e341f57c1b&amp;rurl=https%3A//tapr.org/pub_ax25.html','AuthorizeNetVerification','width=600,height=430,dependent=yes,resizable=yes,scrollbars=yes,menubar=no,toolbar=no,status=no,directories=no,location=yes'); return false;" target="_blank">
+<img src="index_files/secure90x72.gif" alt="Authorize.Net Merchant - Click to Verify" width="90" height="72" border="0">
+</a>
+ 
+<a href="http://web.archive.org/web/20190831185324/http://www.authorize.net/" id="AuthorizeNetText" target="_blank">Accept Credit Cards</a> 
+
+</div> 
+<p>
+
+</p></div> 
+<!--end pagecell1--> 
+<br> 
+
+
+
+</body></html>
+<!--
+     FILE ARCHIVED ON 18:53:24 Aug 31, 2019 AND RETRIEVED FROM THE
+     INTERNET ARCHIVE ON 06:35:58 Oct 23, 2023.
+     JAVASCRIPT APPENDED BY WAYBACK MACHINE, COPYRIGHT INTERNET ARCHIVE.
+
+     ALL OTHER CONTENT MAY ALSO BE PROTECTED BY COPYRIGHT (17 U.S.C.
+     SECTION 108(a)(3)).
+-->
+<!--
+playback timings (ms):
+  captures_list: 71.788 (11)
+  exclusion.robots: 0.302
+  exclusion.robots.policy: 0.284
+  cdx.remote: 0.099
+  esindex: 0.013
+  LoadShardBlock: 40.059 (3)
+  PetaboxLoader3.datanode: 67.154 (4)
+  load_resource: 81.49
+  PetaboxLoader3.resolve: 24.029
+-->
