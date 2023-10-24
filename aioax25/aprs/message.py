@@ -176,7 +176,6 @@ class APRSMessageHandler(object):
 
 
 class APRSMessageFrame(APRSFrame):
-
     MSGID_RE = re.compile(r"{([0-9A-Za-z]+)(}[0-9A-Za-z]*)?(\r?)$")
     ACKREJ_RE = re.compile(r"^(ack|rej)([0-9A-Za-z]+)$")
 
@@ -259,7 +258,6 @@ class APRSMessageFrame(APRSFrame):
         cr=True,
         src_cr=None,
     ):
-
         self._addressee = AX25Address.decode(addressee).normalised
         self._msgid = msgid
         self._replyack = replyack

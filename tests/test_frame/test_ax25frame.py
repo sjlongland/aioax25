@@ -133,6 +133,16 @@ def test_frame_deadline_ro_if_set():
     assert frame.deadline == 44556677
 
 
+def test_frame_tnc2():
+    """
+    Test that we can get a TNC2-compatible frame string.
+    """
+    frame = AX25RawFrame(
+        destination="VK4BWI", source="VK4MSL", deadline=11223344
+    )
+    assert frame.tnc2 == "VK4MSL>VK4BWI"
+
+
 def test_encode_raw():
     """
     Test that we can encode a raw frame.

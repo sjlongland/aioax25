@@ -78,7 +78,6 @@ class APRSInterface(APRSRouter):
         # Logger instance
         log=None,
     ):
-
         super(APRSRouter, self).__init__()
         if log is None:
             log = logging.getLogger(self.__class__.__module__)

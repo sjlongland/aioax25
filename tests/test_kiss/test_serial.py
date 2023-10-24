@@ -27,7 +27,6 @@ class DummySerial(object):
         dsrdtr,
         inter_byte_timeout,
     ):
-
         assert port == "/dev/ttyS0"
         assert baudrate == 9600
         assert bytesize == EIGHTBITS

@@ -195,7 +195,7 @@ class AX25Frame(object):
         return "%s %s:\nPayload=%r" % (
             self.__class__.__name__,
             self.header,
-            self.frame_payload
+            self.frame_payload,
         )
 
     @property
@@ -290,7 +290,7 @@ class AX258BitFrame(AX25Frame):
             self.__class__.__name__,
             self.header,
             self.control,
-            self.payload
+            self.payload,
         )
 
     @property
@@ -350,7 +350,7 @@ class AX2516BitFrame(AX25Frame):
             self.__class__.__name__,
             self.header,
             self.control,
-            self.payload
+            self.payload,
         )
 
     @property
