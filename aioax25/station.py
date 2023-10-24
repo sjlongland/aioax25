@@ -55,7 +55,7 @@ class AX25Station(object):
         # Timer parameters
         ack_timeout=3.0,  # Acknowledge timeout (aka T1)
         idle_timeout=900.0,  # Idle timeout before we "forget" peers
-        rr_delay=10.0,  # Delay between I-frame and RR
+        rr_delay=3.0,  # Delay between I-frame and RR
         rr_interval=30.0,  # Poll interval when peer in busy state
         rnr_interval=10.0,  # Delay between RNRs when busy
         # Protocol version to use for our station
@@ -64,7 +64,6 @@ class AX25Station(object):
         log=None,
         loop=None,
     ):
-
         if log is None:
             log = logging.getLogger(self.__class__.__module__)
 
