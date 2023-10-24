@@ -314,3 +314,11 @@ The `APRSDigipeater` class constructor can take a single parameter,
 `digipeater_timeout`, which sets an expiry (default of 5 seconds) on queued
 digipeat messages.  If a message is not sent by the time this timeout expires,
 the message is quietly dropped, preventing the memory effect.
+
+## Specifications
+
+This library is built on the following specifications:
+
+* [AX.25 2.0](https://htmlpreview.github.io/?https://github.com/sjlongland/aioax25/blob/feature/connected-mode/doc/ax25-2p0/index.html)
+* [AX.25 2.2](doc/ax25-2p2/ax25-2p2.pdf)
+* [APRS 1.01](http://www.aprs.org/doc/APRS101.PDF)
