@@ -430,6 +430,8 @@ class AX25Peer(object):
         """
         Handle an incoming AX.25 frame from this peer.
         """
+        self._log.debug("Received: %s", frame)
+
         # Kick off the idle timer
         self._reset_idle_timeout()
 
@@ -515,6 +517,7 @@ class AX25Peer(object):
                 frame = AX25Frame.decode(
                     frame, modulo128=(self._modulo == 128)
                 )
+                self._log.debug("Decoded frame: %s", frame)
                 self.received_frame.emit(frame=frame, peer=self)
                 if isinstance(frame, AX25InformationFrameMixin):
                     # This is an I-frame
@@ -564,8 +567,8 @@ class AX25Peer(object):
             return
 
         # "…it accepts the received I frame,
-        # increments its receive state variable, and acts in one of the following
-        # manners:…"
+        # increments its receive state variable, and acts in one of the
+        # following manners:…"
         self._update_state("_recv_state", delta=1)
 
         # TODO: the payload here may be a repeat of data already seen, or
@@ -601,6 +604,23 @@ class AX25Peer(object):
         elif isinstance(frame, self._SREJFrameClass):
             self._on_receive_srej(frame)
 
+    def _on_receive_isframe_nr_ns(self, frame):
+        """
+        Handle the N(R) / N(S) fields from an I or S frame from the peer.
+        """
+        # "Whenever an I or S frame is correctly received, even in a busy
+        # condition, the N(R) of the received frame should be checked to see
+        # if it includes an acknowledgement of outstanding sent I frames. The
+        # T1 timer should be cancelled if the received frame actually
+        # acknowledges previously unacknowledged frames. If the T1 timer is
+        # cancelled and there are still some frames that have been sent that
+        # are not acknowledged, T1 should be started again. If the T1 timer
+        # runs out before an acknowledgement is received, the device should
+        # proceed to the retransmission procedure in 2.4.4.9."
+
+        # Check N(R) for received frames.
+        self._ack_outstanding((frame.nr - 1) % self._modulo)
+
     def _on_receive_rr(self, frame):
         if frame.pf:
             # Peer requesting our RR status
@@ -608,7 +628,9 @@ class AX25Peer(object):
             self._on_receive_rr_rnr_rej_query()
         else:
             # Received peer's RR status, peer no longer busy
-            self._log.debug("RR notification received from peer")
+            self._log.debug(
+                "RR notification received from peer N(R)=%d", frame.nr
+            )
             # AX.25 sect 4.3.2.1: "acknowledges properly received
             # I frames up to and including N(R)-1"
             self._ack_outstanding((frame.nr - 1) % self._modulo)
@@ -640,6 +662,7 @@ class AX25Peer(object):
             self._ack_outstanding((frame.nr - 1) % self._modulo)
             # AX.25 2.2 section 6.4.7 says we set V(S) to this frame's
             # N(R) and begin re-transmission.
+            self._log.debug("Set state V(S) from frame N(R) = %d", frame.nr)
             self._update_state("_send_state", value=frame.nr)
             self._send_next_iframe()
 
@@ -671,15 +694,19 @@ class AX25Peer(object):
         Receive all frames up to N(R)
         """
         self._log.debug("%d through to %d are received", self._send_state, nr)
-        while self._send_state != nr:
-            frame = self._pending_iframes.pop(self._send_state)
+        while self._send_seq != nr:
+            if self._log.isEnabledFor(logging.DEBUG):
+                self._log.debug("Pending frames: %r", self._pending_iframes)
+
+            frame = self._pending_iframes.pop(self._send_seq)
             if self._log.isEnabledFor(logging.DEBUG):
                 self._log.debug(
-                    "Popped %s off pending queue, N(R)s pending: %s",
+                    "Popped %s off pending queue, N(R)s pending: %r",
                     frame,
-                    ", ".join(sorted(self._pending_iframes.keys())),
+                    self._pending_iframes,
                 )
-            self._update_state("_send_state", delta=1)
+            self._log.debug("Increment N(S) due to ACK")
+            self._update_state("_send_seq", delta=1)
 
     def _on_receive_test(self, frame):
         self._log.debug("Received TEST response: %s", frame)
@@ -1346,6 +1373,7 @@ class AX25Peer(object):
         """
         Schedule a RR notification frame to be sent.
         """
+        self._log.debug("Waiting before sending RR notification")
         self._cancel_rr_notification()
         self._rr_notification_timeout_handle = self._loop.call_later(
             self._rr_delay, self._send_rr_notification
@@ -1355,8 +1383,16 @@ class AX25Peer(object):
         """
         Send a RR notification frame
         """
+        # "If there are no outstanding I frames, the receiving device will
+        # send a RR frame with N(R) equal to V(R). The receiving DXE may wait
+        # a small period of time before sending the RR frame to be sure
+        # additional I frames are not being transmitted."
+
         self._cancel_rr_notification()
         if self._state is self.AX25PeerState.CONNECTED:
+            self._log.debug(
+                "Sending RR with N(R) == V(R) == %d", self._recv_state
+            )
             self._transmit_frame(
                 self._RRFrameClass(
                     destination=self.address,
@@ -1413,19 +1449,39 @@ class AX25Peer(object):
 
         # "After the I frame is sent, the send state variable is incremented
         # by one."
+        self._log.debug("Increment send state V(S) by one")
         self._update_state("_send_state", delta=1)
+
+        if self._log.isEnabledFor(logging.DEBUG):
+            self._log.debug("Pending frames: %r", self._pending_iframes)
 
     def _transmit_iframe(self, ns):
         """
         Transmit the I-frame identified by the given N(S) parameter.
         """
+        # "Whenever a DXE has an I frame to transmit, it will send the I frame
+        # with N(S) of the control field equal to its current send state
+        # variable V(S). Once the I frame is sent, the send state variable is
+        # incremented by one. If timer T1 is not running, it should be
+        # started. If timer T1 is running, it should be restarted."
+
+        # "If it has an I frame to send, that I frame may be sent with the
+        # transmitted N(R) equal to its receive state variable V(R) (thus
+        # acknowledging the received frame)."
         (pid, payload) = self._pending_iframes[ns]
+        self._log.debug(
+            "Sending I-frame N(R)=%d N(S)=%d PID=0x%02x Payload=%r",
+            self._recv_state,
+            ns,
+            pid,
+            payload,
+        )
         self._transmit_frame(
             self._IFrameClass(
                 destination=self.address,
                 source=self._station().address,
                 repeaters=self.reply_path,
-                nr=self._recv_seq,
+                nr=self._recv_state,  # N(R) == V(R)
                 ns=ns,
                 pf=False,
                 pid=pid,
