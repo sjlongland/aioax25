@@ -932,6 +932,7 @@ def test_on_receive_notframe():
     """
     Test _on_receive ignores non-APRS-frames.
     """
+
     # Create a frame
     class DummyFrame(AX25UnnumberedInformationFrame):
         def __init__(self, *args, **kwargs):

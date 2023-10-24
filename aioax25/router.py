@@ -129,7 +129,7 @@ class Router(object):
             pass
 
         # Compare the incoming frame destination to our regex receivers
-        for (pattern, pat_receivers) in self._receiver_re.values():
+        for pattern, pat_receivers in self._receiver_re.values():
             match = pattern.search(callsign)
             if not match:
                 continue

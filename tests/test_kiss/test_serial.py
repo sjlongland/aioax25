@@ -27,7 +27,6 @@ class DummySerial(object):
         dsrdtr,
         inter_byte_timeout,
     ):
-
         assert port == "/dev/ttyS0"
         assert baudrate == 9600
         assert bytesize == EIGHTBITS
@@ -92,6 +91,7 @@ PortConnection = namedtuple(
 )
 create_serial_conn_log = logging.getLogger("create_serial_connection")
 connections = []
+
 
 # Stub the serial port connection factory
 async def dummy_create_serial_connection(
@@ -217,6 +217,7 @@ def test_on_close_err(logger):
     """
     Test errors are logged if given
     """
+
     # Yeah, kludgy… but py.test won't see the fixture if I don't
     # do it this way.
     @asynctest

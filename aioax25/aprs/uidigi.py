@@ -98,7 +98,7 @@ class APRSDigipeater(object):
         rem_hops = None
 
         prev = None
-        for (digi_idx, digi) in enumerate(frame.header.repeaters):
+        for digi_idx, digi in enumerate(frame.header.repeaters):
             if digi.normalised in self._mydigi:
                 self._log.debug(
                     "MYDIGI digipeat for %s, last was %s", digi, prev

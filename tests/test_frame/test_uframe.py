@@ -678,6 +678,23 @@ def test_frmr_copy():
     )
 
 
+def test_ua_str():
+    """
+    Test we can get a string representation of a UA frame.
+    """
+    frame = AX25UnnumberedAcknowledgeFrame(
+        destination="VK4BWI",
+        source="VK4MSL",
+        cr=True,
+        pid=0xF0,
+    )
+    assert str(frame) == (
+        "AX25UnnumberedAcknowledgeFrame VK4MSL>VK4BWI: "
+        "Control=0x03 P/F=False Modifier=0x03 PID=0xf0\n"
+        "Payload=b'This is a test'"
+    )
+
+
 def test_ui_str():
     """
     Test we can get a string representation of a UI frame.
