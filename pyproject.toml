@@ -18,7 +18,7 @@ classifiers = [
 description = "Asynchronous AX.25 interface in pure Python using asyncio"
 dependencies = [
     "pyserial",
-    "pyserial_asyncio",
+    "pyserial-asyncio",
     "signalslot"
 ]
 
