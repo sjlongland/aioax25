@@ -6,7 +6,6 @@ KISS protocol unit tests.
 
 from aioax25 import kiss
 import logging
-import time
 
 
 class DummyTransport(object):
@@ -486,11 +485,7 @@ def test_subproc_protocol_process_exited_err(logger):
     Test process_exited handles errors.
     """
 
-    class TestConnectionLossError(Exception):
-        pass
-
     on_close_calls = []
-    loss_err = TestConnectionLossError()
 
     def on_connect(*args, **kwargs):
         assert False, "Should not have been called (called with %r, %r)" % (

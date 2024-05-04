@@ -11,7 +11,7 @@ TCP KISS interface unit tests.
 from aioax25 import kiss
 import logging
 from ..asynctest import asynctest
-from asyncio import get_event_loop, sleep
+from asyncio import get_event_loop
 
 
 @asynctest

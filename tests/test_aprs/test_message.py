@@ -39,7 +39,6 @@ def test_msghandler_addressee():
     """
     Test the handler passes through the addressee given.
     """
-    calls = []
     aprshandler = DummyAPRSHandler()
     msghandler = APRSMessageHandler(
         aprshandler=aprshandler,
@@ -209,37 +208,6 @@ def test_msghandler_enter_state_no_handler():
     assert set(call.keys()) == set(["handler", "state"])
     assert call["handler"] is msghandler
     assert call["state"] == msghandler.HandlerState.CANCEL
-
-
-def test_msghandler_enter_state_reject():
-    """
-    Test the message considers 'REJECT' an exit state.
-    """
-    calls = []
-    aprshandler = DummyAPRSHandler()
-    msghandler = APRSMessageHandler(
-        aprshandler=aprshandler,
-        addressee="CQ",
-        path=["WIDE1-1", "WIDE2-1"],
-        message="testing",
-        replyack=False,
-        log=logging.getLogger("messagehandler"),
-    )
-    msghandler.done.connect(lambda **k: calls.append(k))
-
-    # Message handler is still in the INIT state
-    assert msghandler.state == msghandler.HandlerState.INIT
-
-    # Tell it to go to the success state.
-    msghandler._enter_state(msghandler.HandlerState.REJECT)
-
-    # 'done' signal should have been called.
-    assert len(calls) == 1
-    call = calls.pop(0)
-
-    assert set(call.keys()) == set(["handler", "state"])
-    assert call["handler"] is msghandler
-    assert call["state"] == msghandler.HandlerState.REJECT
 
 
 def test_msghandler_enter_state_send():

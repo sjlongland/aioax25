@@ -133,7 +133,7 @@ def test_sexagesimal_encode():
     assert str(v) == "02726.23-"
 
 
-def test_sexagesimal_decode_ambiguity1():
+def test_sexagesimal_encode_ambiguity1():
     """
     Test we can encode a sexagesimal coordinate with level 1 ambiguity
     """
@@ -390,17 +390,6 @@ def test_latitude_compressed_decode_toolong():
         assert False, "Should not have worked"
     except ValueError as e:
         assert str(e) == "Compressed co-ordinate too short"
-
-
-def test_csr_too_short():
-    """
-    Test a too-short course/speed/range/altitude is rejected
-    """
-    try:
-        APRSCompressedCourseSpeedRange.decode("X", None)
-        assert False, "Should not have worked"
-    except ValueError as e:
-        assert str(e) == "Course/Speed value too short"
 
 
 def test_compressed_decode_too_short():

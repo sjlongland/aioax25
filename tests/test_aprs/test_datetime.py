@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-import logging
-
 import datetime
 from aioax25.aprs.datetime import (
     DHMUTCTimestamp,

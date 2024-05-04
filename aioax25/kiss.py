@@ -617,7 +617,7 @@ class SubprocKISSDevice(BaseTransportDevice):
             )
 
     def _send_raw_data(self, data):
-        transport = self._transport.get_pipe_transport(0).write(data)
+        self._transport.get_pipe_transport(0).write(data)
 
 
 # Port interface

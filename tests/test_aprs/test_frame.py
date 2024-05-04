@@ -11,8 +11,6 @@ from aioax25.aprs.message import (
 from aioax25.aprs.position import APRSPositionFrame
 from aioax25.frame import AX25UnnumberedInformationFrame
 
-from ..loop import DummyLoop
-
 
 def test_decode_wrong_pid():
     """

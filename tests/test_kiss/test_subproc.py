@@ -11,7 +11,7 @@ Subprocess KISS interface unit tests.
 from aioax25 import kiss
 import logging
 from ..asynctest import asynctest
-from asyncio import get_event_loop, sleep
+from asyncio import get_event_loop
 
 
 @asynctest
@@ -95,9 +95,6 @@ def test_send_raw_data():
     """
     Test data written to the device gets written to the subprocess ``stdin``.
     """
-    # This will receive the arguments passed to subprocess_shell
-    connection_args = []
-
     # Mock transport
     class DummyStream(object):
         def __init__(self):

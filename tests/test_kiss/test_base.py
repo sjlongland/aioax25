@@ -282,7 +282,7 @@ def test_send_data():
     assert len(loop.calls) == 0
 
 
-def test_send_data_block_size():
+def test_send_data_block_size_exceed_reschedule():
     """
     Test that _send_data re-schedules itself when buffer exceeds block size
     """
@@ -335,7 +335,7 @@ def test_send_data_close_after_send():
     assert kissdev.close_calls == 1
 
 
-def test_send_data_block_size():
+def test_send_data_all_sent_before_close():
     """
     Test that _send_data waits until all data sent before closing.
     """

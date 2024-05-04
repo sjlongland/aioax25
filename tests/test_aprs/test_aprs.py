@@ -76,6 +76,7 @@ def test_constructor_bind():
             dict(callsign="^ZIP", regex=True, ssid=None),  # Legacy
         ],
     )
+    assert aprsint
     assert len(ax25int.bind_calls) == 26
 
     assert set(
@@ -154,6 +155,7 @@ def test_constructor_bind_destinations_and_altnets():
         ],
         listen_altnets=[dict(callsign="VK4BWI", regex=False, ssid=None)],
     )
+    assert aprsint
     assert len(ax25int.bind_calls) == 27
 
     assert set(
@@ -207,6 +209,7 @@ def test_constructor_bind_altnets():
         "VK4MSL-10",
         listen_altnets=[dict(callsign="VK4BWI", regex=False, ssid=None)],
     )
+    assert aprsint
     assert len(ax25int.bind_calls) == 2
 
     assert set(
@@ -234,6 +237,7 @@ def test_constructor_bind_override():
         "VK4MSL-10",
         listen_destinations=[dict(callsign="APRS", regex=False, ssid=None)],
     )
+    assert aprsint
     assert len(ax25int.bind_calls) == 2
 
     assert set(

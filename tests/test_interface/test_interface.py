@@ -555,9 +555,6 @@ async def test_transmit_drops_expired():
     def _on_timeout():
         transmit_future.set_result(None)
 
-    # The time before transmission
-    time_before = time.monotonic()
-
     # Set a timeout
     get_event_loop().call_later(1.0, _on_timeout)
 
