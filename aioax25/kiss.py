@@ -13,6 +13,7 @@ from .signal import Signal
 from binascii import b2a_hex
 import time
 import logging
+from sys import exc_info
 
 
 # Constants
@@ -260,6 +261,13 @@ class BaseKISSDevice(object):
         self._send_block_size = send_block_size
         self._send_block_delay = send_block_delay
 
+        # Signal fired when the device enters the FAILED state
+        # Keyword arguments:
+        # - action: the action being performed at the time of failure
+        #           ('open', 'send', 'close')
+        # - exc_info: the exception trace information for debugging
+        self.failed = Signal()
+
     def _receive(self, data):
         """
         Handle incoming data by appending to our receive buffer.  The
@@ -384,13 +392,13 @@ class BaseKISSDevice(object):
         if self._log.isEnabledFor(logging.DEBUG):
             self._log.debug("XMIT RAW %r", b2a_hex(data).decode())
 
-        self._send_raw_data(data)
+        self._try_send_raw_data(data)
 
         # If we are closing, wait for this to be sent
         if (self._state == KISSDeviceState.CLOSING) and (
             len(self._tx_buffer) == 0
         ):
-            self._close()
+            self._try_close()
             return
 
         if self._tx_buffer:
@@ -416,9 +424,9 @@ class BaseKISSDevice(object):
         command = command.encode("US-ASCII")
         self._rx_buffer = bytearray()
         for bv in command:
-            self._send_raw_data(bytes([bv]))
+            self._try_send_raw_data(bytes([bv]))
             time.sleep(0.1)
-        self._send_raw_data(b"\r")
+        self._try_send_raw_data(b"\r")
         self._loop.call_later(0.5, self._check_open)
 
     def _check_open(self):
@@ -426,6 +434,35 @@ class BaseKISSDevice(object):
         Handle opening of the port
         """
         self._loop.call_soon(self._send_kiss_cmd)
+
+    def _try_open(self):
+        try:
+            self._open()
+        except:
+            self._on_fail("open", exc_info())
+            raise
+
+    def _try_send_raw_data(self, data):
+        try:
+            self._send_raw_data(data)
+        except:
+            self._on_fail("send", exc_info())
+            raise
+
+    def _try_close(self):
+        try:
+            self._close()
+        except:
+            self._on_fail("close", exc_info())
+            raise
+
+    def _on_fail(self, action, exc_info):
+        (ex_t, ex_v, _) = exc_info
+        self._log.warning(
+            "KISS device has failed: %s: %s", ex_t.__name__, ex_v
+        )
+        self._state = KISSDeviceState.FAILED
+        self.failed.emit(action=action, exc_info=exc_info)
 
     def __getitem__(self, port):
         """
@@ -449,7 +486,7 @@ class BaseKISSDevice(object):
         assert self.state == KISSDeviceState.CLOSED, "Device is not closed"
         self._log.debug("Opening device")
         self._state = KISSDeviceState.OPENING
-        self._open()
+        self._try_open()
 
     def close(self):
         assert self.state == KISSDeviceState.OPEN, "Device is not open"
@@ -458,7 +495,12 @@ class BaseKISSDevice(object):
         if self._reset_on_close:
             self._send(KISSCmdReturn())
         else:
-            self._close()
+            self._try_close()
+
+    def reset(self):
+        assert self.state == KISSDeviceState.FAILED, "Device has not failed"
+        self._log.warning("Resetting device")
+        self._state = KISSDeviceState.CLOSED
 
 
 class BaseTransportDevice(BaseKISSDevice):
@@ -695,6 +737,8 @@ class KISSPort(object):
         self._log = log
 
         # Signal for receiving packets
+        # Keyword arguments:
+        # - frame: the raw KISS frame as a `bytes()` object
         self.received = Signal()
 
     @property
