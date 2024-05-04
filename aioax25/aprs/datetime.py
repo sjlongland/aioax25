@@ -11,6 +11,7 @@ class APRSTimestamp(object):
     """
     Base abstract class for APRS timestamps.
     """
+
     pass
 
 
@@ -18,6 +19,7 @@ class DHMBaseTimestamp(APRSTimestamp):
     """
     Day/Hour/Minute timestamp (base class)
     """
+
     TS_LENGTH = 7
 
     def __init__(self, day, hour, minute):
@@ -26,9 +28,11 @@ class DHMBaseTimestamp(APRSTimestamp):
         self.minute = minute
 
     def __str__(self):
-        return '%02d%02d%02d%s' % (
-                self.day, self.hour, self.minute,
-                self.TS_SUFFIX
+        return "%02d%02d%02d%s" % (
+            self.day,
+            self.hour,
+            self.minute,
+            self.TS_SUFFIX,
         )
 
 
@@ -36,6 +40,7 @@ class DHMUTCTimestamp(DHMBaseTimestamp):
     """
     Day/Hour/Minute timestamp in UTC.
     """
+
     TS_SUFFIX = "z"
 
 
@@ -43,6 +48,7 @@ class DHMLocalTimestamp(DHMBaseTimestamp):
     """
     Day/Hour/Minute timestamp in local time.
     """
+
     TS_SUFFIX = "/"
 
 
@@ -50,13 +56,16 @@ class HMSTimestamp(time, APRSTimestamp):
     """
     Hour/Minute/Second timestamp in UTC.
     """
+
     TS_LENGTH = 7
     TS_SUFFIX = "h"
 
     def __str__(self):
-        return '%02d%02d%02d%s' % (
-                self.hour, self.minute, self.second,
-                self.TS_SUFFIX
+        return "%02d%02d%02d%s" % (
+            self.hour,
+            self.minute,
+            self.second,
+            self.TS_SUFFIX,
         )
 
 
@@ -64,6 +73,7 @@ class MDHMTimestamp(APRSTimestamp):
     """
     Month/Day/Hour/Minute timestamp in UTC.
     """
+
     TS_LENGTH = 8
 
     def __init__(self, month, day, hour, minute):
@@ -73,8 +83,11 @@ class MDHMTimestamp(APRSTimestamp):
         self.minute = minute
 
     def __str__(self):
-        return '%02d%02d%02d%02d' % (
-                self.month, self.day, self.hour, self.minute
+        return "%02d%02d%02d%02d" % (
+            self.month,
+            self.day,
+            self.hour,
+            self.minute,
         )
 
 

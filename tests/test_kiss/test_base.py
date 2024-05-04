@@ -4,7 +4,12 @@
 Base KISS interface unit tests.
 """
 
-from aioax25.kiss import BaseKISSDevice, KISSDeviceState, KISSCommand, KISSPort
+from aioax25.kiss import (
+    BaseKISSDevice,
+    KISSDeviceState,
+    KISSCommand,
+    KISSPort,
+)
 from ..loop import DummyLoop
 from asyncio import BaseEventLoop
 
@@ -49,14 +54,13 @@ def test_open():
 
     eq_(kissdev.open_calls, 1)
 
+
 def test_close():
     """
     Test a close call passes to _close
     """
     loop = DummyLoop()
-    kissdev = DummyKISSDevice(
-            loop=loop, reset_on_close=False
-    )
+    kissdev = DummyKISSDevice(loop=loop, reset_on_close=False)
 
     # Force the port open
     kissdev._state = KISSDeviceState.OPEN
@@ -67,14 +71,13 @@ def test_close():
     kissdev.close()
     eq_(kissdev.close_calls, 1)
 
+
 def test_close_reset():
     """
     Test a close call with reset_on_close sends the "return from KISS" frame
     """
     loop = DummyLoop()
-    kissdev = DummyKISSDevice(
-            loop=loop, reset_on_close=True
-    )
+    kissdev = DummyKISSDevice(loop=loop, reset_on_close=True)
 
     # Force the port open
     kissdev._state = KISSDeviceState.OPEN
@@ -86,93 +89,88 @@ def test_close_reset():
     eq_(kissdev._state, KISSDeviceState.CLOSING)
 
     # A "return from KISS" frame should be in the transmit buffer
-    eq_(bytes(kissdev._tx_buffer), b'\xc0\xff\xc0')
+    eq_(bytes(kissdev._tx_buffer), b"\xc0\xff\xc0")
 
     # A call to _send_data should be pending
     (_, func) = loop.calls.pop()
     eq_(func, kissdev._send_data)
+
 
 def test_receive():
     """
     Test that a call to _receive stashes the data then schedules _receive_frame.
     """
     loop = DummyLoop()
-    kissdev = DummyKISSDevice(
-            loop=loop, reset_on_close=True
-    )
-    kissdev._receive(b'test incoming data')
+    kissdev = DummyKISSDevice(loop=loop, reset_on_close=True)
+    kissdev._receive(b"test incoming data")
 
     # Data should be waiting
-    eq_(bytes(kissdev._rx_buffer), b'test incoming data')
+    eq_(bytes(kissdev._rx_buffer), b"test incoming data")
 
     # A call to _receive_frame should be pending
     (_, func) = loop.calls.pop()
     eq_(func, kissdev._receive_frame)
+
 
 def test_receive_frame_garbage():
     """
     Test _receive_frame discards all data when no FEND byte found.
     """
     loop = DummyLoop()
-    kissdev = DummyKISSDevice(
-            loop=loop, reset_on_close=True
-    )
-    kissdev._rx_buffer += b'this should be discarded'
+    kissdev = DummyKISSDevice(loop=loop, reset_on_close=True)
+    kissdev._rx_buffer += b"this should be discarded"
     kissdev._receive_frame()
 
     # We should just have the data including and following the FEND
-    eq_(bytes(kissdev._rx_buffer), b'')
+    eq_(bytes(kissdev._rx_buffer), b"")
 
     # As there's no complete frames, no calls should be scheduled
     eq_(len(loop.calls), 0)
+
 
 def test_receive_frame_garbage_start():
     """
     Test _receive_frame discards everything up to the first FEND byte.
     """
     loop = DummyLoop()
-    kissdev = DummyKISSDevice(
-            loop=loop, reset_on_close=True
-    )
-    kissdev._rx_buffer += b'this should be discarded\xc0this should be kept'
+    kissdev = DummyKISSDevice(loop=loop, reset_on_close=True)
+    kissdev._rx_buffer += b"this should be discarded\xc0this should be kept"
     kissdev._receive_frame()
 
     # We should just have the data including and following the FEND
-    eq_(bytes(kissdev._rx_buffer), b'\xc0this should be kept')
+    eq_(bytes(kissdev._rx_buffer), b"\xc0this should be kept")
 
     # As there's no complete frames, no calls should be scheduled
     eq_(len(loop.calls), 0)
+
 
 def test_receive_frame_empty():
     """
     Test _receive_frame discards empty frames.
     """
     loop = DummyLoop()
-    kissdev = DummyKISSDevice(
-            loop=loop, reset_on_close=True
-    )
-    kissdev._rx_buffer += b'\xc0\xc0'
+    kissdev = DummyKISSDevice(loop=loop, reset_on_close=True)
+    kissdev._rx_buffer += b"\xc0\xc0"
     kissdev._receive_frame()
 
     # We should just have the last FEND
-    eq_(bytes(kissdev._rx_buffer), b'\xc0')
+    eq_(bytes(kissdev._rx_buffer), b"\xc0")
 
     # It should leave the last FEND there and wait for more data.
     eq_(len(loop.calls), 0)
+
 
 def test_receive_frame_single():
     """
     Test _receive_frame hands a single frame to _dispatch_rx_frame.
     """
     loop = DummyLoop()
-    kissdev = DummyKISSDevice(
-            loop=loop, reset_on_close=True
-    )
-    kissdev._rx_buffer += b'\xc0\x00a single KISS frame\xc0'
+    kissdev = DummyKISSDevice(loop=loop, reset_on_close=True)
+    kissdev._rx_buffer += b"\xc0\x00a single KISS frame\xc0"
     kissdev._receive_frame()
 
     # We should just have the last FEND
-    eq_(bytes(kissdev._rx_buffer), b'\xc0')
+    eq_(bytes(kissdev._rx_buffer), b"\xc0")
 
     # We should have one call to _dispatch_rx_frame
     eq_(len(loop.calls), 1)
@@ -181,21 +179,20 @@ def test_receive_frame_single():
     assert isinstance(frame, KISSCommand)
     eq_(frame.port, 0)
     eq_(frame.cmd, 0)
-    eq_(frame.payload, b'a single KISS frame')
+    eq_(frame.payload, b"a single KISS frame")
+
 
 def test_receive_frame_more():
     """
     Test _receive_frame calls itself when more data left.
     """
     loop = DummyLoop()
-    kissdev = DummyKISSDevice(
-            loop=loop, reset_on_close=True
-    )
-    kissdev._rx_buffer += b'\xc0\x00a single KISS frame\xc0more data'
+    kissdev = DummyKISSDevice(loop=loop, reset_on_close=True)
+    kissdev._rx_buffer += b"\xc0\x00a single KISS frame\xc0more data"
     kissdev._receive_frame()
 
     # We should just have the left-over bit including the last FEND
-    eq_(bytes(kissdev._rx_buffer), b'\xc0more data')
+    eq_(bytes(kissdev._rx_buffer), b"\xc0more data")
 
     # This should have generated two calls:
     eq_(len(loop.calls), 2)
@@ -206,11 +203,12 @@ def test_receive_frame_more():
     assert isinstance(frame, KISSCommand)
     eq_(frame.port, 0)
     eq_(frame.cmd, 0)
-    eq_(frame.payload, b'a single KISS frame')
+    eq_(frame.payload, b"a single KISS frame")
 
     # We should have another to _receive_frame itself.
     (_, func) = loop.calls.pop(0)
     eq_(func, kissdev._receive_frame)
+
 
 def test_dispatch_rx_invalid_port():
     """
@@ -219,16 +217,18 @@ def test_dispatch_rx_invalid_port():
     loop = DummyLoop()
     kissdev = DummyKISSDevice(loop=loop)
     kissdev._dispatch_rx_frame(
-            KISSCommand(cmd=10, port=14, payload=b'this should be dropped')
+        KISSCommand(cmd=10, port=14, payload=b"this should be dropped")
     )
+
 
 def test_dispatch_rx_exception():
     """
     Test that _dispatch_rx_port drops frame on exception.
     """
+
     class DummyPort(object):
         def _receive_frame(self, frame):
-            raise IOError('Whoopsie')
+            raise IOError("Whoopsie")
 
     port = DummyPort()
     loop = DummyLoop()
@@ -236,13 +236,15 @@ def test_dispatch_rx_exception():
     kissdev._port[14] = port
 
     # Deliver the frame
-    frame = KISSCommand(cmd=10, port=14, payload=b'this should be dropped')
+    frame = KISSCommand(cmd=10, port=14, payload=b"this should be dropped")
     kissdev._dispatch_rx_frame(frame)
+
 
 def test_dispatch_rx_valid_port():
     """
     Test that _dispatch_rx_port to a known port delivers to that port.
     """
+
     class DummyPort(object):
         def __init__(self):
             self.frames = []
@@ -256,12 +258,13 @@ def test_dispatch_rx_valid_port():
     kissdev._port[14] = port
 
     # Deliver the frame
-    frame = KISSCommand(cmd=10, port=14, payload=b'this should be delivered')
+    frame = KISSCommand(cmd=10, port=14, payload=b"this should be delivered")
     kissdev._dispatch_rx_frame(frame)
 
     # Our port should have the frame
     eq_(len(port.frames), 1)
     assert_is(port.frames[0], frame)
+
 
 def test_send_data():
     """
@@ -269,33 +272,36 @@ def test_send_data():
     """
     loop = DummyLoop()
     kissdev = DummyKISSDevice(loop=loop)
-    kissdev._tx_buffer += b'test output data'
+    kissdev._tx_buffer += b"test output data"
 
     # Send the data out.
     kissdev._send_data()
 
     # We should now see this was "sent" and now in 'transmitted'
-    eq_(bytes(kissdev.transmitted), b'test output data')
+    eq_(bytes(kissdev.transmitted), b"test output data")
 
     # That should be the lot
     eq_(len(loop.calls), 0)
+
 
 def test_send_data_block_size():
     """
     Test that _send_data re-schedules itself when buffer exceeds block size
     """
     loop = DummyLoop()
-    kissdev = DummyKISSDevice(loop=loop, send_block_size=4, send_block_delay=1)
-    kissdev._tx_buffer += b'test output data'
+    kissdev = DummyKISSDevice(
+        loop=loop, send_block_size=4, send_block_delay=1
+    )
+    kissdev._tx_buffer += b"test output data"
 
     # Send the data out.
     kissdev._send_data()
 
     # We should now see the first block was "sent" and now in 'transmitted'
-    eq_(bytes(kissdev.transmitted), b'test')
+    eq_(bytes(kissdev.transmitted), b"test")
 
     # The rest should be waiting
-    eq_(bytes(kissdev._tx_buffer), b' output data')
+    eq_(bytes(kissdev._tx_buffer), b" output data")
 
     # There should be a pending call to send more:
     eq_(len(loop.calls), 1)
@@ -305,6 +311,7 @@ def test_send_data_block_size():
     assert_greater(calltime - loop.time(), 0.990)
     assert_less(calltime - loop.time(), 1.0)
     eq_(callfunc, kissdev._send_data)
+
 
 def test_send_data_close_after_send():
     """
@@ -312,7 +319,7 @@ def test_send_data_close_after_send():
     """
     loop = DummyLoop()
     kissdev = DummyKISSDevice(loop=loop)
-    kissdev._tx_buffer += b'test output data'
+    kissdev._tx_buffer += b"test output data"
 
     # Force state
     kissdev._state = KISSDeviceState.CLOSING
@@ -324,18 +331,21 @@ def test_send_data_close_after_send():
     kissdev._send_data()
 
     # We should now see the first block was "sent" and now in 'transmitted'
-    eq_(bytes(kissdev.transmitted), b'test output data')
+    eq_(bytes(kissdev.transmitted), b"test output data")
 
     # The device should now be closed.
     eq_(kissdev.close_calls, 1)
+
 
 def test_send_data_block_size():
     """
     Test that _send_data waits until all data sent before closing.
     """
     loop = DummyLoop()
-    kissdev = DummyKISSDevice(loop=loop, send_block_size=4, send_block_delay=1)
-    kissdev._tx_buffer += b'test output data'
+    kissdev = DummyKISSDevice(
+        loop=loop, send_block_size=4, send_block_delay=1
+    )
+    kissdev._tx_buffer += b"test output data"
 
     # Force state
     kissdev._state = KISSDeviceState.CLOSING
@@ -344,10 +354,10 @@ def test_send_data_block_size():
     kissdev._send_data()
 
     # We should now see the first block was "sent" and now in 'transmitted'
-    eq_(bytes(kissdev.transmitted), b'test')
+    eq_(bytes(kissdev.transmitted), b"test")
 
     # The rest should be waiting
-    eq_(bytes(kissdev._tx_buffer), b' output data')
+    eq_(bytes(kissdev._tx_buffer), b" output data")
 
     # There should be a pending call to send more:
     eq_(len(loop.calls), 1)
@@ -360,6 +370,7 @@ def test_send_data_block_size():
 
     # No close call made yet
     eq_(kissdev.close_calls, 0)
+
 
 def test_init_kiss():
     """
@@ -378,7 +389,8 @@ def test_init_kiss():
     eq_(kissdev._kiss_rem_commands, kissdev._kiss_commands[1:])
 
     # We should see the first initialisation commands
-    eq_(bytes(kissdev.transmitted), b'INT KISS\r')
+    eq_(bytes(kissdev.transmitted), b"INT KISS\r")
+
 
 def test_getitem():
     """
@@ -389,6 +401,7 @@ def test_getitem():
     assert isinstance(port, KISSPort)
     assert_is(kissdev._port[7], port)
 
+
 def test__send_kiss_cmd():
     kissdev = DummyKISSDevice(loop=DummyLoop())
     kissdev._kiss_rem_commands = []
@@ -396,4 +409,3 @@ def test__send_kiss_cmd():
     kissdev._send_kiss_cmd()
     eq_(KISSDeviceState.OPEN, kissdev._state)
     eq_(bytearray(), kissdev._rx_buffer)
-

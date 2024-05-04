@@ -13,61 +13,71 @@ from hashlib import sha256
 from .router import APRSRouter
 from ..frame import AX25Address
 from .frame import APRSFrame
-from .message import APRSMessageHandler, \
-        APRSMessageFrame, APRSMessageAckFrame, APRSMessageRejFrame
+from .message import (
+    APRSMessageHandler,
+    APRSMessageFrame,
+    APRSMessageAckFrame,
+    APRSMessageRejFrame,
+)
 
 
 class APRSInterface(APRSRouter):
-    def __init__(self, ax25int, mycall,
-            # Retransmission parameters
-            retransmit_count=4, retransmit_timeout_base=30,
-            retransmit_timeout_rand=10, retransmit_timeout_scale=1.5,
-            # Destination call to use for our traffic
-            aprs_destination='APZAIO',
-            # Path to use when sending APRS messages
-            aprs_path=['WIDE1-1','WIDE2-1'],
-            # AX.25 destination SSIDs to listen for.  *NOTE* Setting this will
-            # break reception of MIC-e traffic!  The format here used is a `list`
-            # of `dict` objects:
-            # listen_destinations=[
-            #     # APRS 1.0.1 protocol specification page 13
-            #     dict(callsign='^AIR',   regex=True,     ssid=None), # Legacy
-            #     dict(callsign='^ALL',   regex=True,     ssid=None),
-            #     dict(callsign='^AP',    regex=True,     ssid=None),
-            #     dict(callsign='BEACON', regex=False,    ssid=None),
-            #     dict(callsign='^CQ',    regex=True,     ssid=None),
-            #     dict(callsign='^GPS',   regex=True,     ssid=None),
-            #     dict(callsign='^DF',    regex=True,     ssid=None),
-            #     dict(callsign='^DGPS',  regex=True,     ssid=None),
-            #     dict(callsign='^DRILL', regex=True,     ssid=None),
-            #     dict(callsign='^ID',    regex=True,     ssid=None),
-            #     dict(callsign='^JAVA',  regex=True,     ssid=None),
-            #     dict(callsign='^MAIL',  regex=True,     ssid=None),
-            #     dict(callsign='^MICE',  regex=True,     ssid=None),
-            #     dict(callsign='^QST',   regex=True,     ssid=None),
-            #     dict(callsign='^QTH',   regex=True,     ssid=None),
-            #     dict(callsign='^RTCM',  regex=True,     ssid=None),
-            #     dict(callsign='^SKY',   regex=True,     ssid=None),
-            #     dict(callsign='^SPACE', regex=True,     ssid=None),
-            #     dict(callsign='^SPC',   regex=True,     ssid=None),
-            #     dict(callsign='^SYM',   regex=True,     ssid=None),
-            #     dict(callsign='^TEL',   regex=True,     ssid=None),
-            #     dict(callsign='^TEST',  regex=True,     ssid=None),
-            #     dict(callsign='^TLM',   regex=True,     ssid=None),
-            #     dict(callsign='^WX',    regex=True,     ssid=None),
-            #     dict(callsign='^ZIP',   regex=True,     ssid=None)  # Legacy
-            # ],
-            listen_destinations=None,
-            # listen_altnets uses the same format as listen_destinations
-            # and adds *additional* altnets using the same specification.
-            # *NOTE* Setting this will break reception of MIC-e traffic!
-            listen_altnets=None,
-            # Maximum message ID modulo function
-            msgid_modulo=1000,
-            # Length of time in seconds before duplicates expire
-            deduplication_expiry=28,
-            # Logger instance
-            log=None):
+    def __init__(
+        self,
+        ax25int,
+        mycall,
+        # Retransmission parameters
+        retransmit_count=4,
+        retransmit_timeout_base=30,
+        retransmit_timeout_rand=10,
+        retransmit_timeout_scale=1.5,
+        # Destination call to use for our traffic
+        aprs_destination="APZAIO",
+        # Path to use when sending APRS messages
+        aprs_path=["WIDE1-1", "WIDE2-1"],
+        # AX.25 destination SSIDs to listen for.  *NOTE* Setting this will
+        # break reception of MIC-e traffic!  The format here used is a `list`
+        # of `dict` objects:
+        # listen_destinations=[
+        #     # APRS 1.0.1 protocol specification page 13
+        #     dict(callsign='^AIR',   regex=True,     ssid=None), # Legacy
+        #     dict(callsign='^ALL',   regex=True,     ssid=None),
+        #     dict(callsign='^AP',    regex=True,     ssid=None),
+        #     dict(callsign='BEACON', regex=False,    ssid=None),
+        #     dict(callsign='^CQ',    regex=True,     ssid=None),
+        #     dict(callsign='^GPS',   regex=True,     ssid=None),
+        #     dict(callsign='^DF',    regex=True,     ssid=None),
+        #     dict(callsign='^DGPS',  regex=True,     ssid=None),
+        #     dict(callsign='^DRILL', regex=True,     ssid=None),
+        #     dict(callsign='^ID',    regex=True,     ssid=None),
+        #     dict(callsign='^JAVA',  regex=True,     ssid=None),
+        #     dict(callsign='^MAIL',  regex=True,     ssid=None),
+        #     dict(callsign='^MICE',  regex=True,     ssid=None),
+        #     dict(callsign='^QST',   regex=True,     ssid=None),
+        #     dict(callsign='^QTH',   regex=True,     ssid=None),
+        #     dict(callsign='^RTCM',  regex=True,     ssid=None),
+        #     dict(callsign='^SKY',   regex=True,     ssid=None),
+        #     dict(callsign='^SPACE', regex=True,     ssid=None),
+        #     dict(callsign='^SPC',   regex=True,     ssid=None),
+        #     dict(callsign='^SYM',   regex=True,     ssid=None),
+        #     dict(callsign='^TEL',   regex=True,     ssid=None),
+        #     dict(callsign='^TEST',  regex=True,     ssid=None),
+        #     dict(callsign='^TLM',   regex=True,     ssid=None),
+        #     dict(callsign='^WX',    regex=True,     ssid=None),
+        #     dict(callsign='^ZIP',   regex=True,     ssid=None)  # Legacy
+        # ],
+        listen_destinations=None,
+        # listen_altnets uses the same format as listen_destinations
+        # and adds *additional* altnets using the same specification.
+        # *NOTE* Setting this will break reception of MIC-e traffic!
+        listen_altnets=None,
+        # Maximum message ID modulo function
+        msgid_modulo=1000,
+        # Length of time in seconds before duplicates expire
+        deduplication_expiry=28,
+        # Logger instance
+        log=None,
+    ):
 
         super(APRSRouter, self).__init__()
         if log is None:
@@ -97,12 +107,18 @@ class APRSInterface(APRSRouter):
         else:
             # Bind to receive traffic (direct, standard APRS destinations, and
             # user-defined alt-nets):
-            for spec in [
-                    dict(callsign=self._mycall.callsign,
-                        ssid=self._mycall.ssid, regex=False)
-                    ] + (listen_destinations or []) + (listen_altnets or []):
+            for spec in (
+                [
+                    dict(
+                        callsign=self._mycall.callsign,
+                        ssid=self._mycall.ssid,
+                        regex=False,
+                    )
+                ]
+                + (listen_destinations or [])
+                + (listen_altnets or [])
+            ):
                 self._ax25int.bind(self._on_receive, **spec)
-
 
         # Message ID counter
         self._msgid = 0
@@ -112,13 +128,12 @@ class APRSInterface(APRSRouter):
 
         # APRS destination address for broadcast messages
         self._aprs_destination = AX25Address.decode(
-                aprs_destination).normalised
+            aprs_destination
+        ).normalised
 
         # APRS digi path
         self._aprs_path = [
-                AX25Address.decode(call).normalised
-                for call in
-                aprs_path or []
+            AX25Address.decode(call).normalised for call in aprs_path or []
         ]
 
         # Pending messages, by addressee and message ID
@@ -139,48 +154,57 @@ class APRSInterface(APRSRouter):
     def mycall(self):
         return self._mycall.copy()
 
-    def send_message(self, addressee, message,
-            path=None, oneshot=False, replyack=None):
+    def send_message(
+        self, addressee, message, path=None, oneshot=False, replyack=None
+    ):
         """
         Send a APRS message to the named addressee.  If replyack is not None,
         send a reply-ack.  If replyack is True, advertise reply-ack capability.
         """
         if path is None:
-            self._log.debug('Setting default path for message to %s',
-                    addressee)
-            path=self._aprs_path
+            self._log.debug(
+                "Setting default path for message to %s", addressee
+            )
+            path = self._aprs_path
 
         if oneshot:
             # Forbid replyack when in one-shot mode as we can't encode a
             # reply-ack otherwise.
             if replyack:
-                raise ValueError('Cannot send reply-ack in one-shot mode')
+                raise ValueError("Cannot send reply-ack in one-shot mode")
 
             # One-shot mode, just fire and forget!
-            self._log.info('Send one-shot to %s: %s',
-                    addressee, message)
+            self._log.info("Send one-shot to %s: %s", addressee, message)
 
-            self.transmit(APRSMessageFrame(
+            self.transmit(
+                APRSMessageFrame(
                     destination=addressee,
                     source=self.mycall,
                     addressee=addressee,
                     message=message,
                     msgid=None,
-                    repeaters=path
-            ))
+                    repeaters=path,
+                )
+            )
             return
         elif replyack:
             # If replyack is a message, we are replying to *that* message.
-            self._log.debug('Reply-ACK is %s', replyack)
+            self._log.debug("Reply-ACK is %s", replyack)
             if isinstance(replyack, APRSMessageFrame):
                 if not replyack.replyack:
                     # Likely station won't support it
-                    raise ValueError('replyack is not a reply-ack message')
+                    raise ValueError("replyack is not a reply-ack message")
 
                 replyack = replyack.msgid
 
-        handler = APRSMessageHandler(self, addressee, path, message,
-                replyack, self._log.getChild('message'))
+        handler = APRSMessageHandler(
+            self,
+            addressee,
+            path,
+            message,
+            replyack,
+            self._log.getChild("message"),
+        )
         self._pending_msg[handler.msgid] = handler
         handler._send()
         return handler
@@ -195,8 +219,7 @@ class APRSInterface(APRSRouter):
         if message.msgid is None:
             return
 
-        self._log.debug('Responding to message %s with ack=%s',
-                message, ack)
+        self._log.debug("Responding to message %s with ack=%s", message, ack)
 
         if direct and (message.header.repeaters is not None):
             response_path = message.header.repeaters.reply
@@ -204,10 +227,10 @@ class APRSInterface(APRSRouter):
             response_path = None
 
         self.send_message(
-                addressee=message.header.source.normalised,
-                path=response_path,
-                message='%s%s' % ('ack' if ack else 'rej', message.msgid),
-                oneshot=True
+            addressee=message.header.source.normalised,
+            path=response_path,
+            message="%s%s" % ("ack" if ack else "rej", message.msgid),
+            oneshot=True,
         )
 
     @classmethod
@@ -232,8 +255,9 @@ class APRSInterface(APRSRouter):
             # We've seen this before.
             return True
 
-        self._msg_expiry[framedigest] = \
-                self._loop.time() + self._deduplication_expiry
+        self._msg_expiry[framedigest] = (
+            self._loop.time() + self._deduplication_expiry
+        )
         self._loop.call_soon(self._schedule_dedup_cleanup)
         return False
 
@@ -250,8 +274,9 @@ class APRSInterface(APRSRouter):
 
         delay = min(self._msg_expiry.values()) - self._loop.time()
         if delay > 0:
-            self._deduplication_timeout = \
-                    self._loop.call_later(delay, self._dedup_cleanup)
+            self._deduplication_timeout = self._loop.call_later(
+                delay, self._dedup_cleanup
+            )
         else:
             self._loop.call_soon(self._dedup_cleanup)
 
@@ -270,8 +295,11 @@ class APRSInterface(APRSRouter):
     def _on_receive_ack(self, msgid, frame):
         handler = self._pending_msg.get(msgid)
         self._log.debug(
-                'Response to %r (pending %r), handler %s',
-                msgid, list(self._pending_msg.keys()), handler)
+            "Response to %r (pending %r), handler %s",
+            msgid,
+            list(self._pending_msg.keys()),
+            handler,
+        )
         if handler:
             self._loop.call_soon(handler._on_response, frame)
             return True
@@ -283,26 +311,29 @@ class APRSInterface(APRSRouter):
         Handle the incoming frame.
         """
         if self._test_or_add_frame(frame):
-            self._log.debug('Ignoring duplicate frame: %s', frame)
+            self._log.debug("Ignoring duplicate frame: %s", frame)
             return
 
         try:
-            frame = APRSFrame.decode(frame, self._log.getChild('decode'))
-            self._log.debug('Processing incoming message %s (type %s)',
-                    frame, frame.__class__.__name__)
+            frame = APRSFrame.decode(frame, self._log.getChild("decode"))
+            self._log.debug(
+                "Processing incoming message %s (type %s)",
+                frame,
+                frame.__class__.__name__,
+            )
 
             # Pass to the super-class handler
-            self._loop.call_soon(partial(
-                super(APRSInterface, self)._on_receive,
-                frame
-            ))
+            self._loop.call_soon(
+                partial(super(APRSInterface, self)._on_receive, frame)
+            )
 
             if isinstance(frame, APRSMessageFrame):
                 # This is a message, is it for us?
                 if frame.addressee == self.mycall:
                     # Is it a response for us?
-                    if isinstance(frame, (APRSMessageAckFrame, \
-                            APRSMessageRejFrame)):
+                    if isinstance(
+                        frame, (APRSMessageAckFrame, APRSMessageRejFrame)
+                    ):
                         if self._on_receive_ack(frame.msgid, frame):
                             # Dealt with
                             return
@@ -313,26 +344,32 @@ class APRSInterface(APRSRouter):
                             self._on_receive_ack(frame.replyack, frame)
 
                         # This is a message addressed to us.
-                        self._loop.call_soon(partial(
-                            self.received_addressed_msg.emit,
-                            interface=self, frame=frame
-                        ))
+                        self._loop.call_soon(
+                            partial(
+                                self.received_addressed_msg.emit,
+                                interface=self,
+                                frame=frame,
+                            )
+                        )
                 else:
-                    self._log.debug('Addressee is %s, mycall %s, not for us',
-                            frame.addressee, self.mycall)
+                    self._log.debug(
+                        "Addressee is %s, mycall %s, not for us",
+                        frame.addressee,
+                        self.mycall,
+                    )
         except:
-            self._log.exception('Exception occurred emitting signal')
+            self._log.exception("Exception occurred emitting signal")
 
     def transmit(self, frame):
         """
         Send an AX.25 frame.
         """
-        self._log.info('Sending %s', frame)
+        self._log.info("Sending %s", frame)
         try:
             self._ax25int.transmit(frame)
             self._test_or_add_frame(frame)
         except:
-            self._log.exception('Failed to send %s', frame)
+            self._log.exception("Failed to send %s", frame)
 
     @property
     def _next_msgid(self):

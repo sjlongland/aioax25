@@ -43,21 +43,18 @@ class Router(object):
         ssid may be set to None, which means all SSIDs.
         """
         if not isinstance(callsign, str):
-            raise TypeError('callsign must be a string (use '
-                            'regex=True for regex)')
+            raise TypeError(
+                "callsign must be a string (use " "regex=True for regex)"
+            )
         if regex:
             (_, call_receivers) = self._receiver_re.setdefault(
-                    callsign,
-                    (re.compile(callsign), {})
+                callsign, (re.compile(callsign), {})
             )
         else:
-            call_receivers = self._receiver_str.setdefault(
-                    callsign,
-                    {}
-            )
+            call_receivers = self._receiver_str.setdefault(callsign, {})
 
         call_receivers.setdefault(ssid, []).append(callback)
-            
+
     def unbind(self, callback, callsign, ssid=0, regex=False):
         """
         Unbind a receiver from the given callsign/SSID combo.
@@ -92,12 +89,12 @@ class Router(object):
         # Decode from raw bytes
         if not isinstance(frame, AX25Frame):
             frame = AX25Frame.decode(frame)
-        self._log.debug('Handling incoming frame %s', frame)
+        self._log.debug("Handling incoming frame %s", frame)
 
         # Pass the message to those who elected to receive all traffic
-        self._loop.call_soon(partial(
-            self.received_msg.emit,
-            interface=self, frame=frame))
+        self._loop.call_soon(
+            partial(self.received_msg.emit, interface=self, frame=frame)
+        )
 
         destination = self._get_destination(frame)
         callsign = destination.callsign
@@ -107,29 +104,33 @@ class Router(object):
         calls = []
         try:
             callsign_receivers = self._receiver_str[callsign]
-            calls.extend([
-                partial(receiver, interface=self, frame=frame)
-                for receiver in
-                callsign_receivers.get(None, []) \
-                            + callsign_receivers.get(ssid, [])
-            ])
+            calls.extend(
+                [
+                    partial(receiver, interface=self, frame=frame)
+                    for receiver in callsign_receivers.get(None, [])
+                    + callsign_receivers.get(ssid, [])
+                ]
+            )
         except KeyError:
             pass
 
         # Compare the incoming frame destination to our regex receivers
-        for (pattern, pat_receivers) in self._receiver_re.values():
+        for pattern, pat_receivers in self._receiver_re.values():
             match = pattern.search(callsign)
             if not match:
                 continue
 
-            calls.extend([
-                partial(receiver, interface=self, frame=frame, match=match)
-                for receiver in
-                pat_receivers.get(None, []) \
-                        + pat_receivers.get(ssid, [])
-            ])
+            calls.extend(
+                [
+                    partial(
+                        receiver, interface=self, frame=frame, match=match
+                    )
+                    for receiver in pat_receivers.get(None, [])
+                    + pat_receivers.get(ssid, [])
+                ]
+            )
 
         # Dispatch the received message
-        self._log.debug('Dispatching frame to %d receivers', len(calls))
+        self._log.debug("Dispatching frame to %d receivers", len(calls))
         for receiver in calls:
             self._loop.call_soon(receiver)

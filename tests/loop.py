@@ -6,6 +6,7 @@ Dummy IOLoop interface
 
 import time
 
+
 class DummyLoop(object):
     def __init__(self):
         self.readers = {}

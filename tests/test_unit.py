@@ -8,11 +8,13 @@ from pytest import skip
 
 try:
     from pint import Quantity
+
     PINT_SUPPORTED = True
 except ImportError:
     PINT_SUPPORTED = False
 
 from aioax25.unit import checknumeric, convertvalue
+
 
 def test_checknumeric_required_none():
     """
@@ -29,8 +31,9 @@ def test_checknumeric_optional_none():
     """
     checknumeric should return None if optional value is None
     """
-    assert checknumeric("myparam", None, required=False) is None, \
-            "Should have passed through None for optional parameter"
+    assert (
+        checknumeric("myparam", None, required=False) is None
+    ), "Should have passed through None for optional parameter"
 
 
 def test_checknumeric_int():
@@ -63,15 +66,18 @@ def test_convertvalue_none():
     """
     convertvalue should handle None without barfing
     """
-    assert convertvalue("optparam", None, "m", required=False) is None, \
-            "Should have returned None here"
+    assert (
+        convertvalue("optparam", None, "m", required=False) is None
+    ), "Should have returned None here"
+
 
 def test_convertvalue_barevalue():
     """
     convertvalue should pass through bare value
     """
-    assert convertvalue("optparam", 123.45, "m", required=False) == 123.45, \
-            "Should have passed through value"
+    assert (
+        convertvalue("optparam", 123.45, "m", required=False) == 123.45
+    ), "Should have passed through value"
 
 
 def test_convertvalue_quantity():
@@ -84,6 +90,7 @@ def test_convertvalue_quantity():
             "so unit conversion won't work as expected."
         )
 
-    assert convertvalue("optparam", \
-            Quantity(1, "in"), "cm", required=False) == 2.54, \
-            "Should have converted the value"
+    assert (
+        convertvalue("optparam", Quantity(1, "in"), "cm", required=False)
+        == 2.54
+    ), "Should have converted the value"

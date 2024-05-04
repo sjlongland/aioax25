@@ -13,11 +13,22 @@ from asyncio import get_event_loop, sleep
 
 
 class DummySerial(object):
-    def __init__(self, port, baudrate, bytesize, parity, stopbits,
-            timeout, xonxoff, rtscts, write_timeout, dsrdtr,
-            inter_byte_timeout):
+    def __init__(
+        self,
+        port,
+        baudrate,
+        bytesize,
+        parity,
+        stopbits,
+        timeout,
+        xonxoff,
+        rtscts,
+        write_timeout,
+        dsrdtr,
+        inter_byte_timeout,
+    ):
 
-        assert port == '/dev/ttyS0'
+        assert port == "/dev/ttyS0"
         assert baudrate == 9600
         assert bytesize == EIGHTBITS
         assert parity == PARITY_NONE
@@ -65,55 +76,64 @@ class DummyTransport(object):
 
     def flush(self):
         future = self._loop.create_future()
-        self._loop.call_soon(lambda : future.set_result(None))
+        self._loop.call_soon(lambda: future.set_result(None))
         return future
 
     def write(self, *args, **kwargs):
         future = self._loop.create_future()
         self._port.write(*args, **kwargs)
-        self._loop.call_soon(lambda : future.set_result(None))
+        self._loop.call_soon(lambda: future.set_result(None))
         return future
 
 
 # Keep a record of all ports, transports and protocols
-PortConnection = namedtuple('PortConnection', ['port', 'protocol', 'transport'])
-create_serial_conn_log = logging.getLogger('create_serial_connection')
+PortConnection = namedtuple(
+    "PortConnection", ["port", "protocol", "transport"]
+)
+create_serial_conn_log = logging.getLogger("create_serial_connection")
 connections = []
 
+
 # Stub the serial port connection factory
-async def dummy_create_serial_connection(loop, proto_factory, *args, **kwargs):
+async def dummy_create_serial_connection(
+    loop, proto_factory, *args, **kwargs
+):
     future = loop.create_future()
     create_serial_conn_log.debug(
-            'Creating new serial connection: '
-            'loop=%r proto=%r args=%r kwargs=%r',
-            loop, proto_factory, args, kwargs
+        "Creating new serial connection: "
+        "loop=%r proto=%r args=%r kwargs=%r",
+        loop,
+        proto_factory,
+        args,
+        kwargs,
     )
 
     def _open():
-        create_serial_conn_log.debug('Creating objects')
+        create_serial_conn_log.debug("Creating objects")
         # Create the objects
         protocol = proto_factory()
         port = DummySerial(*args, **kwargs)
         transport = DummyTransport(loop, port)
 
         # Record the created object references
-        connections.append(PortConnection(
-            port=port, protocol=protocol, transport=transport
-        ))
+        connections.append(
+            PortConnection(port=port, protocol=protocol, transport=transport)
+        )
 
         # Pass the protocol the transport object
-        create_serial_conn_log.debug('Passing transport to protocol')
+        create_serial_conn_log.debug("Passing transport to protocol")
         protocol.connection_made(transport)
 
         # Finish up the future
-        create_serial_conn_log.debug('Finishing up')
+        create_serial_conn_log.debug("Finishing up")
         future.set_result((protocol, transport))
 
-    create_serial_conn_log.debug('Scheduled in IOLoop')
+    create_serial_conn_log.debug("Scheduled in IOLoop")
     loop.call_soon(_open)
 
-    create_serial_conn_log.debug('Returning future')
-    return (await future)
+    create_serial_conn_log.debug("Returning future")
+    return await future
+
 
 kiss.create_serial_connection = dummy_create_serial_connection
 
@@ -133,10 +153,7 @@ async def test_open():
     Test we can open the port.
     """
     loop = get_event_loop()
-    kissdev = TestDevice(
-            device='/dev/ttyS0', baudrate=9600,
-            loop=loop
-    )
+    kissdev = TestDevice(device="/dev/ttyS0", baudrate=9600, loop=loop)
     assert kissdev._transport is None
 
     kissdev.open()
@@ -160,16 +177,24 @@ async def test_close():
     """
     loop = get_event_loop()
     kissdev = TestDevice(
-            device='/dev/ttyS0', baudrate=9600,
-            loop=loop, reset_on_close=False
+        device="/dev/ttyS0", baudrate=9600, loop=loop, reset_on_close=False
     )
 
     # Force the port open
     kissdev._state = kiss.KISSDeviceState.OPEN
-    serial = DummySerial(port='/dev/ttyS0', baudrate=9600,
-            bytesize=EIGHTBITS, parity=PARITY_NONE, stopbits=STOPBITS_ONE,
-            timeout=None, xonxoff=False, rtscts=False, write_timeout=None,
-            dsrdtr=False, inter_byte_timeout=None)
+    serial = DummySerial(
+        port="/dev/ttyS0",
+        baudrate=9600,
+        bytesize=EIGHTBITS,
+        parity=PARITY_NONE,
+        stopbits=STOPBITS_ONE,
+        timeout=None,
+        xonxoff=False,
+        rtscts=False,
+        write_timeout=None,
+        dsrdtr=False,
+        inter_byte_timeout=None,
+    )
     kissdev._transport = serial
 
     # Now try closing the port
@@ -193,27 +218,41 @@ def test_on_close_err(logger):
     """
     Test errors are logged if given
     """
+
     # Yeah, kludgy… but py.test won't see the fixture if I don't
     # do it this way.
     @asynctest
     async def _run():
         loop = get_event_loop()
         kissdev = TestDevice(
-                device='/dev/ttyS0', baudrate=9600,
-                log=logger, loop=loop, reset_on_close=False
+            device="/dev/ttyS0",
+            baudrate=9600,
+            log=logger,
+            loop=loop,
+            reset_on_close=False,
         )
 
         # Force the port open
         kissdev._state = kiss.KISSDeviceState.OPEN
-        serial = DummySerial(port='/dev/ttyS0', baudrate=9600,
-                bytesize=EIGHTBITS, parity=PARITY_NONE, stopbits=STOPBITS_ONE,
-                timeout=None, xonxoff=False, rtscts=False, write_timeout=None,
-                dsrdtr=False, inter_byte_timeout=None)
+        serial = DummySerial(
+            port="/dev/ttyS0",
+            baudrate=9600,
+            bytesize=EIGHTBITS,
+            parity=PARITY_NONE,
+            stopbits=STOPBITS_ONE,
+            timeout=None,
+            xonxoff=False,
+            rtscts=False,
+            write_timeout=None,
+            dsrdtr=False,
+            inter_byte_timeout=None,
+        )
         kissdev._transport = serial
 
         # Define a close error
         class CommsError(IOError):
             pass
+
         my_err = CommsError()
 
         # Now report the closure of the port
@@ -221,12 +260,17 @@ def test_on_close_err(logger):
 
         # We should have seen a log message reported
         assert logger.logrecords == [
-                dict(
-                    method='error',
-                    args=('Closing port due to error %r', my_err,),
-                    kwargs={},
-                    ex_type=None, ex_val=None, ex_tb=None
-                )
+            dict(
+                method="error",
+                args=(
+                    "Closing port due to error %r",
+                    my_err,
+                ),
+                kwargs={},
+                ex_type=None,
+                ex_val=None,
+                ex_tb=None,
+            )
         ]
 
         # The device should not reference the port
@@ -234,6 +278,7 @@ def test_on_close_err(logger):
 
         # The port should now be in the closed state
         assert kissdev._state == kiss.KISSDeviceState.CLOSED
+
     _run()
 
 
@@ -243,10 +288,7 @@ async def test_send_raw_data():
     Test _send_raw_data passes the data to the serial device.
     """
     loop = get_event_loop()
-    kissdev = TestDevice(
-            device='/dev/ttyS0', baudrate=9600,
-            loop=loop
-    )
+    kissdev = TestDevice(device="/dev/ttyS0", baudrate=9600, loop=loop)
     assert kissdev._transport is None
 
     kissdev.open()
@@ -256,5 +298,5 @@ async def test_send_raw_data():
     assert len(connections) == 1
     connection = connections.pop(0)
 
-    kissdev._send_raw_data(b'a test frame')
-    assert bytes(connection.port.tx_buffer) == b'a test frame'
+    kissdev._send_raw_data(b"a test frame")
+    assert bytes(connection.port.tx_buffer) == b"a test frame"
