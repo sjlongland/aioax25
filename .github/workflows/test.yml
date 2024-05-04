@@ -1,0 +1,63 @@
+name: Reusable workflow that runs all tests
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        type: string
+        required: true
+      platform:
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  # Environment variables to support color support (jaraco/skeleton#66):
+  # Request colored output from CLI tools supporting it. Different tools
+  # interpret the value differently. For some, just being set is sufficient.
+  # For others, it must be a non-zero integer. For yet others, being set
+  # to a non-empty value is sufficient. For tox, it must be one of
+  # <blank>, 0, 1, false, no, off, on, true, yes. The only enabling value
+  # in common is "1".
+  FORCE_COLOR: 1
+  # Recognized by the `py` package, dependency of `pytest` (must be "1")
+  PY_COLORS: 1
+
+  # Suppress noisy pip warnings
+  PIP_DISABLE_PIP_VERSION_CHECK: 'true'
+  PIP_NO_PYTHON_VERSION_WARNING: 'true'
+  PIP_NO_WARN_SCRIPT_LOCATION: 'true'
+
+
+jobs:
+  test:
+    runs-on: ${{ inputs.platform }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python-version }}
+          allow-prereleases: true
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pytest coverage coverage-lcov toml pint
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Lint with flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 .  --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings.
+          flake8 .  --count --exit-zero --max-complexity=10 --statistics
+      - name: Test with py.test
+        run: |
+          coverage run -m pytest
+          coverage-lcov
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: ./lcov.info

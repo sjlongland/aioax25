@@ -1,0 +1,55 @@
+name: Pre-merge and post-merge tests
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Run tests
+    uses: ./.github/workflows/test.yml
+    # https://wildwolf.name/github-actions-how-to-avoid-running-the-same-workflow-multiple-times/
+    if: >
+      github.event_name != 'pull_request'
+      || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
+    strategy:
+      matrix:
+        python:
+        - "3.5"
+        - "3.11"
+        - "3.12"
+        platform:
+        # This package is supposed to be OS-independent and is unlikely to have
+        # OS-specific bugs, so we conserve runner usage by only testing on Linux
+        # during pre-merge and post-merge testing. If it works on Linux, it'll
+        # probably work on Mac and Windows too. But if an OS-specific bug does
+        # slip through, we should catch it in pre-release testing.
+        - ubuntu-latest
+        exclude:
+        # Python 3.5 does not run on ubuntu-latest
+        - python: "3.5"
+          platform: ubuntu-latest
+        include:
+        - python: "3.5"
+          platform: ubuntu-20.04
+        - python: "3.12"
+          platform: ubuntu-latest
+    with:
+      python-version: ${{ matrix.python }}
+      platform: ${{ matrix.platform }}
+
+  check:  # This job does nothing and is only used for the branch protection
+    # https://wildwolf.name/github-actions-how-to-avoid-running-the-same-workflow-multiple-times/
+    if: >
+      github.event_name != 'pull_request'
+      || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
+
+    needs:
+    - test
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Decide whether the needed jobs succeeded or failed
+      uses: re-actors/alls-green@release/v1
+      with:
+        jobs: ${{ toJSON(needs) }}
