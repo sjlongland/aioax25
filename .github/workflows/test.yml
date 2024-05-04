@@ -67,8 +67,7 @@ jobs:
       - name: Test with py.test (with coverage)
         if: ${{ !inputs.skip-coverage }}
         run: |
-          coverage run -m pytest
-          coverage-lcov
+          python -m pytest --cov=aioax25 --cov-report=term-missing --cov-report=lcov
       - name: Test with py.test (without lcov coverage)
         if: ${{ inputs.skip-coverage }}
         run: |
@@ -78,4 +77,4 @@ jobs:
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: ./lcov.info
+          path-to-lcov: ./coverage.lcov
