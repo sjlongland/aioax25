@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 
 from aioax25.frame import (
-    AX25Frame,
-    AX25UnnumberedInformationFrame,
-    AX25FrameRejectFrame,
-    AX25UnnumberedFrame,
     AX25DisconnectModeFrame,
+    AX25Frame,
+    AX25FrameRejectFrame,
     AX25SetAsyncBalancedModeFrame,
     AX25SetAsyncBalancedModeExtendedFrame,
     AX25TestFrame,
+    AX25UnnumberedAcknowledgeFrame,
+    AX25UnnumberedFrame,
+    AX25UnnumberedInformationFrame,
 )
 
 from ..hex import from_hex, hex_cmp
@@ -686,12 +687,10 @@ def test_ua_str():
         destination="VK4BWI",
         source="VK4MSL",
         cr=True,
-        pid=0xF0,
     )
     assert str(frame) == (
         "AX25UnnumberedAcknowledgeFrame VK4MSL>VK4BWI: "
-        "Control=0x03 P/F=False Modifier=0x03 PID=0xf0\n"
-        "Payload=b'This is a test'"
+        "Control=0x73 P/F=True Modifier=0x63"
     )
 
 
