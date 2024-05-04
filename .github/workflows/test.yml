@@ -9,6 +9,10 @@ on:
       platform:
         type: string
         required: true
+      skip-coverage:
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -41,22 +45,36 @@ jobs:
         with:
           python-version: ${{ inputs.python-version }}
           allow-prereleases: true
+      - name: Sanity check
+        run: |
+          which python
+          python --version
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 pytest coverage coverage-lcov toml pint
+          pip install flake8 pytest coverage toml pint
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Install coverage-lcov
+        if: "! inputs.skip-coverage"
+        run: |
+          pip install coverage-lcov
       - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
           flake8 .  --count --select=E9,F63,F7,F82 --show-source --statistics
           # exit-zero treats all errors as warnings.
           flake8 .  --count --exit-zero --max-complexity=10 --statistics
-      - name: Test with py.test
+      - name: Test with py.test (with coverage)
+        if: "! inputs.skip-coverage"
         run: |
           coverage run -m pytest
           coverage-lcov
+      - name: Test with py.test (without lcov coverage)
+        if: "inputs.skip-coverage"
+        run: |
+          python -m pytest --cov=aioax25 --cov-report=term-missing
       - name: Coveralls
+        if: "! inputs.skip-coverage"
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,5 +1,17 @@
 name: Pre-merge and post-merge tests
 
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      skip-coverage:
+        # lcov won't work in Python 3.5.
+        description: "Whether to skip coverage checks?"
+        type: boolean
+        required: false
+        default: false
+
 permissions:
   contents: read
 
@@ -31,11 +43,11 @@ jobs:
         include:
         - python: "3.5"
           platform: ubuntu-20.04
-        - python: "3.12"
-          platform: ubuntu-latest
+          skip-coverage: true
     with:
       python-version: ${{ matrix.python }}
       platform: ${{ matrix.platform }}
+      skip-coverage: ${{ matrix.skip-coverage || false }}
 
   check:  # This job does nothing and is only used for the branch protection
     # https://wildwolf.name/github-actions-how-to-avoid-running-the-same-workflow-multiple-times/
