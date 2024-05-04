@@ -91,6 +91,65 @@ async def test_open_connection_shell():
         loop.subprocess_shell = orig_subprocess_shell
 
 
+@asynctest
+async def test_open_connection_failure():
+    """
+    Test subprocess failure is detected and handled.
+    """
+    # This will receive the arguments passed to subprocess_shell
+    connection_args = []
+
+    loop = get_event_loop()
+
+    # Stub the subprocess_shell method
+    orig_subprocess_shell = loop.subprocess_shell
+
+    async def _subprocess_shell(proto_factory, *args):
+        # proto_factory should give us a KISSSubprocessProtocol object
+        protocol = proto_factory()
+        assert isinstance(protocol, kiss.KISSSubprocessProtocol)
+
+        connection_args.extend(args)
+        raise IOError("Exec failed")
+
+    loop.subprocess_shell = _subprocess_shell
+
+    try:
+        device = kiss.SubprocKISSDevice(
+            command=["kisspipecmd", "arg1", "arg2"],
+            shell=True,
+            loop=loop,
+            log=logging.getLogger(__name__),
+        )
+
+        failures = []
+
+        def _on_fail(**kwargs):
+            failures.append(kwargs)
+
+        device.failed.connect(_on_fail)
+
+        await device._open_connection()
+
+        # Expect a connection attempt to have been made
+        assert connection_args == ["kisspipecmd arg1 arg2"]
+
+        # Connection should be in the failed state
+        assert device.state == kiss.KISSDeviceState.FAILED
+
+        # Failure should have been reported
+        assert failures
+        failure = failures.pop(0)
+
+        assert failure.pop("action") == "open"
+        (ex_c, ex_v, _) = failure.pop("exc_info")
+        assert ex_c is IOError
+        assert str(ex_v) == "Exec failed"
+    finally:
+        # Restore mock
+        loop.subprocess_shell = orig_subprocess_shell
+
+
 def test_send_raw_data():
     """
     Test data written to the device gets written to the subprocess ``stdin``.
