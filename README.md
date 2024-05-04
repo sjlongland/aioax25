@@ -111,6 +111,21 @@ their `received` signals and accept raw AX.25 frames via the `send` method.
 Any object passed to `send` is wrapped in a `bytes` call -- this will
 implicitly call the `__bytes__` method on the object you pass in.
 
+#### Exception handling on the KISS device
+
+There are a couple of exception cases that are emitted via a signal, so that
+any consumer of the KISS device can react to issues, such as the port failing
+to open, transmission failures, or failures to shut down.
+
+```python
+def _on_fail(action, exc_info, **kwargs):
+    # Put your error handling code here
+    # action is a string: "open", "send" or "close"
+    # exc_info is the output of sys.exc_info() at the time of the error
+    pass
+kissdev.failed.connect(_on_fail)
+```
+
 ### Setting up an AX.25 Interface
 
 The AX.25 interface is a logical routing and queueing layer which decodes the
