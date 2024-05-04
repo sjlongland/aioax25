@@ -73,8 +73,10 @@ def test_open():
     kissdev = DummyKISSDevice(loop=loop)
 
     failures = []
+
     def _on_fail(**kwargs):
         failures.append(kwargs)
+
     kissdev.failed.connect(_on_fail)
 
     assert kissdev.open_calls == 0
@@ -93,8 +95,10 @@ def test_open_fail():
     kissdev = FailingKISSDevice(loop=loop)
 
     failures = []
+
     def _on_fail(**kwargs):
         failures.append(kwargs)
+
     kissdev.failed.connect(_on_fail)
 
     assert kissdev.open_calls == 0
@@ -124,8 +128,10 @@ def test_close():
     kissdev = DummyKISSDevice(loop=loop, reset_on_close=False)
 
     failures = []
+
     def _on_fail(**kwargs):
         failures.append(kwargs)
+
     kissdev.failed.connect(_on_fail)
 
     # Force the port open
@@ -148,8 +154,10 @@ def test_close_fail():
     kissdev = FailingKISSDevice(loop=loop, reset_on_close=False)
 
     failures = []
+
     def _on_fail(**kwargs):
         failures.append(kwargs)
+
     kissdev.failed.connect(_on_fail)
 
     # Force the port open
@@ -395,8 +403,10 @@ def test_send_data():
     kissdev._tx_buffer += b"test output data"
 
     failures = []
+
     def _on_fail(**kwargs):
         failures.append(kwargs)
+
     kissdev.failed.connect(_on_fail)
 
     # Send the data out.
@@ -421,8 +431,10 @@ def test_send_data_fail():
     kissdev._tx_buffer += b"test output data"
 
     failures = []
+
     def _on_fail(**kwargs):
         failures.append(kwargs)
+
     kissdev.failed.connect(_on_fail)
 
     # Send the data out.
