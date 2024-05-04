@@ -1,8 +1,6 @@
 # `aioax25`: AX.25 and APRS library in `asyncio`
 
-[![Test Status 3.5](https://github.com/sjlongland/aioax25/actions/workflows/python-3.5.yml/badge.svg)](https://github.com/sjlongland/aioax25/actions/workflows/python-3.5.yml)
-[![Test Status 3.9](https://github.com/sjlongland/aioax25/actions/workflows/python-3.9.yml/badge.svg)](https://github.com/sjlongland/aioax25/actions/workflows/python-3.9.yml)
-[![Test Status 3.10](https://github.com/sjlongland/aioax25/actions/workflows/python-3.10.yml/badge.svg)](https://github.com/sjlongland/aioax25/actions/workflows/python-3.10.yml)
+[![Test Status](https://github.com/sjlongland/aioax25/actions/workflows/main.yml/badge.svg)](https://github.com/sjlongland/aioax25/actions/workflows/main.yml)
 [![Coverage Status](https://coveralls.io/repos/github/sjlongland/aioax25/badge.svg?branch=master)](https://coveralls.io/github/sjlongland/aioax25?branch=master)
 
 The aim of this project is to implement a simple-to-understand asynchronous
