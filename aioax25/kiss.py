@@ -45,12 +45,15 @@ class KISSDeviceState(Enum):
     - OPEN: Serial port is open, TNC in KISS mode.
     - CLOSING: Close instruction just received.  Putting TNC back into
       TNC2-mode if requested then closing the port.
+    - FAILED: A critical error has occurred and the port is now no longer
+      functional.
     """
 
     CLOSED = 0
     OPENING = 1
     OPEN = 2
     CLOSING = 3
+    FAILED = -1
 
 
 # Command classes
