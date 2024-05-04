@@ -95,6 +95,7 @@ def test_send_raw_data():
     """
     Test data written to the device gets written to the subprocess ``stdin``.
     """
+
     # Mock transport
     class DummyStream(object):
         def __init__(self):
