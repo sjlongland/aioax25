@@ -2,8 +2,6 @@
 
 import logging
 
-from ..nosecompat import eq_
-
 from aioax25.aprs.message import APRSMessageAckFrame
 from aioax25.frame import AX25UnnumberedInformationFrame
 from aioax25.aprs.router import APRSRouter
@@ -23,7 +21,7 @@ def test_get_destination_msgframe():
     )
     router = APRSRouter()
     destination = router._get_destination(frame)
-    eq_(destination, frame.addressee)
+    assert destination == frame.addressee
 
 
 def test_get_destination_uiframe():
@@ -38,4 +36,4 @@ def test_get_destination_uiframe():
     )
     router = APRSRouter()
     destination = router._get_destination(frame)
-    eq_(destination, frame.header.destination)
+    assert destination == frame.header.destination

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 from aioax25.frame import AX25Address, AX25FrameHeader
-from ..nosecompat import eq_
 from ..hex import from_hex, hex_cmp
 
 
@@ -15,7 +14,7 @@ def test_decode_incomplete():
         )
         assert False, "This should not have worked"
     except ValueError as e:
-        eq_(str(e), "Too few addresses")
+        assert str(e) == "Too few addresses"
 
 
 def test_decode_no_digis():
@@ -29,10 +28,10 @@ def test_decode_no_digis():
         )
         + b"frame data goes here"  # Frame data
     )
-    eq_(header.destination, AX25Address("VK4BWI", ch=True))
-    eq_(header.source, AX25Address("VK4MSL", extension=True))
-    eq_(len(header.repeaters), 0)
-    eq_(data, b"frame data goes here")
+    assert header.destination == AX25Address("VK4BWI", ch=True)
+    assert header.source == AX25Address("VK4MSL", extension=True)
+    assert len(header.repeaters) == 0
+    assert data == b"frame data goes here"
 
 
 def test_decode_with_1digi():
@@ -47,10 +46,10 @@ def test_decode_with_1digi():
         )
         + b"frame data goes here"  # Frame data
     )
-    eq_(header.destination, AX25Address("VK4BWI", ch=True))
-    eq_(header.source, AX25Address("VK4MSL"))
-    eq_(header.repeaters[0], AX25Address("VK4RZB", extension=True))
-    eq_(data, b"frame data goes here")
+    assert header.destination == AX25Address("VK4BWI", ch=True)
+    assert header.source == AX25Address("VK4MSL")
+    assert header.repeaters[0] == AX25Address("VK4RZB", extension=True)
+    assert data == b"frame data goes here"
 
 
 def test_decode_with_2digis():
@@ -66,12 +65,12 @@ def test_decode_with_2digis():
         )
         + b"frame data goes here"  # Frame data
     )
-    eq_(header.destination, AX25Address("VK4BWI", ch=True))
-    eq_(header.source, AX25Address("VK4MSL"))
-    eq_(len(header.repeaters), 2)
-    eq_(header.repeaters[0], AX25Address("VK4RZB"))
-    eq_(header.repeaters[1], AX25Address("VK4RZA", extension=True))
-    eq_(data, b"frame data goes here")
+    assert header.destination == AX25Address("VK4BWI", ch=True)
+    assert header.source == AX25Address("VK4MSL")
+    assert len(header.repeaters) == 2
+    assert header.repeaters[0] == AX25Address("VK4RZB")
+    assert header.repeaters[1] == AX25Address("VK4RZA", extension=True)
+    assert data == b"frame data goes here"
 
 
 def test_encode_no_digis():

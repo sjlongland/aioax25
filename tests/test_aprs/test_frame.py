@@ -2,8 +2,6 @@
 
 import logging
 
-from ..nosecompat import eq_, assert_is, assert_is_not
-
 from aioax25.aprs.frame import APRSFrame
 from aioax25.aprs.message import (
     APRSMessageAckFrame,
@@ -27,7 +25,7 @@ def test_decode_wrong_pid():
         payload=b"Test frame that's not APRS",
     )
     decoded = APRSFrame.decode(frame, logging.getLogger("decoder"))
-    assert_is(decoded, frame)
+    assert decoded is frame
 
 
 def test_decode_no_payload():
@@ -41,7 +39,7 @@ def test_decode_no_payload():
         payload=b"",  # Empty payload
     )
     decoded = APRSFrame.decode(frame, logging.getLogger("decoder"))
-    assert_is(decoded, frame)
+    assert decoded is frame
 
 
 def test_decode_unknown_type():
@@ -55,7 +53,7 @@ def test_decode_unknown_type():
         payload=b"X A mystery frame X",
     )
     decoded = APRSFrame.decode(frame, logging.getLogger("decoder"))
-    assert_is(decoded, frame)
+    assert decoded is frame
 
 
 def test_decode_position():
@@ -93,7 +91,7 @@ def test_decode_message():
         payload=b":VK4MDL-7 :Hi",
     )
     decoded = APRSFrame.decode(frame, logging.getLogger("decoder"))
-    assert_is_not(decoded, frame)
+    assert decoded is not frame
     assert isinstance(decoded, APRSMessageFrame)
 
 
@@ -108,9 +106,9 @@ def test_decode_message_confirmable():
         payload=b":VK4MDL-7 :Hi{14",
     )
     decoded = APRSFrame.decode(frame, logging.getLogger("decoder"))
-    assert_is_not(decoded, frame)
+    assert decoded is not frame
     assert isinstance(decoded, APRSMessageFrame)
-    eq_(decoded.msgid, "14")
+    assert decoded.msgid == "14"
 
 
 def test_decode_message_replyack_capable():
@@ -125,10 +123,10 @@ def test_decode_message_replyack_capable():
         payload=b":VK4MDL-7 :Hi{01}",
     )
     decoded = APRSFrame.decode(frame, logging.getLogger("decoder"))
-    assert_is_not(decoded, frame)
+    assert decoded is not frame
     assert isinstance(decoded, APRSMessageFrame)
-    eq_(decoded.replyack, True)
-    eq_(decoded.msgid, "01")
+    assert decoded.replyack == True
+    assert decoded.msgid == "01"
 
 
 def test_decode_message_replyack_reply():
@@ -143,10 +141,10 @@ def test_decode_message_replyack_reply():
         payload=b":VK4MDL-7 :Hi{01}45",
     )
     decoded = APRSFrame.decode(frame, logging.getLogger("decoder"))
-    assert_is_not(decoded, frame)
+    assert decoded is not frame
     assert isinstance(decoded, APRSMessageFrame)
-    eq_(decoded.replyack, "45")
-    eq_(decoded.msgid, "01")
+    assert decoded.replyack == "45"
+    assert decoded.msgid == "01"
 
 
 def test_decode_message_ack():
@@ -160,9 +158,9 @@ def test_decode_message_ack():
         payload=b":VK4MDL-7 :ack2",
     )
     decoded = APRSFrame.decode(frame, logging.getLogger("decoder"))
-    assert_is_not(decoded, frame)
+    assert decoded is not frame
     assert isinstance(decoded, APRSMessageAckFrame)
-    eq_(decoded.msgid, "2")
+    assert decoded.msgid == "2"
 
 
 def test_decode_message_rej():
@@ -176,6 +174,6 @@ def test_decode_message_rej():
         payload=b":VK4MDL-7 :rej3",
     )
     decoded = APRSFrame.decode(frame, logging.getLogger("decoder"))
-    assert_is_not(decoded, frame)
+    assert decoded is not frame
     assert isinstance(decoded, APRSMessageRejFrame)
-    eq_(decoded.msgid, "3")
+    assert decoded.msgid == "3"

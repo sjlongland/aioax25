@@ -4,8 +4,6 @@
 Tests for signalslot wrappers
 """
 
-from ..nosecompat import eq_, assert_set_equal
-
 from aioax25.signal import Signal, Slot, OneshotSlot
 
 
@@ -19,17 +17,17 @@ def test_connect():
     signal.emit(myarg=123)
     signal.emit(myarg=456)
 
-    eq_(len(calls), 2)
+    assert len(calls) == 2
 
     # First call should have myarg=123
     call = calls.pop(0)
-    assert_set_equal(set(call.keys()), set(["myarg"]))
-    eq_(call["myarg"], 123)
+    assert set(call.keys()) == set(["myarg"])
+    assert call["myarg"] == 123
 
     # Last call should have myarg=456
     call = calls.pop(0)
-    assert_set_equal(set(call.keys()), set(["myarg"]))
-    eq_(call["myarg"], 456)
+    assert set(call.keys()) == set(["myarg"])
+    assert call["myarg"] == 456
 
 
 def test_connect_oneshot():
@@ -42,12 +40,12 @@ def test_connect_oneshot():
     signal.emit(myarg=123)
     signal.emit(myarg=456)
 
-    eq_(len(calls), 1)
+    assert len(calls) == 1
 
     # Only call should have myarg=123
     call = calls.pop(0)
-    assert_set_equal(set(call.keys()), set(["myarg"]))
-    eq_(call["myarg"], 123)
+    assert set(call.keys()) == set(["myarg"])
+    assert call["myarg"] == 123
 
 
 def test_find_slot():
@@ -88,12 +86,12 @@ def test_disconnect():
     signal.disconnect(slot_fn)
     signal.emit(myarg=456)
 
-    eq_(len(calls), 1)
+    assert len(calls) == 1
 
     # Only call should have myarg=123
     call = calls.pop(0)
-    assert_set_equal(set(call.keys()), set(["myarg"]))
-    eq_(call["myarg"], 123)
+    assert set(call.keys()) == set(["myarg"])
+    assert call["myarg"] == 123
 
 
 def test_is_connected():

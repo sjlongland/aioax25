@@ -1,13 +1,5 @@
 #!/usr/bin/env python3
 
-from ..nosecompat import (
-    eq_,
-    assert_set_equal,
-    assert_is,
-    assert_greater,
-    assert_less,
-)
-
 from aioax25.aprs.uidigi import APRSDigipeater
 from aioax25.frame import AX25UnnumberedInformationFrame, AX25Address
 from aioax25.signal import Signal
@@ -32,7 +24,7 @@ def test_mydigi_read():
     mydigi = digipeater.mydigi
 
     assert mydigi is not digipeater._mydigi
-    eq_(mydigi, digipeater._mydigi)
+    assert mydigi == digipeater._mydigi
 
 
 def test_mydigi_replace():
@@ -43,7 +35,7 @@ def test_mydigi_replace():
     digipeater._mydigi.add(AX25Address.decode("VK4MSL"))
     digipeater.mydigi = ["VK4BWI"]
 
-    eq_(digipeater.mydigi, set([AX25Address.decode("VK4BWI")]))
+    assert digipeater.mydigi == set([AX25Address.decode("VK4BWI")])
 
 
 def test_connect_noadd():
@@ -54,7 +46,7 @@ def test_connect_noadd():
     interface = DummyAPRSInterface()
     digipeater = APRSDigipeater()
     digipeater.connect(interface, addcall=False)
-    eq_(digipeater._mydigi, set())
+    assert digipeater._mydigi == set()
 
 
 def test_disconnect_norm():
@@ -66,7 +58,7 @@ def test_disconnect_norm():
     digipeater = APRSDigipeater()
     digipeater.connect(interface)
     digipeater.disconnect(interface, rmcall=False)
-    eq_(digipeater._mydigi, set([AX25Address.decode("VK4MSL-10")]))
+    assert digipeater._mydigi == set([AX25Address.decode("VK4MSL-10")])
 
 
 def test_rx_irrelevant():
@@ -88,7 +80,7 @@ def test_rx_irrelevant():
     )
 
     # This should have been dropped
-    eq_(len(interface.transmitted), 0)
+    assert len(interface.transmitted) == 0
 
 
 def test_rx_selfdigied():
@@ -110,7 +102,7 @@ def test_rx_selfdigied():
     )
 
     # This should have been dropped
-    eq_(len(interface.transmitted), 0)
+    assert len(interface.transmitted) == 0
 
 
 def test_rx_selftodigi_uplink():
@@ -132,7 +124,7 @@ def test_rx_selftodigi_uplink():
     )
 
     # This should have been dropped
-    eq_(len(interface.transmitted), 0)
+    assert len(interface.transmitted) == 0
 
 
 def test_rx_selftodigi_first():
@@ -154,11 +146,11 @@ def test_rx_selftodigi_first():
     )
 
     # This should have been digipeated
-    eq_(len(interface.transmitted), 1)
+    assert len(interface.transmitted) == 1
     frame = interface.transmitted.pop()
 
     # It should be passed through VK4MSL-10.
-    eq_(str(frame.header.repeaters), "VK4MSL-10*,VK4RZB")
+    assert str(frame.header.repeaters) == "VK4MSL-10*,VK4RZB"
 
 
 def test_disconnect():
@@ -180,11 +172,11 @@ def test_disconnect():
     )
 
     # This should have been digipeated
-    eq_(len(interface.transmitted), 1)
+    assert len(interface.transmitted) == 1
     frame = interface.transmitted.pop()
 
     # It should be passed through VK4MSL-10.
-    eq_(str(frame.header.repeaters), "VK4MSL-10*,VK4RZB")
+    assert str(frame.header.repeaters) == "VK4MSL-10*,VK4RZB"
 
     # Disconnect, then send another message
     digipeater.disconnect(interface)
@@ -200,7 +192,7 @@ def test_disconnect():
     )
 
     # This should not have been digipeated
-    eq_(len(interface.transmitted), 0)
+    assert len(interface.transmitted) == 0
 
 
 def test_rx_selftodigi_alias():
@@ -223,11 +215,11 @@ def test_rx_selftodigi_alias():
     )
 
     # This should have been digipeated
-    eq_(len(interface.transmitted), 1)
+    assert len(interface.transmitted) == 1
     frame = interface.transmitted.pop()
 
     # It should be passed through VK4MSL-10.
-    eq_(str(frame.header.repeaters), "VK4MSL-10*,VK4RZB")
+    assert str(frame.header.repeaters) == "VK4MSL-10*,VK4RZB"
 
 
 def test_rx_selftodigi_downlink():
@@ -254,12 +246,12 @@ def test_rx_selftodigi_downlink():
     )
 
     # This should have been digipeated
-    eq_(len(interface.transmitted), 1)
+    assert len(interface.transmitted) == 1
     frame = interface.transmitted.pop()
 
     # It should be passed through VK4MSL-10.  H bits of prior repeaters
     # should be left intact.
-    eq_(str(frame.header.repeaters), "VK2RXX,VK4RZA*,VK4MSL-10*,VK4RZB")
+    assert str(frame.header.repeaters) == "VK2RXX,VK4RZA*,VK4MSL-10*,VK4RZB"
 
 
 def test_rx_exhausted():
@@ -281,7 +273,7 @@ def test_rx_exhausted():
     )
 
     # This should have been dropped
-    eq_(len(interface.transmitted), 0)
+    assert len(interface.transmitted) == 0
 
 
 def test_rx_lasthop():
@@ -303,9 +295,9 @@ def test_rx_lasthop():
     )
 
     # This should have been digipeated
-    eq_(len(interface.transmitted), 1)
+    assert len(interface.transmitted) == 1
     frame = interface.transmitted.pop()
-    eq_(str(frame.header.repeaters), "VK4MSL-10*")
+    assert str(frame.header.repeaters) == "VK4MSL-10*"
 
 
 def test_rx_nexthop():
@@ -327,9 +319,9 @@ def test_rx_nexthop():
     )
 
     # This should have been digipeated
-    eq_(len(interface.transmitted), 1)
+    assert len(interface.transmitted) == 1
     frame = interface.transmitted.pop()
-    eq_(str(frame.header.repeaters), "VK4MSL-10*,WIDE3-2")
+    assert str(frame.header.repeaters) == "VK4MSL-10*,WIDE3-2"
 
 
 def test_rx_hybridpath():
@@ -351,6 +343,6 @@ def test_rx_hybridpath():
     )
 
     # This should have been digipeated
-    eq_(len(interface.transmitted), 1)
+    assert len(interface.transmitted) == 1
     frame = interface.transmitted.pop()
-    eq_(str(frame.header.repeaters), "VK4MSL-10*,WIDE2-2")
+    assert str(frame.header.repeaters) == "VK4MSL-10*,WIDE2-2"

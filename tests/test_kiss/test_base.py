@@ -13,8 +13,6 @@ from aioax25.kiss import (
 from ..loop import DummyLoop
 from asyncio import BaseEventLoop
 
-from ..nosecompat import eq_, assert_is, assert_greater, assert_less
-
 
 class DummyKISSDevice(BaseKISSDevice):
     def __init__(self, **kwargs):
@@ -49,10 +47,10 @@ def test_open():
     loop = DummyLoop()
     kissdev = DummyKISSDevice(loop=loop)
 
-    eq_(kissdev.open_calls, 0)
+    assert kissdev.open_calls == 0
     kissdev.open()
 
-    eq_(kissdev.open_calls, 1)
+    assert kissdev.open_calls == 1
 
 
 def test_close():
@@ -65,11 +63,11 @@ def test_close():
     # Force the port open
     kissdev._state = KISSDeviceState.OPEN
 
-    eq_(kissdev.close_calls, 0)
+    assert kissdev.close_calls == 0
 
     # Now try closing the port
     kissdev.close()
-    eq_(kissdev.close_calls, 1)
+    assert kissdev.close_calls == 1
 
 
 def test_close_reset():
@@ -86,14 +84,14 @@ def test_close_reset():
     kissdev.close()
 
     # Should be in the closing state
-    eq_(kissdev._state, KISSDeviceState.CLOSING)
+    assert kissdev._state == KISSDeviceState.CLOSING
 
     # A "return from KISS" frame should be in the transmit buffer
-    eq_(bytes(kissdev._tx_buffer), b"\xc0\xff\xc0")
+    assert bytes(kissdev._tx_buffer) == b"\xc0\xff\xc0"
 
     # A call to _send_data should be pending
     (_, func) = loop.calls.pop()
-    eq_(func, kissdev._send_data)
+    assert func == kissdev._send_data
 
 
 def test_receive():
@@ -105,11 +103,11 @@ def test_receive():
     kissdev._receive(b"test incoming data")
 
     # Data should be waiting
-    eq_(bytes(kissdev._rx_buffer), b"test incoming data")
+    assert bytes(kissdev._rx_buffer) == b"test incoming data"
 
     # A call to _receive_frame should be pending
     (_, func) = loop.calls.pop()
-    eq_(func, kissdev._receive_frame)
+    assert func == kissdev._receive_frame
 
 
 def test_receive_frame_garbage():
@@ -122,10 +120,10 @@ def test_receive_frame_garbage():
     kissdev._receive_frame()
 
     # We should just have the data including and following the FEND
-    eq_(bytes(kissdev._rx_buffer), b"")
+    assert bytes(kissdev._rx_buffer) == b""
 
     # As there's no complete frames, no calls should be scheduled
-    eq_(len(loop.calls), 0)
+    assert len(loop.calls) == 0
 
 
 def test_receive_frame_garbage_start():
@@ -138,10 +136,10 @@ def test_receive_frame_garbage_start():
     kissdev._receive_frame()
 
     # We should just have the data including and following the FEND
-    eq_(bytes(kissdev._rx_buffer), b"\xc0this should be kept")
+    assert bytes(kissdev._rx_buffer) == b"\xc0this should be kept"
 
     # As there's no complete frames, no calls should be scheduled
-    eq_(len(loop.calls), 0)
+    assert len(loop.calls) == 0
 
 
 def test_receive_frame_empty():
@@ -154,10 +152,10 @@ def test_receive_frame_empty():
     kissdev._receive_frame()
 
     # We should just have the last FEND
-    eq_(bytes(kissdev._rx_buffer), b"\xc0")
+    assert bytes(kissdev._rx_buffer) == b"\xc0"
 
     # It should leave the last FEND there and wait for more data.
-    eq_(len(loop.calls), 0)
+    assert len(loop.calls) == 0
 
 
 def test_receive_frame_single():
@@ -170,16 +168,16 @@ def test_receive_frame_single():
     kissdev._receive_frame()
 
     # We should just have the last FEND
-    eq_(bytes(kissdev._rx_buffer), b"\xc0")
+    assert bytes(kissdev._rx_buffer) == b"\xc0"
 
     # We should have one call to _dispatch_rx_frame
-    eq_(len(loop.calls), 1)
+    assert len(loop.calls) == 1
     (_, func, frame) = loop.calls.pop(0)
-    eq_(func, kissdev._dispatch_rx_frame)
+    assert func == kissdev._dispatch_rx_frame
     assert isinstance(frame, KISSCommand)
-    eq_(frame.port, 0)
-    eq_(frame.cmd, 0)
-    eq_(frame.payload, b"a single KISS frame")
+    assert frame.port == 0
+    assert frame.cmd == 0
+    assert frame.payload == b"a single KISS frame"
 
 
 def test_receive_frame_more():
@@ -192,22 +190,22 @@ def test_receive_frame_more():
     kissdev._receive_frame()
 
     # We should just have the left-over bit including the last FEND
-    eq_(bytes(kissdev._rx_buffer), b"\xc0more data")
+    assert bytes(kissdev._rx_buffer) == b"\xc0more data"
 
     # This should have generated two calls:
-    eq_(len(loop.calls), 2)
+    assert len(loop.calls) == 2
 
     # We should have one call to _dispatch_rx_frame
     (_, func, frame) = loop.calls.pop(0)
-    eq_(func, kissdev._dispatch_rx_frame)
+    assert func == kissdev._dispatch_rx_frame
     assert isinstance(frame, KISSCommand)
-    eq_(frame.port, 0)
-    eq_(frame.cmd, 0)
-    eq_(frame.payload, b"a single KISS frame")
+    assert frame.port == 0
+    assert frame.cmd == 0
+    assert frame.payload == b"a single KISS frame"
 
     # We should have another to _receive_frame itself.
     (_, func) = loop.calls.pop(0)
-    eq_(func, kissdev._receive_frame)
+    assert func == kissdev._receive_frame
 
 
 def test_dispatch_rx_invalid_port():
@@ -262,8 +260,8 @@ def test_dispatch_rx_valid_port():
     kissdev._dispatch_rx_frame(frame)
 
     # Our port should have the frame
-    eq_(len(port.frames), 1)
-    assert_is(port.frames[0], frame)
+    assert len(port.frames) == 1
+    assert port.frames[0] is frame
 
 
 def test_send_data():
@@ -278,10 +276,10 @@ def test_send_data():
     kissdev._send_data()
 
     # We should now see this was "sent" and now in 'transmitted'
-    eq_(bytes(kissdev.transmitted), b"test output data")
+    assert bytes(kissdev.transmitted) == b"test output data"
 
     # That should be the lot
-    eq_(len(loop.calls), 0)
+    assert len(loop.calls) == 0
 
 
 def test_send_data_block_size():
@@ -298,19 +296,19 @@ def test_send_data_block_size():
     kissdev._send_data()
 
     # We should now see the first block was "sent" and now in 'transmitted'
-    eq_(bytes(kissdev.transmitted), b"test")
+    assert bytes(kissdev.transmitted) == b"test"
 
     # The rest should be waiting
-    eq_(bytes(kissdev._tx_buffer), b" output data")
+    assert bytes(kissdev._tx_buffer) == b" output data"
 
     # There should be a pending call to send more:
-    eq_(len(loop.calls), 1)
+    assert len(loop.calls) == 1
     (calltime, callfunc) = loop.calls.pop(0)
 
     # It'll be roughly in a second's time calling the same function
-    assert_greater(calltime - loop.time(), 0.990)
-    assert_less(calltime - loop.time(), 1.0)
-    eq_(callfunc, kissdev._send_data)
+    assert (calltime - loop.time()) > (0.990)
+    assert (calltime - loop.time()) < (1.0)
+    assert callfunc == kissdev._send_data
 
 
 def test_send_data_close_after_send():
@@ -325,16 +323,16 @@ def test_send_data_close_after_send():
     kissdev._state = KISSDeviceState.CLOSING
 
     # No close call made yet
-    eq_(kissdev.close_calls, 0)
+    assert kissdev.close_calls == 0
 
     # Send the data out.
     kissdev._send_data()
 
     # We should now see the first block was "sent" and now in 'transmitted'
-    eq_(bytes(kissdev.transmitted), b"test output data")
+    assert bytes(kissdev.transmitted) == b"test output data"
 
     # The device should now be closed.
-    eq_(kissdev.close_calls, 1)
+    assert kissdev.close_calls == 1
 
 
 def test_send_data_block_size():
@@ -354,22 +352,22 @@ def test_send_data_block_size():
     kissdev._send_data()
 
     # We should now see the first block was "sent" and now in 'transmitted'
-    eq_(bytes(kissdev.transmitted), b"test")
+    assert bytes(kissdev.transmitted) == b"test"
 
     # The rest should be waiting
-    eq_(bytes(kissdev._tx_buffer), b" output data")
+    assert bytes(kissdev._tx_buffer) == b" output data"
 
     # There should be a pending call to send more:
-    eq_(len(loop.calls), 1)
+    assert len(loop.calls) == 1
     (calltime, callfunc) = loop.calls.pop(0)
 
     # It'll be roughly in a second's time calling the same function
-    assert_greater(calltime - loop.time(), 0.990)
-    assert_less(calltime - loop.time(), 1.0)
-    eq_(callfunc, kissdev._send_data)
+    assert (calltime - loop.time()) > (0.990)
+    assert (calltime - loop.time()) < (1.0)
+    assert callfunc == kissdev._send_data
 
     # No close call made yet
-    eq_(kissdev.close_calls, 0)
+    assert kissdev.close_calls == 0
 
 
 def test_init_kiss():
@@ -386,10 +384,10 @@ def test_init_kiss():
     kissdev._init_kiss()
 
     # We should see a copy of the KISS commands, minus the first
-    eq_(kissdev._kiss_rem_commands, kissdev._kiss_commands[1:])
+    assert kissdev._kiss_rem_commands == kissdev._kiss_commands[1:]
 
     # We should see the first initialisation commands
-    eq_(bytes(kissdev.transmitted), b"INT KISS\r")
+    assert bytes(kissdev.transmitted) == b"INT KISS\r"
 
 
 def test_getitem():
@@ -399,7 +397,7 @@ def test_getitem():
     kissdev = DummyKISSDevice(loop=DummyLoop())
     port = kissdev[7]
     assert isinstance(port, KISSPort)
-    assert_is(kissdev._port[7], port)
+    assert kissdev._port[7] is port
 
 
 def test__send_kiss_cmd():
@@ -407,5 +405,5 @@ def test__send_kiss_cmd():
     kissdev._kiss_rem_commands = []
 
     kissdev._send_kiss_cmd()
-    eq_(KISSDeviceState.OPEN, kissdev._state)
-    eq_(bytearray(), kissdev._rx_buffer)
+    assert KISSDeviceState.OPEN == kissdev._state
+    assert bytearray() == kissdev._rx_buffer

@@ -1,13 +1,5 @@
 #!/usr/bin/env python3
 
-from ..nosecompat import (
-    eq_,
-    assert_set_equal,
-    assert_is,
-    assert_greater,
-    assert_less,
-)
-
 import logging
 from functools import partial
 from signalslot import Signal
@@ -84,47 +76,44 @@ def test_constructor_bind():
             dict(callsign="^ZIP", regex=True, ssid=None),  # Legacy
         ],
     )
-    eq_(len(ax25int.bind_calls), 26)
+    assert len(ax25int.bind_calls) == 26
 
-    assert_set_equal(
-        set(
-            [
-                (call, regex, ssid)
-                for (cb, call, ssid, regex) in ax25int.bind_calls
-            ]
-        ),
-        set(
-            [
-                # The first bind call should be for the station SSID
-                ("VK4MSL", False, 10),
-                # The rest should be the standard APRS ones.
-                ("^AIR", True, None),
-                ("^ALL", True, None),
-                ("^AP", True, None),
-                ("BEACON", False, None),
-                ("^CQ", True, None),
-                ("^GPS", True, None),
-                ("^DF", True, None),
-                ("^DGPS", True, None),
-                ("^DRILL", True, None),
-                ("^ID", True, None),
-                ("^JAVA", True, None),
-                ("^MAIL", True, None),
-                ("^MICE", True, None),
-                ("^QST", True, None),
-                ("^QTH", True, None),
-                ("^RTCM", True, None),
-                ("^SKY", True, None),
-                ("^SPACE", True, None),
-                ("^SPC", True, None),
-                ("^SYM", True, None),
-                ("^TEL", True, None),
-                ("^TEST", True, None),
-                ("^TLM", True, None),
-                ("^WX", True, None),
-                ("^ZIP", True, None),
-            ]
-        ),
+    assert set(
+        [
+            (call, regex, ssid)
+            for (cb, call, ssid, regex) in ax25int.bind_calls
+        ]
+    ) == set(
+        [
+            # The first bind call should be for the station SSID
+            ("VK4MSL", False, 10),
+            # The rest should be the standard APRS ones.
+            ("^AIR", True, None),
+            ("^ALL", True, None),
+            ("^AP", True, None),
+            ("BEACON", False, None),
+            ("^CQ", True, None),
+            ("^GPS", True, None),
+            ("^DF", True, None),
+            ("^DGPS", True, None),
+            ("^DRILL", True, None),
+            ("^ID", True, None),
+            ("^JAVA", True, None),
+            ("^MAIL", True, None),
+            ("^MICE", True, None),
+            ("^QST", True, None),
+            ("^QTH", True, None),
+            ("^RTCM", True, None),
+            ("^SKY", True, None),
+            ("^SPACE", True, None),
+            ("^SPC", True, None),
+            ("^SYM", True, None),
+            ("^TEL", True, None),
+            ("^TEST", True, None),
+            ("^TLM", True, None),
+            ("^WX", True, None),
+            ("^ZIP", True, None),
+        ]
     )
 
 
@@ -165,49 +154,46 @@ def test_constructor_bind_destinations_and_altnets():
         ],
         listen_altnets=[dict(callsign="VK4BWI", regex=False, ssid=None)],
     )
-    eq_(len(ax25int.bind_calls), 27)
+    assert len(ax25int.bind_calls) == 27
 
-    assert_set_equal(
-        set(
-            [
-                (call, regex, ssid)
-                for (cb, call, ssid, regex) in ax25int.bind_calls
-            ]
-        ),
-        set(
-            [
-                # The first bind call should be for the station SSID
-                ("VK4MSL", False, 10),
-                # The rest should be the standard APRS ones.
-                ("^AIR", True, None),
-                ("^ALL", True, None),
-                ("^AP", True, None),
-                ("BEACON", False, None),
-                ("^CQ", True, None),
-                ("^GPS", True, None),
-                ("^DF", True, None),
-                ("^DGPS", True, None),
-                ("^DRILL", True, None),
-                ("^ID", True, None),
-                ("^JAVA", True, None),
-                ("^MAIL", True, None),
-                ("^MICE", True, None),
-                ("^QST", True, None),
-                ("^QTH", True, None),
-                ("^RTCM", True, None),
-                ("^SKY", True, None),
-                ("^SPACE", True, None),
-                ("^SPC", True, None),
-                ("^SYM", True, None),
-                ("^TEL", True, None),
-                ("^TEST", True, None),
-                ("^TLM", True, None),
-                ("^WX", True, None),
-                ("^ZIP", True, None),
-                # Now should be the "alt-nets"
-                ("VK4BWI", False, None),
-            ]
-        ),
+    assert set(
+        [
+            (call, regex, ssid)
+            for (cb, call, ssid, regex) in ax25int.bind_calls
+        ]
+    ) == set(
+        [
+            # The first bind call should be for the station SSID
+            ("VK4MSL", False, 10),
+            # The rest should be the standard APRS ones.
+            ("^AIR", True, None),
+            ("^ALL", True, None),
+            ("^AP", True, None),
+            ("BEACON", False, None),
+            ("^CQ", True, None),
+            ("^GPS", True, None),
+            ("^DF", True, None),
+            ("^DGPS", True, None),
+            ("^DRILL", True, None),
+            ("^ID", True, None),
+            ("^JAVA", True, None),
+            ("^MAIL", True, None),
+            ("^MICE", True, None),
+            ("^QST", True, None),
+            ("^QTH", True, None),
+            ("^RTCM", True, None),
+            ("^SKY", True, None),
+            ("^SPACE", True, None),
+            ("^SPC", True, None),
+            ("^SYM", True, None),
+            ("^TEL", True, None),
+            ("^TEST", True, None),
+            ("^TLM", True, None),
+            ("^WX", True, None),
+            ("^ZIP", True, None),
+            # Now should be the "alt-nets"
+            ("VK4BWI", False, None),
+        ]
     )
 
 
@@ -221,23 +207,20 @@ def test_constructor_bind_altnets():
         "VK4MSL-10",
         listen_altnets=[dict(callsign="VK4BWI", regex=False, ssid=None)],
     )
-    eq_(len(ax25int.bind_calls), 2)
+    assert len(ax25int.bind_calls) == 2
 
-    assert_set_equal(
-        set(
-            [
-                (call, regex, ssid)
-                for (cb, call, ssid, regex) in ax25int.bind_calls
-            ]
-        ),
-        set(
-            [
-                # The first bind call should be for the station SSID
-                ("VK4MSL", False, 10),
-                # Now should be the "alt-nets"
-                ("VK4BWI", False, None),
-            ]
-        ),
+    assert set(
+        [
+            (call, regex, ssid)
+            for (cb, call, ssid, regex) in ax25int.bind_calls
+        ]
+    ) == set(
+        [
+            # The first bind call should be for the station SSID
+            ("VK4MSL", False, 10),
+            # Now should be the "alt-nets"
+            ("VK4BWI", False, None),
+        ]
     )
 
 
@@ -251,23 +234,20 @@ def test_constructor_bind_override():
         "VK4MSL-10",
         listen_destinations=[dict(callsign="APRS", regex=False, ssid=None)],
     )
-    eq_(len(ax25int.bind_calls), 2)
+    assert len(ax25int.bind_calls) == 2
 
-    assert_set_equal(
-        set(
-            [
-                (call, regex, ssid)
-                for (cb, call, ssid, regex) in ax25int.bind_calls
-            ]
-        ),
-        set(
-            [
-                # The first bind call should be for the station SSID
-                ("VK4MSL", False, 10),
-                # The rest should be the ones we gave
-                ("APRS", False, None),
-            ]
-        ),
+    assert set(
+        [
+            (call, regex, ssid)
+            for (cb, call, ssid, regex) in ax25int.bind_calls
+        ]
+    ) == set(
+        [
+            # The first bind call should be for the station SSID
+            ("VK4MSL", False, 10),
+            # The rest should be the ones we gave
+            ("APRS", False, None),
+        ]
     )
 
 
@@ -298,7 +278,7 @@ def test_transmit_exception():
     )
 
     # Transmit should have been called
-    eq_(len(calls), 1)
+    assert len(calls) == 1
 
 
 def test_send_message_oneshot():
@@ -310,20 +290,20 @@ def test_send_message_oneshot():
     res = aprsint.send_message("VK4MDL-7", "Hi", oneshot=True)
 
     # We don't get a return value
-    assert_is(res, None)
+    assert res is None
 
     # No message handler should be registered with the interface
-    eq_(len(aprsint._pending_msg), 0)
+    assert len(aprsint._pending_msg) == 0
 
     # The frame is passed to the AX.25 interface
-    eq_(len(ax25int.transmitted), 1)
+    assert len(ax25int.transmitted) == 1
     frame = ax25int.transmitted.pop(0)
 
     # Frame is a APRS message frame
     assert isinstance(frame, APRSMessageFrame)
 
     # There is no pending messages
-    eq_(len(aprsint._pending_msg), 0)
+    assert len(aprsint._pending_msg) == 0
 
 
 def test_send_message_oneshot_replyack():
@@ -341,7 +321,7 @@ def test_send_message_oneshot_replyack():
             "that this value is None, which it won't be here.",
         )
     except ValueError as e:
-        eq_(str(e), "Cannot send reply-ack in one-shot mode")
+        assert str(e) == "Cannot send reply-ack in one-shot mode"
 
 
 def test_send_message_replyack():
@@ -366,22 +346,22 @@ def test_send_message_replyack():
     assert isinstance(res, APRSMessageHandler)
 
     # That message handler should be registered with the interface
-    eq_(len(aprsint._pending_msg), 1)
+    assert len(aprsint._pending_msg) == 1
     assert res.msgid in aprsint._pending_msg
-    assert_is(aprsint._pending_msg[res.msgid], res)
+    assert aprsint._pending_msg[res.msgid] is res
 
     # The APRS message handler will have tried sending the message
-    eq_(len(ax25int.transmitted), 1)
+    assert len(ax25int.transmitted) == 1
     frame = ax25int.transmitted.pop(0)
 
     # Frame is a APRS message frame
     assert isinstance(frame, APRSMessageFrame)
 
     # Frame has reply-ACK set
-    eq_(frame.replyack, "123")
+    assert frame.replyack == "123"
 
     # Message handler is in 'SEND' state
-    eq_(res.state, APRSMessageHandler.HandlerState.SEND)
+    assert res.state == APRSMessageHandler.HandlerState.SEND
 
 
 def test_send_message_advreplyack():
@@ -396,22 +376,22 @@ def test_send_message_advreplyack():
     assert isinstance(res, APRSMessageHandler)
 
     # That message handler should be registered with the interface
-    eq_(len(aprsint._pending_msg), 1)
+    assert len(aprsint._pending_msg) == 1
     assert res.msgid in aprsint._pending_msg
-    assert_is(aprsint._pending_msg[res.msgid], res)
+    assert aprsint._pending_msg[res.msgid] is res
 
     # The APRS message handler will have tried sending the message
-    eq_(len(ax25int.transmitted), 1)
+    assert len(ax25int.transmitted) == 1
     frame = ax25int.transmitted.pop(0)
 
     # Frame is a APRS message frame
     assert isinstance(frame, APRSMessageFrame)
 
     # Frame has reply-ACK set
-    eq_(frame.replyack, True)
+    assert frame.replyack == True
 
     # Message handler is in 'SEND' state
-    eq_(res.state, APRSMessageHandler.HandlerState.SEND)
+    assert res.state == APRSMessageHandler.HandlerState.SEND
 
 
 def test_send_message_replyack_notreplyack():
@@ -433,7 +413,7 @@ def test_send_message_replyack_notreplyack():
             "VK4MDL-7", "Hi", oneshot=False, replyack=replymsg
         )
     except ValueError as e:
-        eq_(str(e), "replyack is not a reply-ack message")
+        assert str(e) == "replyack is not a reply-ack message"
 
 
 def test_send_message_confirmable():
@@ -448,19 +428,19 @@ def test_send_message_confirmable():
     assert isinstance(res, APRSMessageHandler)
 
     # That message handler should be registered with the interface
-    eq_(len(aprsint._pending_msg), 1)
+    assert len(aprsint._pending_msg) == 1
     assert res.msgid in aprsint._pending_msg
-    assert_is(aprsint._pending_msg[res.msgid], res)
+    assert aprsint._pending_msg[res.msgid] is res
 
     # The APRS message handler will have tried sending the message
-    eq_(len(ax25int.transmitted), 1)
+    assert len(ax25int.transmitted) == 1
     frame = ax25int.transmitted.pop(0)
 
     # Frame is a APRS message frame
     assert isinstance(frame, APRSMessageFrame)
 
     # Message handler is in 'SEND' state
-    eq_(res.state, APRSMessageHandler.HandlerState.SEND)
+    assert res.state == APRSMessageHandler.HandlerState.SEND
 
 
 def test_send_response_oneshot():
@@ -480,7 +460,7 @@ def test_send_response_oneshot():
     )
 
     # Nothing should be sent
-    eq_(len(ax25int.transmitted), 0)
+    assert len(ax25int.transmitted) == 0
 
 
 def test_send_response_ack():
@@ -501,12 +481,12 @@ def test_send_response_ack():
     )
 
     # The APRS message handler will have tried sending the message
-    eq_(len(ax25int.transmitted), 1)
+    assert len(ax25int.transmitted) == 1
     frame = ax25int.transmitted.pop(0)
 
     # Frame is a APRS message acknowledgement frame
     assert isinstance(frame, APRSMessageFrame)
-    eq_(frame.payload, b":VK4MSL-10:ack123")
+    assert frame.payload == b":VK4MSL-10:ack123"
 
 
 def test_send_response_rej():
@@ -527,12 +507,12 @@ def test_send_response_rej():
     )
 
     # The APRS message handler will have tried sending the message
-    eq_(len(ax25int.transmitted), 1)
+    assert len(ax25int.transmitted) == 1
     frame = ax25int.transmitted.pop(0)
 
     # Frame is a APRS message rejection frame
     assert isinstance(frame, APRSMessageFrame)
-    eq_(frame.payload, b":VK4MSL-10:rej123")
+    assert frame.payload == b":VK4MSL-10:rej123"
 
 
 def test_hash_frame_mismatch_dest():
@@ -663,8 +643,8 @@ def test_hash_frame():
     )
 
     # These should all be the same
-    eq_(hash1, hash2)
-    eq_(hash1, hash3)
+    assert hash1 == hash2
+    assert hash1 == hash3
 
 
 def test_test_or_add_frame_first():
@@ -688,20 +668,20 @@ def test_test_or_add_frame_first():
     res = aprsint._test_or_add_frame(frame)
 
     # We should get 'False' as the response
-    eq_(res, False)
+    assert res == False
 
     # There should be an entry in our hash table.
-    eq_(len(aprsint._msg_expiry), 1)
+    assert len(aprsint._msg_expiry) == 1
 
     # The expiry time should be at least 25 seconds.
-    assert_greater(
-        aprsint._msg_expiry.get(framedigest, 0), ax25int._loop.time() + 25
+    assert aprsint._msg_expiry.get(framedigest, 0) > (
+        ax25int._loop.time() + 25
     )
 
     # A clean-up should have been scheduled.
-    eq_(len(ax25int._loop.calls), 1)
+    assert len(ax25int._loop.calls) == 1
     (_, callfunc) = ax25int._loop.calls.pop(0)
-    eq_(callfunc, aprsint._schedule_dedup_cleanup)
+    assert callfunc == aprsint._schedule_dedup_cleanup
 
 
 def test_test_or_add_frame_repeat():
@@ -728,14 +708,14 @@ def test_test_or_add_frame_repeat():
     res = aprsint._test_or_add_frame(frame)
 
     # We should get 'False' as the response
-    eq_(res, True)
+    assert res == True
 
     # Expiry should not have changed
-    eq_(len(aprsint._msg_expiry), 1)
-    eq_(aprsint._msg_expiry[framedigest], expiry_time)
+    assert len(aprsint._msg_expiry) == 1
+    assert aprsint._msg_expiry[framedigest] == expiry_time
 
     # Nothing further should be done.
-    eq_(len(ax25int._loop.calls), 0)
+    assert len(ax25int._loop.calls) == 0
 
 
 def test_test_or_add_frame_expired():
@@ -762,18 +742,18 @@ def test_test_or_add_frame_expired():
     res = aprsint._test_or_add_frame(frame)
 
     # We should get 'False' as the response
-    eq_(res, False)
+    assert res == False
 
     # The expiry time should be at least 25 seconds.
-    eq_(len(aprsint._msg_expiry), 1)
-    assert_greater(
-        aprsint._msg_expiry.get(framedigest, 0), ax25int._loop.time() + 25
+    assert len(aprsint._msg_expiry) == 1
+    assert aprsint._msg_expiry.get(framedigest, 0) > (
+        ax25int._loop.time() + 25
     )
 
     # A clean-up should have been scheduled.
-    eq_(len(ax25int._loop.calls), 1)
+    assert len(ax25int._loop.calls) == 1
     (_, callfunc) = ax25int._loop.calls.pop(0)
-    eq_(callfunc, aprsint._schedule_dedup_cleanup)
+    assert callfunc == aprsint._schedule_dedup_cleanup
 
 
 def test_schedule_dedup_cleanup_no_msg():
@@ -786,7 +766,7 @@ def test_schedule_dedup_cleanup_no_msg():
     aprsint._schedule_dedup_cleanup()
 
     # A clean-up should not have been scheduled.
-    eq_(len(ax25int._loop.calls), 0)
+    assert len(ax25int._loop.calls) == 0
 
 
 def test_schedule_dedup_cleanup_pending():
@@ -805,7 +785,7 @@ def test_schedule_dedup_cleanup_pending():
 
     # We should now no-longer have a pending clean-up
     assert deduplication_timeout.cancelled()
-    assert_is(aprsint._deduplication_timeout, None)
+    assert aprsint._deduplication_timeout is None
 
 
 def test_schedule_dedup_cleanup_oldest_future():
@@ -825,13 +805,13 @@ def test_schedule_dedup_cleanup_oldest_future():
     aprsint._schedule_dedup_cleanup()
 
     # A clean-up should have been scheduled.
-    eq_(len(ax25int._loop.calls), 1)
+    assert len(ax25int._loop.calls) == 1
     (calltime, callfunc) = ax25int._loop.calls.pop(0)
 
     # Should be scheduled for the earliest expiry
-    assert_less(calltime - now, 1.01)
-    assert_greater(calltime - now, 0.99)
-    eq_(callfunc, aprsint._dedup_cleanup)
+    assert (calltime - now) < (1.01)
+    assert (calltime - now) > (0.99)
+    assert callfunc == aprsint._dedup_cleanup
 
 
 def test_schedule_dedup_cleanup_oldest_past():
@@ -851,12 +831,12 @@ def test_schedule_dedup_cleanup_oldest_past():
     aprsint._schedule_dedup_cleanup()
 
     # A clean-up should have been scheduled.
-    eq_(len(ax25int._loop.calls), 1)
+    assert len(ax25int._loop.calls) == 1
     (calltime, callfunc) = ax25int._loop.calls.pop(0)
 
     # Should be scheduled pretty much now
-    assert_less(calltime - now, 0.01)
-    eq_(callfunc, aprsint._dedup_cleanup)
+    assert (calltime - now) < (0.01)
+    assert callfunc == aprsint._dedup_cleanup
 
 
 def test_dedup_cleanup_expired():
@@ -883,12 +863,12 @@ def test_dedup_cleanup_expired():
     assert b"hash3" in aprsint._msg_expiry
 
     # There should be a re-schedule pending
-    eq_(len(ax25int._loop.calls), 1)
+    assert len(ax25int._loop.calls) == 1
     (calltime, callfunc) = ax25int._loop.calls.pop(0)
 
     # Should be scheduled pretty much now
-    assert_less(calltime - now, 0.01)
-    eq_(callfunc, aprsint._schedule_dedup_cleanup)
+    assert (calltime - now) < (0.01)
+    assert callfunc == aprsint._schedule_dedup_cleanup
 
 
 def test_on_receive_exception():
@@ -925,7 +905,7 @@ def test_on_receive_exception():
 
     # We should have called call_soon, but the exception should have been
     # caught and logged.
-    eq_(len(calls), 1)
+    assert len(calls) == 1
 
 
 def test_on_receive_notframe():
@@ -963,7 +943,7 @@ def test_on_receive_notframe():
     aprsint._on_receive(frame)
 
     # The addressee property should not be touched
-    eq_(frame.addressee_calls, 0)
+    assert frame.addressee_calls == 0
 
 
 def test_on_receive_dup():
@@ -992,7 +972,7 @@ def test_on_receive_dup():
     aprsint._on_receive(frame)
 
     # There should be no calls made
-    eq_(len(ax25int._loop.calls), 0)
+    assert len(ax25int._loop.calls) == 0
 
 
 def test_on_receive_pass_to_router():
@@ -1017,14 +997,14 @@ def test_on_receive_pass_to_router():
 
     # There should be two calls made, one to our deduplication clean-up, the
     # other to our superclass
-    eq_(len(ax25int._loop.calls), 2)
+    assert len(ax25int._loop.calls) == 2
 
     (_, callfunc) = ax25int._loop.calls.pop(0)
-    eq_(callfunc, aprsint._schedule_dedup_cleanup)
+    assert callfunc == aprsint._schedule_dedup_cleanup
 
     (_, callfunc) = ax25int._loop.calls.pop(0)
     assert isinstance(callfunc, partial)
-    eq_(callfunc.func, super(APRSInterface, aprsint)._on_receive)
+    assert callfunc.func == super(APRSInterface, aprsint)._on_receive
 
 
 def test_on_receive_addressed():
@@ -1049,18 +1029,18 @@ def test_on_receive_addressed():
 
     # There should be three calls made, one to our deduplication clean-up, the
     # other to our superclass, the third to our received_address_msg signal.
-    eq_(len(ax25int._loop.calls), 3)
+    assert len(ax25int._loop.calls) == 3
 
     (_, callfunc) = ax25int._loop.calls.pop(0)
-    eq_(callfunc, aprsint._schedule_dedup_cleanup)
-
-    (_, callfunc) = ax25int._loop.calls.pop(0)
-    assert isinstance(callfunc, partial)
-    eq_(callfunc.func, super(APRSInterface, aprsint)._on_receive)
+    assert callfunc == aprsint._schedule_dedup_cleanup
 
     (_, callfunc) = ax25int._loop.calls.pop(0)
     assert isinstance(callfunc, partial)
-    eq_(callfunc.func, aprsint.received_addressed_msg.emit)
+    assert callfunc.func == super(APRSInterface, aprsint)._on_receive
+
+    (_, callfunc) = ax25int._loop.calls.pop(0)
+    assert isinstance(callfunc, partial)
+    assert callfunc.func == aprsint.received_addressed_msg.emit
 
 
 def test_on_receive_addressed_replyack():
@@ -1085,18 +1065,18 @@ def test_on_receive_addressed_replyack():
 
     # There should be three calls made, one to our deduplication clean-up, the
     # other to our superclass, the third to our received_address_msg signal.
-    eq_(len(ax25int._loop.calls), 3)
+    assert len(ax25int._loop.calls) == 3
 
     (_, callfunc) = ax25int._loop.calls.pop(0)
-    eq_(callfunc, aprsint._schedule_dedup_cleanup)
-
-    (_, callfunc) = ax25int._loop.calls.pop(0)
-    assert isinstance(callfunc, partial)
-    eq_(callfunc.func, super(APRSInterface, aprsint)._on_receive)
+    assert callfunc == aprsint._schedule_dedup_cleanup
 
     (_, callfunc) = ax25int._loop.calls.pop(0)
     assert isinstance(callfunc, partial)
-    eq_(callfunc.func, aprsint.received_addressed_msg.emit)
+    assert callfunc.func == super(APRSInterface, aprsint)._on_receive
+
+    (_, callfunc) = ax25int._loop.calls.pop(0)
+    assert isinstance(callfunc, partial)
+    assert callfunc.func == aprsint.received_addressed_msg.emit
 
 
 def test_on_receive_unsol_ackrej():
@@ -1121,14 +1101,14 @@ def test_on_receive_unsol_ackrej():
 
     # There should be two calls made, one to our deduplication clean-up, the
     # other to our superclass.  We don't pass the message out otherwise.
-    eq_(len(ax25int._loop.calls), 2)
+    assert len(ax25int._loop.calls) == 2
 
     (_, callfunc) = ax25int._loop.calls.pop(0)
-    eq_(callfunc, aprsint._schedule_dedup_cleanup)
+    assert callfunc == aprsint._schedule_dedup_cleanup
 
     (_, callfunc) = ax25int._loop.calls.pop(0)
     assert isinstance(callfunc, partial)
-    eq_(callfunc.func, super(APRSInterface, aprsint)._on_receive)
+    assert callfunc.func == super(APRSInterface, aprsint)._on_receive
 
 
 def test_on_receive_sol_ackrej():
@@ -1158,18 +1138,18 @@ def test_on_receive_sol_ackrej():
     # There should be three calls made, one to our deduplication clean-up, the
     # second to our superclass, and finally the third to the handler's
     # _on_response method.
-    eq_(len(ax25int._loop.calls), 3)
+    assert len(ax25int._loop.calls) == 3
 
     (_, callfunc) = ax25int._loop.calls.pop(0)
-    eq_(callfunc, aprsint._schedule_dedup_cleanup)
+    assert callfunc == aprsint._schedule_dedup_cleanup
 
     (_, callfunc) = ax25int._loop.calls.pop(0)
     assert isinstance(callfunc, partial)
-    eq_(callfunc.func, super(APRSInterface, aprsint)._on_receive)
+    assert callfunc.func == super(APRSInterface, aprsint)._on_receive
 
     (_, callfunc, msg) = ax25int._loop.calls.pop(0)
-    eq_(callfunc, handler._on_response)
-    eq_(bytes(frame), bytes(msg))
+    assert callfunc == handler._on_response
+    assert bytes(frame) == bytes(msg)
 
 
 def test_on_receive_sol_replyack():
@@ -1199,23 +1179,23 @@ def test_on_receive_sol_replyack():
     # There should be four calls made, one to our deduplication clean-up, the
     # second to our superclass, the third to the handler's _on_response method
     # and finally the incoming message should be emitted like a normal message.
-    eq_(len(ax25int._loop.calls), 4)
+    assert len(ax25int._loop.calls) == 4
 
     (_, callfunc) = ax25int._loop.calls.pop(0)
-    eq_(callfunc, aprsint._schedule_dedup_cleanup)
+    assert callfunc == aprsint._schedule_dedup_cleanup
 
     (_, callfunc) = ax25int._loop.calls.pop(0)
     assert isinstance(callfunc, partial)
-    eq_(callfunc.func, super(APRSInterface, aprsint)._on_receive)
+    assert callfunc.func == super(APRSInterface, aprsint)._on_receive
 
     (_, callfunc, msg) = ax25int._loop.calls.pop(0)
-    eq_(callfunc, handler._on_response)
-    eq_(bytes(frame), bytes(msg))
+    assert callfunc == handler._on_response
+    assert bytes(frame) == bytes(msg)
 
     # The message should also have been treated as a new incoming message.
     (_, callfunc) = ax25int._loop.calls.pop(0)
     assert isinstance(callfunc, partial)
-    eq_(callfunc.func, aprsint.received_addressed_msg.emit)
+    assert callfunc.func == aprsint.received_addressed_msg.emit
 
 
 def test_on_msg_handler_finish():
@@ -1233,4 +1213,4 @@ def test_on_msg_handler_finish():
     aprsint._on_msg_handler_finish("123")
 
     # This should now be empty
-    eq_(aprsint._pending_msg, {})
+    assert aprsint._pending_msg == {}

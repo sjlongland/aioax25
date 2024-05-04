@@ -5,7 +5,6 @@ KISS command unit tests
 """
 
 from aioax25.kiss import KISSPort, KISSCmdData, KISSCommand
-from ..nosecompat import eq_
 import logging
 
 
@@ -25,12 +24,12 @@ def test_send():
     port = KISSPort(dev, 5, logging.getLogger("port"))
     port.send(b"this is a test frame")
 
-    eq_(len(dev.sent), 1)
+    assert len(dev.sent) == 1
     last = dev.sent.pop(0)
 
     assert isinstance(last, KISSCmdData)
-    eq_(last.port, 5)
-    eq_(last.payload, b"this is a test frame")
+    assert last.port == 5
+    assert last.payload == b"this is a test frame"
 
 
 def test_receive_frame():
@@ -45,8 +44,8 @@ def test_receive_frame():
     port._receive_frame(KISSCmdData(port=5, payload=b"this is a test frame"))
 
     # We should have received that via the signal
-    eq_(len(sent), 1)
-    eq_(sent.pop(0), b"this is a test frame")
+    assert len(sent) == 1
+    assert sent.pop(0) == b"this is a test frame"
 
 
 def test_receive_frame_filter_nondata():
@@ -63,4 +62,4 @@ def test_receive_frame_filter_nondata():
     )
 
     # We should not have received that frame
-    eq_(len(sent), 0)
+    assert len(sent) == 0

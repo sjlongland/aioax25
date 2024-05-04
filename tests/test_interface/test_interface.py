@@ -7,14 +7,6 @@ from aioax25.frame import AX25UnnumberedInformationFrame
 from ..asynctest import asynctest
 from asyncio import Future, get_event_loop, sleep
 
-from ..nosecompat import (
-    assert_greater,
-    assert_less,
-    assert_is,
-    assert_greater_equal,
-    eq_,
-)
-
 import time
 import re
 
@@ -59,9 +51,9 @@ async def test_received_msg_signal():
 
     def _on_receive_match(interface, frame, **kwargs):
         try:
-            eq_(len(kwargs), 0, msg="Too many arguments")
-            assert_is(interface, my_interface, msg="Wrong interface")
-            eq_(bytes(frame), bytes(my_frame), msg="Wrong frame")
+            assert len(kwargs) == 0, "Too many arguments"
+            assert (interface) is (my_interface), "Wrong interface"
+            assert bytes(frame) == bytes(my_frame), "Wrong frame"
             receive_future.set_result(None)
         except Exception as e:
             receive_future.set_exception(e)
@@ -88,7 +80,10 @@ def test_receive_bind():
         )
         assert False, "This should not have worked"
     except TypeError as e:
-        eq_(str(e), "callsign must be a string (use " "regex=True for regex)")
+        assert (
+            str(e) == "callsign must be a string (use "
+            "regex=True for regex)"
+        )
 
 
 @asynctest
@@ -107,9 +102,9 @@ async def test_receive_str_filter():
 
     def _on_receive_match(interface, frame, **kwargs):
         try:
-            eq_(len(kwargs), 0, msg="Too many arguments")
-            assert_is(interface, my_interface, msg="Wrong interface")
-            eq_(bytes(frame), bytes(my_frame), msg="Wrong frame")
+            assert len(kwargs) == 0, "Too many arguments"
+            assert (interface) is (my_interface), "Wrong interface"
+            assert bytes(frame) == bytes(my_frame), "Wrong frame"
             receive_future.set_result(None)
         except Exception as e:
             receive_future.set_exception(e)
@@ -133,7 +128,7 @@ async def test_receive_str_filter():
     my_port.received.emit(frame=bytes(my_frame))
 
     await receive_future
-    eq_(len(unmatched_filter_received), 0)
+    assert len(unmatched_filter_received) == 0
 
 
 @asynctest
@@ -152,9 +147,9 @@ async def test_receive_str_filter_ssid():
 
     def _on_receive_match(interface, frame, **kwargs):
         try:
-            eq_(len(kwargs), 0, msg="Too many arguments")
-            assert_is(interface, my_interface, msg="Wrong interface")
-            eq_(bytes(frame), bytes(my_frame), msg="Wrong frame")
+            assert len(kwargs) == 0, "Too many arguments"
+            assert (interface) is (my_interface), "Wrong interface"
+            assert bytes(frame) == bytes(my_frame), "Wrong frame"
             receive_future.set_result(None)
         except Exception as e:
             receive_future.set_exception(e)
@@ -178,7 +173,7 @@ async def test_receive_str_filter_ssid():
     my_port.received.emit(frame=bytes(my_frame))
 
     await receive_future
-    eq_(len(unmatched_filter_received), 0)
+    assert len(unmatched_filter_received) == 0
 
 
 @asynctest
@@ -197,9 +192,9 @@ async def test_receive_re_filter():
 
     def _on_receive_match(interface, frame, match, **kwargs):
         try:
-            eq_(len(kwargs), 0, msg="Too many arguments")
-            assert_is(interface, my_interface, msg="Wrong interface")
-            eq_(bytes(frame), bytes(my_frame), msg="Wrong frame")
+            assert len(kwargs) == 0, "Too many arguments"
+            assert (interface) is (my_interface), "Wrong interface"
+            assert bytes(frame) == bytes(my_frame), "Wrong frame"
             receive_future.set_result(None)
         except Exception as e:
             receive_future.set_exception(e)
@@ -227,7 +222,7 @@ async def test_receive_re_filter():
     my_port.received.emit(frame=bytes(my_frame))
 
     await receive_future
-    eq_(len(unmatched_filter_received), 0)
+    assert len(unmatched_filter_received) == 0
 
 
 @asynctest
@@ -246,9 +241,9 @@ async def test_receive_re_filter_ssid():
 
     def _on_receive_match(interface, frame, match, **kwargs):
         try:
-            eq_(len(kwargs), 0, msg="Too many arguments")
-            assert_is(interface, my_interface, msg="Wrong interface")
-            eq_(bytes(frame), bytes(my_frame), msg="Wrong frame")
+            assert len(kwargs) == 0, "Too many arguments"
+            assert (interface) is (my_interface), "Wrong interface"
+            assert bytes(frame) == bytes(my_frame), "Wrong frame"
             receive_future.set_result(None)
         except Exception as e:
             receive_future.set_exception(e)
@@ -272,7 +267,7 @@ async def test_receive_re_filter_ssid():
     my_port.received.emit(frame=bytes(my_frame))
 
     await receive_future
-    eq_(len(unmatched_filter_received), 0)
+    assert len(unmatched_filter_received) == 0
 
 
 def test_unbind_notexist_call():
@@ -333,7 +328,7 @@ def test_unbind_str():
     my_interface.unbind(my_receiver, "MYCALL", ssid=12)
 
     # This should now be empty
-    eq_(len(my_interface._receiver_str), 0)
+    assert len(my_interface._receiver_str) == 0
 
 
 def test_unbind_re():
@@ -352,7 +347,7 @@ def test_unbind_re():
     my_interface.unbind(my_receiver, r"^MY", ssid=12, regex=True)
 
     # This should now be empty
-    eq_(len(my_interface._receiver_re), 0)
+    assert len(my_interface._receiver_re) == 0
 
 
 def test_reception_resets_cts():
@@ -371,8 +366,8 @@ def test_reception_resets_cts():
     my_port.received.emit(frame=bytes(my_frame))
     cts_after = my_interface._cts_expiry
 
-    assert_less(cts_before, cts_after)
-    assert_greater(cts_after, time.monotonic())
+    assert (cts_before) < (cts_after)
+    assert (cts_after) > (time.monotonic())
 
 
 @asynctest
@@ -390,9 +385,9 @@ async def test_transmit_waits_cts():
 
     def _on_transmit(interface, frame, **kwargs):
         try:
-            eq_(len(kwargs), 0, msg="Too many arguments")
-            assert_is(interface, my_interface, msg="Wrong interface")
-            eq_(bytes(frame), bytes(my_frame), msg="Wrong frame")
+            assert len(kwargs) == 0, "Too many arguments"
+            assert (interface) is (my_interface), "Wrong interface"
+            assert bytes(frame) == bytes(my_frame), "Wrong frame"
             transmit_future.set_result(None)
         except Exception as e:
             transmit_future.set_exception(e)
@@ -411,12 +406,12 @@ async def test_transmit_waits_cts():
 
     await transmit_future
 
-    eq_(len(my_port.sent), 1)
+    assert len(my_port.sent) == 1
     (send_time, sent_frame) = my_port.sent.pop(0)
 
-    eq_(bytes(sent_frame), bytes(my_frame))
-    assert_less((time.monotonic() - send_time), 0.05)
-    assert_greater_equal((send_time - time_before), 0.25)
+    assert bytes(sent_frame) == bytes(my_frame)
+    assert ((time.monotonic() - send_time)) < (0.05)
+    assert ((send_time - time_before)) >= (0.25)
 
 
 @asynctest
@@ -441,7 +436,7 @@ async def test_transmit_cancel():
     await sleep(1)
 
     # Nothing should have been sent.
-    eq_(len(my_port.sent), 0)
+    assert len(my_port.sent) == 0
 
 
 @asynctest
@@ -462,9 +457,9 @@ async def test_transmit_sends_immediate_if_cts():
 
     def _on_transmit(interface, frame, **kwargs):
         try:
-            eq_(len(kwargs), 0, msg="Too many arguments")
-            assert_is(interface, my_interface, msg="Wrong interface")
-            eq_(bytes(frame), bytes(my_frame), msg="Wrong frame")
+            assert len(kwargs) == 0, "Too many arguments"
+            assert (interface) is (my_interface), "Wrong interface"
+            assert bytes(frame) == bytes(my_frame), "Wrong frame"
             transmit_future.set_result(None)
         except Exception as e:
             transmit_future.set_exception(e)
@@ -483,12 +478,12 @@ async def test_transmit_sends_immediate_if_cts():
 
     await transmit_future
 
-    eq_(len(my_port.sent), 1)
+    assert len(my_port.sent) == 1
     (send_time, sent_frame) = my_port.sent.pop(0)
 
-    eq_(bytes(sent_frame), bytes(my_frame))
-    assert_less((time.monotonic() - send_time), 0.05)
-    assert_less((send_time - time_before), 0.01)
+    assert bytes(sent_frame) == bytes(my_frame)
+    assert ((time.monotonic() - send_time)) < (0.05)
+    assert ((send_time - time_before)) < (0.01)
 
 
 @asynctest
@@ -510,9 +505,9 @@ async def test_transmit_sends_if_not_expired():
 
     def _on_transmit(interface, frame, **kwargs):
         try:
-            eq_(len(kwargs), 0, msg="Too many arguments")
-            assert_is(interface, my_interface, msg="Wrong interface")
-            eq_(bytes(frame), bytes(my_frame), msg="Wrong frame")
+            assert len(kwargs) == 0, "Too many arguments"
+            assert (interface) is (my_interface), "Wrong interface"
+            assert bytes(frame) == bytes(my_frame), "Wrong frame"
             transmit_future.set_result(None)
         except Exception as e:
             transmit_future.set_exception(e)
@@ -531,12 +526,12 @@ async def test_transmit_sends_if_not_expired():
 
     await transmit_future
 
-    eq_(len(my_port.sent), 1)
+    assert len(my_port.sent) == 1
     (send_time, sent_frame) = my_port.sent.pop(0)
 
-    eq_(bytes(sent_frame), bytes(my_frame))
-    assert_less((time.monotonic() - send_time), 0.05)
-    assert_less((send_time - time_before), 0.05)
+    assert bytes(sent_frame) == bytes(my_frame)
+    assert ((time.monotonic() - send_time)) < (0.05)
+    assert ((send_time - time_before)) < (0.05)
 
 
 @asynctest
@@ -572,7 +567,7 @@ async def test_transmit_drops_expired():
     await transmit_future
 
     # Nothing should be sent!
-    eq_(len(my_port.sent), 0)
+    assert len(my_port.sent) == 0
 
 
 @asynctest
@@ -590,9 +585,9 @@ async def test_transmit_waits_if_cts_reset():
 
     def _on_transmit(interface, frame, **kwargs):
         try:
-            eq_(len(kwargs), 0, msg="Too many arguments")
-            assert_is(interface, my_interface, msg="Wrong interface")
-            eq_(bytes(frame), bytes(my_frame), msg="Wrong frame")
+            assert len(kwargs) == 0, "Too many arguments"
+            assert (interface) is (my_interface), "Wrong interface"
+            assert bytes(frame) == bytes(my_frame), "Wrong frame"
             transmit_future.set_result(None)
         except Exception as e:
             transmit_future.set_exception(e)
@@ -614,13 +609,13 @@ async def test_transmit_waits_if_cts_reset():
 
     await transmit_future
 
-    eq_(len(my_port.sent), 1)
+    assert len(my_port.sent) == 1
     (send_time, sent_frame) = my_port.sent.pop(0)
 
-    eq_(bytes(sent_frame), bytes(my_frame))
-    assert_less((time.monotonic() - send_time), 0.05)
-    assert_greater(send_time - time_before, 0.25)
-    assert_less(send_time - time_before, 1.05)
+    assert bytes(sent_frame) == bytes(my_frame)
+    assert ((time.monotonic() - send_time)) < (0.05)
+    assert (send_time - time_before) > (0.25)
+    assert (send_time - time_before) < (1.05)
 
 
 @asynctest
@@ -650,9 +645,9 @@ async def test_transmit_handles_failure():
 
     def _on_transmit(interface, frame, **kwargs):
         try:
-            eq_(len(kwargs), 0, msg="Too many arguments")
-            assert_is(interface, my_interface, msg="Wrong interface")
-            eq_(bytes(frame), bytes(my_frame_2), msg="Wrong frame")
+            assert len(kwargs) == 0, "Too many arguments"
+            assert (interface) is (my_interface), "Wrong interface"
+            assert bytes(frame) == bytes(my_frame_2), "Wrong frame"
             transmit_future.set_result(None)
         except Exception as e:
             transmit_future.set_exception(e)
@@ -672,9 +667,9 @@ async def test_transmit_handles_failure():
 
     await transmit_future
 
-    eq_(len(my_port.sent), 1)
+    assert len(my_port.sent) == 1
     (send_time, sent_frame) = my_port.sent.pop(0)
 
-    eq_(bytes(sent_frame), bytes(my_frame_2))
-    assert_less((time.monotonic() - send_time), 0.05)
-    assert_greater_equal((send_time - time_before), 0.25)
+    assert bytes(sent_frame) == bytes(my_frame_2)
+    assert ((time.monotonic() - send_time)) < (0.05)
+    assert ((send_time - time_before)) >= (0.25)
