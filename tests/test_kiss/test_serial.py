@@ -27,7 +27,8 @@ class DummySerial(object):
         dsrdtr,
         inter_byte_timeout,
     ):
-        assert port == "/dev/ttyS0"
+
+        assert port in ("/dev/ttyS0", "/dev/ttyS1")
         assert baudrate == 9600
         assert bytesize == EIGHTBITS
         assert parity == PARITY_NONE
@@ -95,37 +96,45 @@ connections = []
 
 # Stub the serial port connection factory
 async def dummy_create_serial_connection(
-    loop, proto_factory, *args, **kwargs
+    loop, proto_factory, device, *args, **kwargs
 ):
     future = loop.create_future()
     create_serial_conn_log.debug(
         "Creating new serial connection: "
-        "loop=%r proto=%r args=%r kwargs=%r",
+        "loop=%r proto=%r device=%r args=%r kwargs=%r",
         loop,
         proto_factory,
+        device,
         args,
         kwargs,
     )
 
     def _open():
-        create_serial_conn_log.debug("Creating objects")
-        # Create the objects
-        protocol = proto_factory()
-        port = DummySerial(*args, **kwargs)
-        transport = DummyTransport(loop, port)
+        if device == "/dev/ttyS0":
+            create_serial_conn_log.debug("Creating objects")
+            # Create the objects
+            protocol = proto_factory()
+            port = DummySerial(device, *args, **kwargs)
+            transport = DummyTransport(loop, port)
 
-        # Record the created object references
-        connections.append(
-            PortConnection(port=port, protocol=protocol, transport=transport)
-        )
+            # Record the created object references
+            connections.append(
+                PortConnection(
+                    port=port, protocol=protocol, transport=transport
+                )
+            )
 
-        # Pass the protocol the transport object
-        create_serial_conn_log.debug("Passing transport to protocol")
-        protocol.connection_made(transport)
+            # Pass the protocol the transport object
+            create_serial_conn_log.debug("Passing transport to protocol")
+            protocol.connection_made(transport)
 
-        # Finish up the future
-        create_serial_conn_log.debug("Finishing up")
-        future.set_result((protocol, transport))
+            # Finish up the future
+            create_serial_conn_log.debug("Finishing up")
+            future.set_result((protocol, transport))
+        else:
+            # Abort with an error
+            create_serial_conn_log.debug("Failing")
+            future.set_exception(IOError("Open device failed"))
 
     create_serial_conn_log.debug("Scheduled in IOLoop")
     loop.call_soon(_open)
@@ -167,6 +176,41 @@ async def test_open():
 
     # The device should have been initialised
     assert kissdev.init_called
+
+
+@asynctest
+async def test_open_fail():
+    """
+    Test open failures are handled.
+    """
+    loop = get_event_loop()
+    kissdev = TestDevice(device="/dev/ttyS1", baudrate=9600, loop=loop)
+    assert kissdev._transport is None
+
+    failures = []
+
+    def _on_fail(**kwargs):
+        failures.append(kwargs)
+
+    kissdev.failed.connect(_on_fail)
+
+    kissdev.open()
+    await sleep(0.01)
+
+    # We should NOT have created a new port
+    assert len(connections) == 0
+
+    # Connection should be in the failed state
+    assert kissdev.state == kiss.KISSDeviceState.FAILED
+
+    # Failure should have been reported
+    assert failures
+    failure = failures.pop(0)
+
+    assert failure.pop("action") == "open"
+    (ex_c, ex_v, _) = failure.pop("exc_info")
+    assert ex_c is IOError
+    assert str(ex_v) == "Open device failed"
 
 
 @asynctest

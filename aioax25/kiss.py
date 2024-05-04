@@ -594,22 +594,28 @@ class SerialKISSDevice(BaseTransportDevice):
         self._baudrate = baudrate
 
     async def _open_connection(self):
-        self._log.debug("Delegating to KISS serial device %r", self._device)
-        await create_serial_connection(
-            self._loop,
-            self._make_protocol,
-            self._device,
-            baudrate=self._baudrate,
-            bytesize=EIGHTBITS,
-            parity=PARITY_NONE,
-            stopbits=STOPBITS_ONE,
-            timeout=None,
-            xonxoff=False,
-            rtscts=False,
-            write_timeout=None,
-            dsrdtr=False,
-            inter_byte_timeout=None,
-        )
+        try:
+            self._log.debug(
+                "Delegating to KISS serial device %r", self._device
+            )
+            await create_serial_connection(
+                self._loop,
+                self._make_protocol,
+                self._device,
+                baudrate=self._baudrate,
+                bytesize=EIGHTBITS,
+                parity=PARITY_NONE,
+                stopbits=STOPBITS_ONE,
+                timeout=None,
+                xonxoff=False,
+                rtscts=False,
+                write_timeout=None,
+                dsrdtr=False,
+                inter_byte_timeout=None,
+            )
+        except:
+            self._log.warning("Failed to open serial connection", exc_info=1)
+            self._on_fail("open", exc_info())
 
 
 class TCPKISSDevice(BaseTransportDevice):
@@ -679,9 +685,13 @@ class TCPKISSDevice(BaseTransportDevice):
         )
 
     async def _open_connection(self):
-        await self._loop.create_connection(
-            self._make_protocol, **self._conn_args
-        )
+        try:
+            await self._loop.create_connection(
+                self._make_protocol, **self._conn_args
+            )
+        except:
+            self._log.warning("Failed to open TCP connection", exc_info=1)
+            self._on_fail("open", exc_info())
 
 
 class SubprocKISSDevice(BaseTransportDevice):
@@ -719,14 +729,18 @@ class SubprocKISSDevice(BaseTransportDevice):
         )
 
     async def _open_connection(self):
-        if self._shell:
-            await self._loop.subprocess_shell(
-                self._make_protocol, " ".join(self._command)
-            )
-        else:
-            await self._loop.subprocess_exec(
-                self._make_protocol, *self._command
-            )
+        try:
+            if self._shell:
+                await self._loop.subprocess_shell(
+                    self._make_protocol, " ".join(self._command)
+                )
+            else:
+                await self._loop.subprocess_exec(
+                    self._make_protocol, *self._command
+                )
+        except:
+            self._log.warning("Failed to call subprocess", exc_info=1)
+            self._on_fail("open", exc_info())
 
     def _send_raw_data(self, data):
         self._transport.get_pipe_transport(0).write(data)
