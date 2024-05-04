@@ -299,3 +299,85 @@ async def test_send_raw_data():
 
     kissdev._send_raw_data(b"a test frame")
     assert bytes(connection.port.tx_buffer) == b"a test frame"
+
+
+def test_reset_no_transport():
+    """
+    Test reset handles the "no transport" case
+    """
+    loop = get_event_loop()
+    kissdev = TestDevice(device="/dev/ttyS0", baudrate=9600, loop=loop)
+    assert kissdev._transport is None
+
+    # Inject state
+    kissdev._state = kiss.KISSDeviceState.FAILED
+
+    # Reset
+    kissdev.reset()
+
+    assert kissdev.state == kiss.KISSDeviceState.CLOSED
+
+
+def test_reset_with_transport():
+    """
+    Test reset closes the transport if it exists
+    """
+    loop = get_event_loop()
+    kissdev = TestDevice(device="/dev/ttyS0", baudrate=9600, loop=loop)
+
+    assert kissdev._transport is None
+
+    class MyTransport(object):
+        def __init__(self):
+            self.closed = False
+
+        def close(self):
+            assert not self.closed
+            self.closed = True
+
+    # Inject transport
+    transport = MyTransport()
+    kissdev._transport = transport
+
+    # Inject state
+    kissdev._state = kiss.KISSDeviceState.FAILED
+
+    # Reset
+    kissdev.reset()
+
+    assert kissdev.state == kiss.KISSDeviceState.CLOSED
+    assert kissdev._transport is None
+    assert transport.closed
+
+
+def test_reset_with_transport_err():
+    """
+    Test reset swallows close errors from the transport
+    """
+    loop = get_event_loop()
+    kissdev = TestDevice(device="/dev/ttyS0", baudrate=9600, loop=loop)
+
+    assert kissdev._transport is None
+
+    class MyTransport(object):
+        def __init__(self):
+            self.closed = False
+
+        def close(self):
+            assert not self.closed
+            self.closed = True
+            raise IOError("Whoopsie!")
+
+    # Inject transport
+    transport = MyTransport()
+    kissdev._transport = transport
+
+    # Inject state
+    kissdev._state = kiss.KISSDeviceState.FAILED
+
+    # Reset
+    kissdev.reset()
+
+    assert kissdev.state == kiss.KISSDeviceState.CLOSED
+    assert kissdev._transport is None
+    assert transport.closed

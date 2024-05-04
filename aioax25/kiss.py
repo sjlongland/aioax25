@@ -555,6 +555,19 @@ class BaseTransportDevice(BaseKISSDevice):
     def _send_raw_data(self, data):
         self._transport.write(data)
 
+    def reset(self):
+        super(BaseTransportDevice, self).reset()
+
+        try:
+            if self._transport:
+                self._transport.close()
+        except:
+            self._log.warning(
+                "Failed to close transport, ignoring!", exc_info=1
+            )
+
+        self._transport = None
+
 
 class SerialKISSDevice(BaseTransportDevice):
     """
