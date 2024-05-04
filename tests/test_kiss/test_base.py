@@ -208,6 +208,22 @@ def test_close_reset():
     assert func == kissdev._send_data
 
 
+def test_reset():
+    """
+    Test a reset call resets a failed device
+    """
+    loop = DummyLoop()
+    kissdev = DummyKISSDevice(loop=loop, reset_on_close=False)
+
+    # Force the port failed
+    kissdev._state = KISSDeviceState.FAILED
+
+    # Reset the device
+    kissdev.reset()
+
+    assert kissdev._state == KISSDeviceState.CLOSED
+
+
 def test_receive():
     """
     Test that a call to _receive stashes the data then schedules _receive_frame.
