@@ -31,6 +31,7 @@ class TestingAX25Peer(AX25Peer):
         full_duplex=False,
         reply_path=None,
         locked_path=False,
+        paclen=128,
     ):
         super(TestingAX25Peer, self).__init__(
             station,
@@ -54,4 +55,5 @@ class TestingAX25Peer(AX25Peer):
             full_duplex,
             reply_path,
             locked_path,
+            paclen,
         )
