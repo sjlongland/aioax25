@@ -1285,7 +1285,11 @@ class AX25Peer(object):
                     AX25XIDIFieldLengthReceiveParameter(
                         self._max_ifield_rx * 8
                     ),
-                    AX25XIDWindowSizeTransmitParameter(self._max_outstanding),
+                    AX25XIDWindowSizeTransmitParameter(
+                        self._max_outstanding_mod128
+                        if self._modulo128
+                        else self._max_outstanding_mod8
+                    ),
                     AX25XIDWindowSizeReceiveParameter(
                         self._max_outstanding_mod128
                         if self._modulo128
