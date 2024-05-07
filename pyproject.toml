@@ -22,6 +22,11 @@ dependencies = [
     "signalslot"
 ]
 
+[project.optional-dependencies]
+call = [
+    "prompt_toolkit"
+]
+
 [project.readme]
 file = "README.md"
 content-type = "text/markdown"
@@ -41,9 +46,3 @@ log_cli = true
 
 [tool.setuptools.dynamic]
 version = {attr = "aioax25.__version__"}
-
-[tool.coverage.run]
-omit = [
-    # Debugging tool for dumping KISS traffic from socat hex dumps.
-    "aioax25/tools/dumphex.py"
-]
