@@ -700,7 +700,9 @@ class AX25Peer(object):
             # AX.25 2.2 section 6.4.7 says we set V(S) to this frame's
             # N(R) and begin re-transmission.
             self._log.debug("Set state V(S) from frame N(R) = %d", frame.nr)
-            self._update_state("_send_state", value=frame.nr)
+            self._update_state(
+                "_send_state", value=frame.nr, comment="from REJ N(R)"
+            )
             self._send_next_iframe()
 
     def _on_receive_srej(self, frame):
@@ -971,11 +973,10 @@ class AX25Peer(object):
         self._log.debug("Resetting the peer state")
 
         # Reset our state
-        self._update_state("_send_state", value=0)  # AKA V(S)
-        self._send_seq = 0  # AKA N(S)
-        self._update_state("_recv_state", value=0)  # AKA V(R)
-        self._recv_seq = 0  # AKA N(R)
-        self._ack_state = 0  # AKA V(A)
+        self._update_state("_send_state", value=0, comment="reset")
+        self._update_state("_send_seq", value=0, comment="reset")
+        self._update_state("_recv_state", value=0, comment="reset")
+        self._update_state("_recv_seq", value=0, comment="reset")
 
         # Unacknowledged I-frames to be ACKed
         self._pending_iframes = {}
@@ -1503,8 +1504,9 @@ class AX25Peer(object):
 
         # "After the I frame is sent, the send state variable is incremented
         # by one."
-        self._log.debug("Increment send state V(S) by one")
-        self._update_state("_send_state", delta=1)
+        self._update_state(
+            "_send_state", delta=1, comment="send next I-frame"
+        )
 
         if self._log.isEnabledFor(logging.DEBUG):
             self._log.debug("Pending frames: %r", self._pending_iframes)
