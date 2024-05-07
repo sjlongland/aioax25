@@ -31,6 +31,7 @@ def test_peer_recv_dm():
     ack_timer = DummyTimeout(None, None)
     peer._ack_timeout_handle = ack_timer
     peer._state = AX25PeerState.CONNECTED
+    peer._modulo = 8
     peer._send_state = 1
     peer._send_seq = 2
     peer._recv_state = 3
@@ -73,6 +74,7 @@ def test_peer_recv_dm_disconnected():
     ack_timer = DummyTimeout(None, None)
     peer._ack_timeout_handle = ack_timer
     peer._state = AX25PeerState.NEGOTIATING
+    peer._modulo = 8
     peer._send_state = 1
     peer._send_seq = 2
     peer._recv_state = 3

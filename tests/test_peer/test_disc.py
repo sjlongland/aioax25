@@ -37,6 +37,7 @@ def test_peer_recv_disc():
     ack_timer = DummyTimeout(None, None)
     peer._ack_timeout_handle = ack_timer
     peer._state = AX25PeerState.CONNECTED
+    peer._modulo = 8
     peer._send_state = 1
     peer._send_seq = 2
     peer._recv_state = 3
@@ -91,6 +92,7 @@ def test_peer_send_disc():
         repeaters=AX25Path("VK4MSL-2", "VK4MSL-3"),
         full_duplex=True,
     )
+    peer._modulo = 8
 
     # Request a DISC frame be sent
     peer._send_disc()
@@ -127,6 +129,7 @@ def test_peer_ua_timeout_disconnecting():
     )
 
     peer._state = AX25PeerState.DISCONNECTING
+    peer._modulo = 8
     peer._ack_timeout_handle = "time-out handle"
 
     peer._on_disc_ua_timeout()
@@ -149,6 +152,7 @@ def test_peer_ua_timeout_notdisconnecting():
 
     peer._state = AX25PeerState.CONNECTED
     peer._ack_timeout_handle = "time-out handle"
+    peer._modulo = 8
 
     peer._on_disc_ua_timeout()
 

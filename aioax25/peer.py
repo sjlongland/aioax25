@@ -1538,15 +1538,23 @@ class AX25Peer(object):
         self._reset_idle_timeout()
         return self._station()._interface().transmit(frame, callback=None)
 
-    def _update_state(self, prop, delta=None, value=None):
+    def _update_state(self, prop, delta=None, value=None, comment=""):
+        if comment:
+            comment = " " + comment
+
         if value is None:
             value = getattr(self, prop)
 
         if delta is not None:
             value += delta
-            value %= self._modulo
+            comment += " delta=%s" % delta
 
-        self._log.debug("%s = %s", getattr(self, "%s_name" % prop), value)
+        # Always apply modulo op
+        value %= self._modulo
+
+        self._log.debug(
+            "%s = %s" + comment, getattr(self, "%s_name" % prop), value
+        )
         setattr(self, prop, value)
 
 
