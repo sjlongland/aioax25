@@ -12,6 +12,7 @@ from yaml import safe_load
 # from aioax25.kiss import …
 # from aioax25.interface import …
 # etc… if you're copying this for your own code
+from ..frame import AX25Frame
 from ..kiss import make_device, KISSDeviceState
 from ..interface import AX25Interface
 from ..station import AX25Station
@@ -42,7 +43,7 @@ class AX25Call(object):
 
     def _on_receive(self, frame, **kwargs):
         with patch_stdout():
-            if frame.pid == 0xF0:
+            if frame.pid == AX25Frame.PID_NO_L3:
                 # No L3 protocol
                 print("\n".join(frame.payload.decode().split("\r")))
             else:
