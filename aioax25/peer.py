@@ -603,6 +603,7 @@ class AX25Peer(object):
         # increments its receive state variable, and acts in one of the
         # following manners:…"
         self._update_state("_recv_state", delta=1)
+        self._on_receive_isframe_nr_ns(frame)
 
         # TODO: the payload here may be a repeat of data already seen, or
         # for _future_ data (i.e. there's an I-frame that got missed in between
@@ -628,6 +629,7 @@ class AX25Peer(object):
         """
         Handle a S-frame from the peer.
         """
+        self._on_receive_isframe_nr_ns(frame)
         if isinstance(frame, self._RRFrameClass):
             self._on_receive_rr(frame)
         elif isinstance(frame, self._RNRFrameClass):
