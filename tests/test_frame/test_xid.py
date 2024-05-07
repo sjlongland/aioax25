@@ -13,6 +13,8 @@ from aioax25.frame import (
 
 from ..hex import from_hex, hex_cmp
 
+from pytest import mark
+
 
 def test_encode_xid():
     """
@@ -417,6 +419,18 @@ def test_encode_hdlcfunc_param():
     )
 
     hex_cmp(param.pv, from_hex("8c a8 83"))
+
+
+@mark.parametrize("value", [("96", None)])
+def test_encode_badtype(value):
+    """
+    Test that AX25XIDBigEndianParameter refuses bad input types.
+    """
+    try:
+        AX25XIDRetriesParameter(value)
+        assert False, "Should not have been accepted"
+    except TypeError as e:
+        assert str(e) == "value must be an integer or boolean"
 
 
 def test_encode_retries_param():

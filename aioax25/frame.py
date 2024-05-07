@@ -1910,6 +1910,9 @@ class AX25XIDBigEndianParameter(AX25XIDParameter):
         """
         Create a big-endian integer parameter.
         """
+        if not (isinstance(value, int) or isinstance(value, bool)):
+            raise TypeError("value must be an integer or boolean")
+
         self._value = value
 
         super(AX25XIDBigEndianParameter, self).__init__(pi=self.PI)
