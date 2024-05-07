@@ -2611,10 +2611,24 @@ class AX25Address(object):
         mydata.update(overrides)
         return self.__class__(**mydata)
 
+    def normcopy(self, **overrides):
+        """
+        Return a normalised copy of this address.  By default, reserved bits
+        are set to 1s, C/H and extension bits are set to 0s.
+        """
+
+        # Define defaults for the overrides
+        overrides.setdefault("res0", True)
+        overrides.setdefault("res1", True)
+        overrides.setdefault("ch", False)
+        overrides.setdefault("extension", False)
+
+        return self.copy(**overrides)
+
     @property
     def normalised(self):
         """
-        Return a normalised copy of this address.  (Set reserved bits to ones,
-        clear the CH bit and extension bit.)
+        Return a normalised copy of this address.
         """
-        return self.copy(res0=True, res1=True, ch=False, extension=False)
+
+        return self.normcopy()

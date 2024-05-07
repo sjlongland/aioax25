@@ -338,6 +338,18 @@ def test_copy():
         assert getattr(a, field) == getattr(b, field)
 
 
+def test_normcopy():
+    """
+    Test we can get normalised copies with specific bits set.
+    """
+    a = AX25Address("VK4MSL", 15, ch=True, res0=False, res1=False)
+    b = a.normcopy(res0=False, ch=True)
+
+    assert b._ch is True
+    assert b._res0 is False
+    assert b._res1 is True
+
+
 def test_normalised():
     """
     Test we can get normalised copies for comparison.
