@@ -1106,6 +1106,590 @@ def test_recv_iframe_matched_seq_iframepending():
     ]
 
 
+def test_recv_sframe_rr_req_busy():
+    """
+    Test that RR with P/F set while busy sends RNR
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = TestingAX25Peer(
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
+    )
+
+    # Stub the functions called
+    count = dict(send_rr=0, send_rnr=0, send_next_iframe=0)
+
+    def _send_rr():
+        count["send_rr"] += 1
+
+    peer._send_rr_notification = _send_rr
+
+    def _send_rnr():
+        count["send_rnr"] += 1
+
+    peer._send_rnr_notification = _send_rnr
+
+    def _send_next_iframe():
+        count["send_next_iframe"] += 1
+
+    peer._send_next_iframe = _send_next_iframe
+
+    # Set the state
+    peer._state = AX25PeerState.CONNECTED
+    peer._init_connection(False)
+    peer._local_busy = True
+
+    # Inject a frame
+    peer._on_receive(
+        AX25RawFrame(
+            destination=AX25Address("VK4MSL-1"),
+            source=AX25Address("VK4MSL"),
+            repeaters=AX25Path("VK4RZB"),
+            payload=b"\x51",
+        )
+    )
+
+    # We should send a RNR in reply
+    assert count == dict(send_rr=0, send_rnr=1, send_next_iframe=0)
+
+
+def test_recv_sframe_rr_req_notbusy():
+    """
+    Test that RR with P/F set while not busy sends RR
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = TestingAX25Peer(
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
+    )
+
+    # Stub the functions called
+    count = dict(send_rr=0, send_rnr=0, send_next_iframe=0)
+
+    def _send_rr():
+        count["send_rr"] += 1
+
+    peer._send_rr_notification = _send_rr
+
+    def _send_rnr():
+        count["send_rnr"] += 1
+
+    peer._send_rnr_notification = _send_rnr
+
+    def _send_next_iframe():
+        count["send_next_iframe"] += 1
+
+    peer._send_next_iframe = _send_next_iframe
+
+    # Set the state
+    peer._state = AX25PeerState.CONNECTED
+    peer._init_connection(False)
+    peer._local_busy = False
+
+    # Inject a frame
+    peer._on_receive(
+        AX25RawFrame(
+            destination=AX25Address("VK4MSL-1"),
+            source=AX25Address("VK4MSL"),
+            repeaters=AX25Path("VK4RZB"),
+            payload=b"\x51",
+        )
+    )
+
+    # We should send a RR in reply
+    assert count == dict(send_rr=1, send_rnr=0, send_next_iframe=0)
+
+
+def test_recv_sframe_rr_rep():
+    """
+    Test that RR with P/F clear marks peer not busy
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = TestingAX25Peer(
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
+    )
+
+    # Stub the functions called
+    count = dict(send_rr=0, send_rnr=0, send_next_iframe=0)
+
+    def _send_rr():
+        count["send_rr"] += 1
+
+    peer._send_rr_notification = _send_rr
+
+    def _send_rnr():
+        count["send_rnr"] += 1
+
+    peer._send_rnr_notification = _send_rnr
+
+    def _send_next_iframe():
+        count["send_next_iframe"] += 1
+
+    peer._send_next_iframe = _send_next_iframe
+
+    # Set the state
+    peer._state = AX25PeerState.CONNECTED
+    peer._init_connection(False)
+    peer._peer_busy = True
+
+    # Inject a frame
+    peer._on_receive(
+        AX25RawFrame(
+            destination=AX25Address("VK4MSL-1"),
+            source=AX25Address("VK4MSL"),
+            repeaters=AX25Path("VK4RZB"),
+            payload=b"\x41",
+        )
+    )
+
+    # Busy flag should be cleared
+    assert peer._peer_busy is False
+
+    # We should send the next I-frame in reply
+    assert count == dict(send_rr=0, send_rnr=0, send_next_iframe=1)
+
+
+def test_recv_sframe_rnr_req_busy():
+    """
+    Test that RNR with P/F set while busy sends RNR
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = TestingAX25Peer(
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
+    )
+
+    # Stub the functions called
+    count = dict(send_rr=0, send_rnr=0, send_next_iframe=0)
+
+    def _send_rr():
+        count["send_rr"] += 1
+
+    peer._send_rr_notification = _send_rr
+
+    def _send_rnr():
+        count["send_rnr"] += 1
+
+    peer._send_rnr_notification = _send_rnr
+
+    def _send_next_iframe():
+        count["send_next_iframe"] += 1
+
+    peer._send_next_iframe = _send_next_iframe
+
+    # Set the state
+    peer._state = AX25PeerState.CONNECTED
+    peer._init_connection(False)
+    peer._local_busy = True
+
+    # Inject a frame
+    peer._on_receive(
+        AX25RawFrame(
+            destination=AX25Address("VK4MSL-1"),
+            source=AX25Address("VK4MSL"),
+            repeaters=AX25Path("VK4RZB"),
+            payload=b"\x55",
+        )
+    )
+
+    # We should send a RNR in reply
+    assert count == dict(send_rr=0, send_rnr=1, send_next_iframe=0)
+
+
+def test_recv_sframe_rnr_req_notbusy():
+    """
+    Test that RNR with P/F set while not busy sends RR
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = TestingAX25Peer(
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
+    )
+
+    # Stub the functions called
+    count = dict(send_rr=0, send_rnr=0, send_next_iframe=0)
+
+    def _send_rr():
+        count["send_rr"] += 1
+
+    peer._send_rr_notification = _send_rr
+
+    def _send_rnr():
+        count["send_rnr"] += 1
+
+    peer._send_rnr_notification = _send_rnr
+
+    def _send_next_iframe():
+        count["send_next_iframe"] += 1
+
+    peer._send_next_iframe = _send_next_iframe
+
+    # Set the state
+    peer._state = AX25PeerState.CONNECTED
+    peer._init_connection(False)
+    peer._local_busy = False
+
+    # Inject a frame
+    peer._on_receive(
+        AX25RawFrame(
+            destination=AX25Address("VK4MSL-1"),
+            source=AX25Address("VK4MSL"),
+            repeaters=AX25Path("VK4RZB"),
+            payload=b"\x55",
+        )
+    )
+
+    # We should send a RR in reply
+    assert count == dict(send_rr=1, send_rnr=0, send_next_iframe=0)
+
+
+def test_recv_sframe_rnr_rep():
+    """
+    Test that RNR with P/F clear marks peer busy
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = TestingAX25Peer(
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
+    )
+
+    # Stub the functions called
+    count = dict(send_rr=0, send_rnr=0, send_next_iframe=0)
+
+    def _send_rr():
+        count["send_rr"] += 1
+
+    peer._send_rr_notification = _send_rr
+
+    def _send_rnr():
+        count["send_rnr"] += 1
+
+    peer._send_rnr_notification = _send_rnr
+
+    def _send_next_iframe():
+        count["send_next_iframe"] += 1
+
+    peer._send_next_iframe = _send_next_iframe
+
+    # Set the state
+    peer._state = AX25PeerState.CONNECTED
+    peer._init_connection(False)
+    peer._peer_busy = False
+
+    # Inject a frame
+    peer._on_receive(
+        AX25RawFrame(
+            destination=AX25Address("VK4MSL-1"),
+            source=AX25Address("VK4MSL"),
+            repeaters=AX25Path("VK4RZB"),
+            payload=b"\x45",
+        )
+    )
+
+    # Busy flag should be set
+    assert peer._peer_busy is True
+
+
+def test_recv_sframe_rej_req_busy():
+    """
+    Test that REJ with P/F set while busy sends RNR
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = TestingAX25Peer(
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
+    )
+
+    # Stub the functions called
+    count = dict(send_rr=0, send_rnr=0, send_next_iframe=0)
+    state_updates = []
+
+    def _send_rr():
+        count["send_rr"] += 1
+
+    peer._send_rr_notification = _send_rr
+
+    def _send_rnr():
+        count["send_rnr"] += 1
+
+    peer._send_rnr_notification = _send_rnr
+
+    def _send_next_iframe():
+        count["send_next_iframe"] += 1
+
+    peer._send_next_iframe = _send_next_iframe
+
+    def _update_state(prop, **kwargs):
+        kwargs["prop"] = prop
+        state_updates.append(kwargs)
+        setattr(
+            peer,
+            prop,
+            kwargs.get("value", getattr(peer, prop)) + kwargs.get("delta", 0),
+        )
+
+    peer._update_state = _update_state
+
+    # Set the state
+    peer._state = AX25PeerState.CONNECTED
+    peer._init_connection(False)
+    peer._local_busy = True
+
+    # Inject a frame
+    peer._on_receive(
+        AX25RawFrame(
+            destination=AX25Address("VK4MSL-1"),
+            source=AX25Address("VK4MSL"),
+            repeaters=AX25Path("VK4RZB"),
+            payload=b"\x59",
+        )
+    )
+
+    # We should update due to resets and peer ACKs
+    assert state_updates == [
+        {"comment": "reset", "prop": "_send_state", "value": 0},
+        {"comment": "reset", "prop": "_send_seq", "value": 0},
+        {"comment": "reset", "prop": "_recv_state", "value": 0},
+        {"comment": "reset", "prop": "_recv_seq", "value": 0},
+        {"comment": "ACKed by peer N(R)", "delta": 1, "prop": "_recv_seq"},
+    ]
+
+    # We should send a RNR in reply
+    assert count == dict(send_rr=0, send_rnr=1, send_next_iframe=0)
+
+
+def test_recv_sframe_rej_req_notbusy():
+    """
+    Test that REJ with P/F set while not busy sends RR
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = TestingAX25Peer(
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
+    )
+
+    # Stub the functions called
+    count = dict(send_rr=0, send_rnr=0, send_next_iframe=0)
+    state_updates = []
+
+    def _send_rr():
+        count["send_rr"] += 1
+
+    peer._send_rr_notification = _send_rr
+
+    def _send_rnr():
+        count["send_rnr"] += 1
+
+    peer._send_rnr_notification = _send_rnr
+
+    def _send_next_iframe():
+        count["send_next_iframe"] += 1
+
+    peer._send_next_iframe = _send_next_iframe
+
+    def _update_state(prop, **kwargs):
+        kwargs["prop"] = prop
+        state_updates.append(kwargs)
+        setattr(
+            peer,
+            prop,
+            kwargs.get("value", getattr(peer, prop)) + kwargs.get("delta", 0),
+        )
+
+    peer._update_state = _update_state
+
+    # Set the state
+    peer._state = AX25PeerState.CONNECTED
+    peer._init_connection(False)
+    peer._local_busy = False
+
+    # Inject a frame
+    peer._on_receive(
+        AX25RawFrame(
+            destination=AX25Address("VK4MSL-1"),
+            source=AX25Address("VK4MSL"),
+            repeaters=AX25Path("VK4RZB"),
+            payload=b"\x59",
+        )
+    )
+
+    # State updates should be a reset and peer ACK
+    assert state_updates == [
+        {"comment": "reset", "prop": "_send_state", "value": 0},
+        {"comment": "reset", "prop": "_send_seq", "value": 0},
+        {"comment": "reset", "prop": "_recv_state", "value": 0},
+        {"comment": "reset", "prop": "_recv_seq", "value": 0},
+        {"comment": "ACKed by peer N(R)", "delta": 1, "prop": "_recv_seq"},
+    ]
+
+    # We should send a RR in reply
+    assert count == dict(send_rr=1, send_rnr=0, send_next_iframe=0)
+
+
+def test_recv_sframe_rej_rep():
+    """
+    Test that REJ with P/F clear marks peer busy
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = TestingAX25Peer(
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
+    )
+
+    # Stub the functions called
+    count = dict(send_rr=0, send_rnr=0, send_next_iframe=0)
+    state_updates = []
+
+    def _send_rr():
+        count["send_rr"] += 1
+
+    peer._send_rr_notification = _send_rr
+
+    def _send_rnr():
+        count["send_rnr"] += 1
+
+    peer._send_rnr_notification = _send_rnr
+
+    def _send_next_iframe():
+        count["send_next_iframe"] += 1
+
+    peer._send_next_iframe = _send_next_iframe
+
+    def _update_state(prop, **kwargs):
+        kwargs["prop"] = prop
+        state_updates.append(kwargs)
+        setattr(
+            peer,
+            prop,
+            kwargs.get("value", getattr(peer, prop)) + kwargs.get("delta", 0),
+        )
+
+    peer._update_state = _update_state
+
+    # Set the state
+    peer._state = AX25PeerState.CONNECTED
+    peer._init_connection(False)
+    peer._peer_busy = False
+
+    # Inject a frame
+    peer._on_receive(
+        AX25RawFrame(
+            destination=AX25Address("VK4MSL-1"),
+            source=AX25Address("VK4MSL"),
+            repeaters=AX25Path("VK4RZB"),
+            payload=b"\x49",
+        )
+    )
+
+    assert state_updates == [
+        # Reset state
+        {"comment": "reset", "prop": "_send_state", "value": 0},
+        {"comment": "reset", "prop": "_send_seq", "value": 0},
+        {"comment": "reset", "prop": "_recv_state", "value": 0},
+        {"comment": "reset", "prop": "_recv_seq", "value": 0},
+        # Peer ACK
+        {"comment": "ACKed by peer N(R)", "delta": 1, "prop": "_recv_seq"},
+        # REJ handling
+        {"comment": "from REJ N(R)", "prop": "_send_state", "value": 2},
+    ]
+
+    # We should send an I-frame in reply
+    assert count == dict(send_rr=0, send_rnr=0, send_next_iframe=1)
+
+
+def test_recv_sframe_srej_pf():
+    """
+    Test that REJ with P/F set retransmits specified frame
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = TestingAX25Peer(
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
+    )
+
+    # Stub the functions called
+    iframes_rqd = []
+
+    def _transmit_iframe(nr):
+        iframes_rqd.append(nr)
+
+    peer._transmit_iframe = _transmit_iframe
+
+    # Set the state
+    peer._state = AX25PeerState.CONNECTED
+    peer._init_connection(True)
+
+    # Inject a frame
+    peer._on_receive(
+        AX25RawFrame(
+            destination=AX25Address("VK4MSL-1"),
+            source=AX25Address("VK4MSL"),
+            repeaters=AX25Path("VK4RZB"),
+            payload=b"\x0d\x55",
+        )
+    )
+
+    assert iframes_rqd == [42]
+
+
+def test_recv_sframe_srej_nopf():
+    """
+    Test that REJ with P/F clear retransmits specified frame
+    """
+    station = DummyStation(AX25Address("VK4MSL", ssid=1))
+    peer = TestingAX25Peer(
+        station=station,
+        address=AX25Address("VK4MSL"),
+        repeaters=AX25Path("VK4RZB"),
+        locked_path=True,
+    )
+
+    # Stub the functions called
+    iframes_rqd = []
+
+    def _transmit_iframe(nr):
+        iframes_rqd.append(nr)
+
+    peer._transmit_iframe = _transmit_iframe
+
+    # Set the state
+    peer._state = AX25PeerState.CONNECTED
+    peer._init_connection(True)
+
+    # Inject a frame
+    peer._on_receive(
+        AX25RawFrame(
+            destination=AX25Address("VK4MSL-1"),
+            source=AX25Address("VK4MSL"),
+            repeaters=AX25Path("VK4RZB"),
+            payload=b"\x0d\x54",
+        )
+    )
+
+    assert iframes_rqd == [42]
+
+
 def test_recv_disc():
     """
     Test that DISC is handled.

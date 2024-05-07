@@ -57,6 +57,9 @@ class DummyLogger(object):
     def getChild(self, name):
         return DummyLogger(self.name + "." + name, parent=self)
 
+    def isEnabledFor(self, level):
+        return True
+
 
 class DummyTimeout(object):
     def __init__(self, delay, callback, *args, **kwargs):

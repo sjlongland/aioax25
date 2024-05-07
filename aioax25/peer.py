@@ -570,6 +570,23 @@ class AX25Peer(object):
                 self.received_frame.emit(frame=frame, peer=self)
                 return self._send_dm()
 
+    def _on_receive_isframe_nr_ns(self, frame):
+        """
+        Handle the N(R) / N(S) fields from an I or S frame from the peer.
+        """
+        # "Whenever an I or S frame is correctly received, even in a busy
+        # condition, the N(R) of the received frame should be checked to see
+        # if it includes an acknowledgement of outstanding sent I frames. The
+        # T1 timer should be cancelled if the received frame actually
+        # acknowledges previously unacknowledged frames. If the T1 timer is
+        # cancelled and there are still some frames that have been sent that
+        # are not acknowledged, T1 should be started again. If the T1 timer
+        # runs out before an acknowledgement is received, the device should
+        # proceed to the retransmission procedure in 2.4.4.9."
+
+        # Check N(R) for received frames.
+        self._ack_outstanding((frame.nr - 1) % self._modulo)
+
     def _on_receive_iframe(self, frame):
         """
         Handle an incoming I-frame
@@ -642,23 +659,9 @@ class AX25Peer(object):
             self._on_receive_rej(frame)
         elif isinstance(frame, self._SREJFrameClass):
             self._on_receive_srej(frame)
-
-    def _on_receive_isframe_nr_ns(self, frame):
-        """
-        Handle the N(R) / N(S) fields from an I or S frame from the peer.
-        """
-        # "Whenever an I or S frame is correctly received, even in a busy
-        # condition, the N(R) of the received frame should be checked to see
-        # if it includes an acknowledgement of outstanding sent I frames. The
-        # T1 timer should be cancelled if the received frame actually
-        # acknowledges previously unacknowledged frames. If the T1 timer is
-        # cancelled and there are still some frames that have been sent that
-        # are not acknowledged, T1 should be started again. If the T1 timer
-        # runs out before an acknowledgement is received, the device should
-        # proceed to the retransmission procedure in 2.4.4.9."
-
-        # Check N(R) for received frames.
-        self._ack_outstanding((frame.nr - 1) % self._modulo)
+        else:  # pragma: no cover
+            # Should be impossible to get here!
+            raise TypeError("Unhandled frame: %r" % frame)
 
     def _on_receive_rr(self, frame):
         if frame.pf:
@@ -670,9 +673,6 @@ class AX25Peer(object):
             self._log.debug(
                 "RR notification received from peer N(R)=%d", frame.nr
             )
-            # AX.25 sect 4.3.2.1: "acknowledges properly received
-            # I frames up to and including N(R)-1"
-            self._ack_outstanding((frame.nr - 1) % self._modulo)
             self._peer_busy = False
             self._send_next_iframe()
 
@@ -684,8 +684,6 @@ class AX25Peer(object):
         else:
             # Received peer's RNR status, peer is busy
             self._log.debug("RNR notification received from peer")
-            # AX.25 sect 4.3.2.2: "Frames up to N(R)-1 are acknowledged."
-            self._ack_outstanding((frame.nr - 1) % self._modulo)
             self._peer_busy = True
 
     def _on_receive_rej(self, frame):
@@ -696,9 +694,6 @@ class AX25Peer(object):
         else:
             # Reject reject.
             self._log.debug("REJ notification received from peer")
-            # AX.25 sect 4.3.2.3: "Any frames sent with a sequence number
-            # of N(R)-1 or less are acknowledged."
-            self._ack_outstanding((frame.nr - 1) % self._modulo)
             # AX.25 2.2 section 6.4.7 says we set V(S) to this frame's
             # N(R) and begin re-transmission.
             self._log.debug("Set state V(S) from frame N(R) = %d", frame.nr)
@@ -713,7 +708,8 @@ class AX25Peer(object):
             # '1', then I frames numbered up to N(R)-1 inclusive are considered
             # as acknowledged."
             self._log.debug("SREJ received with P/F=1")
-            self._ack_outstanding((frame.nr - 1) % self._modulo)
+            # TODO: but we always ACK up to N(R)-1 on receipt of a S-frame?
+            # What if the P/F bit is 0?
 
         # Re-send the outstanding frame
         self._log.debug("Re-sending I-frame %d due to SREJ", frame.nr)
