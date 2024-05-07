@@ -728,22 +728,33 @@ class AX25Peer(object):
 
     def _ack_outstanding(self, nr):
         """
-        Receive all frames up to N(R)
+        Receive all frames up to N(R)-1
         """
-        self._log.debug("%d through to %d are received", self._send_state, nr)
-        while self._send_seq != nr:
+        self._log.debug("%d through to %d are received", self._recv_seq, nr)
+        while self._recv_seq != nr:
             if self._log.isEnabledFor(logging.DEBUG):
                 self._log.debug("Pending frames: %r", self._pending_iframes)
 
-            frame = self._pending_iframes.pop(self._send_seq)
-            if self._log.isEnabledFor(logging.DEBUG):
-                self._log.debug(
-                    "Popped %s off pending queue, N(R)s pending: %r",
-                    frame,
-                    self._pending_iframes,
+            self._log.debug("ACKing N(R)=%s", self._recv_seq)
+            try:
+                frame = self._pending_iframes.pop(self._recv_seq)
+                if self._log.isEnabledFor(logging.DEBUG):
+                    self._log.debug(
+                        "Popped %s off pending queue, N(R)s pending: %r",
+                        frame,
+                        self._pending_iframes,
+                    )
+            except KeyError:
+                if self._log.isEnabledFor(logging.DEBUG):
+                    self._log.debug(
+                        "ACK to unexpected N(R) number %s, pending: %r",
+                        self._recv_seq,
+                        self._pending_iframes,
+                    )
+            finally:
+                self._update_state(
+                    "_recv_seq", delta=1, comment="ACKed by peer N(R)"
                 )
-            self._log.debug("Increment N(S) due to ACK")
-            self._update_state("_send_seq", delta=1)
 
     def _on_receive_test(self, frame):
         self._log.debug("Received TEST response: %s", frame)
