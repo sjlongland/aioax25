@@ -1609,10 +1609,16 @@ class AX25PeerHelper(object):
     negotiating parameters or sending test frames.
     """
 
+    # Class-level counter so we can differentiate instances
+    _IDX = 0
+
     def __init__(self, peer, timeout):
         self._peer = peer
         self._loop = peer._loop
-        self._log = peer._log.getChild(self.__class__.__name__)
+        self._log = peer._log.getChild(
+            "%s-%d" % (self.__class__.__name__, self.__class__._IDX)
+        )
+        self.__class__._IDX += 1
         self._done = False
         self._timeout = timeout
         self._timeout_handle = None
