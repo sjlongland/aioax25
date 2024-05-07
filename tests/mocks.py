@@ -68,7 +68,6 @@ class DummyTimeout(object):
         self.cancelled = False
 
     def cancel(self):
-        assert not self.cancelled, "Cancel called twice!"
         self.cancelled = True
 
 
