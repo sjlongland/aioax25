@@ -127,6 +127,9 @@ class DummyPeer(object):
         self._negotiated = False
         self._protocol = AX25Version.UNKNOWN
 
+        self._modulo128 = False
+        self._init_connection_modulo = None
+
     # Our fake weakref
     def _station(self):
         return self._station_ref
@@ -135,6 +138,14 @@ class DummyPeer(object):
     def address(self):
         self.address_read = True
         return self._address
+
+    def _init_connection(self, extended):
+        if extended is True:
+            self._init_connection_modulo = 128
+        elif extended is False:
+            self._init_connection_modulo = 8
+        else:
+            raise ValueError("Invalid extended value %r" % extended)
 
     def _negotiate(self, callback):
         self._negotiate_calls.append(callback)
