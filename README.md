@@ -29,27 +29,31 @@ Python 3.5 support is planned to continue until it too, becomes infeasible
   [NWDR UDRC-II](https://nw-digital-radio.groups.io/g/udrc/wiki/home))
 * We can receive AX.25 UI frames
 * We can send AX.25 UI frames
+* Connecting to AX.25 nodes (*experimental*)
 
 ## What doesn't work
 
-* Connecting to AX.25 nodes
-* Accepting connections from AX.25 nodes
+* Nothing yet?
 
 ## What isn't tested
 
 * Platforms other than GNU/Linux
+* Accepting connections from AX.25 nodes
 
 ## Current plans
 
-Right now, I intend to get enough going for APRS operation, as that is my
-immediate need now.  Hence the focus on UI frames.
+Right now, I have the smarts to deal with basic APRS messaging.  Hence the
+focus on UI frames.  We can send and receive APRS message frames, parse some
+kinds of position frames, and do basic UI frame stuff.
 
-I intend to write a core class that will take care of some core AX.25 message
-handling work and provide the basis of what's needed to implement APRS.
+Preliminary support for AX.25 connected mode is present, but is _experimental_.
+It was tested connecting to a BPQ32 node, but not a lot of testing has been
+done at this stage.  **More feedback would be appreciated.**  At this stage,
+there is code for accepting a connection, but no testing has been done of this
+code so there could be glaring bugs.
 
 After that, some things I'd like to tackle in no particular order:
 
-* Connected mode operation
 * NET/ROM support
 
 Supported platforms will be GNU/Linux, and possibly BSD variants.  I don't
