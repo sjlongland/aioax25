@@ -743,7 +743,6 @@ def test_init_connection_mod8():
     peer._send_seq = 2
     peer._recv_state = 3
     peer._recv_seq = 4
-    peer._ack_state = 5
     peer._modulo = 6
     peer._max_outstanding = 7
     peer._IFrameClass = None
@@ -770,7 +769,6 @@ def test_init_connection_mod8():
     assert peer._send_seq == 0
     assert peer._recv_state == 0
     assert peer._recv_seq == 0
-    assert peer._ack_state == 0
     assert peer._pending_iframes == {}
     assert peer._pending_data == []
 
@@ -794,7 +792,6 @@ def test_init_connection_mod128():
     peer._send_seq = 2
     peer._recv_state = 3
     peer._recv_seq = 4
-    peer._ack_state = 5
     peer._modulo = 6
     peer._max_outstanding = 7
     peer._IFrameClass = None
@@ -821,7 +818,6 @@ def test_init_connection_mod128():
     assert peer._send_seq == 0
     assert peer._recv_state == 0
     assert peer._recv_seq == 0
-    assert peer._ack_state == 0
     assert peer._pending_iframes == {}
     assert peer._pending_data == []
 

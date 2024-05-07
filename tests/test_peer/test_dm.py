@@ -35,7 +35,6 @@ def test_peer_recv_dm():
     peer._send_seq = 2
     peer._recv_state = 3
     peer._recv_seq = 4
-    peer._ack_state = 5
     peer._pending_iframes = dict(comment="pending data")
     peer._pending_data = ["pending data"]
 
@@ -53,7 +52,6 @@ def test_peer_recv_dm():
     assert peer._send_seq == 0
     assert peer._recv_state == 0
     assert peer._recv_seq == 0
-    assert peer._ack_state == 0
     assert peer._pending_iframes == {}
     assert peer._pending_data == []
 
@@ -79,7 +77,6 @@ def test_peer_recv_dm_disconnected():
     peer._send_seq = 2
     peer._recv_state = 3
     peer._recv_seq = 4
-    peer._ack_state = 5
     peer._pending_iframes = dict(comment="pending data")
     peer._pending_data = ["pending data"]
 
@@ -97,7 +94,6 @@ def test_peer_recv_dm_disconnected():
     assert peer._send_seq == 2
     assert peer._recv_state == 3
     assert peer._recv_seq == 4
-    assert peer._ack_state == 5
     assert peer._pending_iframes == dict(comment="pending data")
     assert peer._pending_data == ["pending data"]
 

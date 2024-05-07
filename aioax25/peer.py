@@ -167,16 +167,40 @@ class AX25Peer(object):
         self._negotiated = False  # Set to True after XID negotiation
         self._connected = False  # Set to true on SABM UA
         self._last_act = 0  # Time of last activity
-        self._send_state = 0  # AKA V(S)
+
+        # 2.3.2.4.1 Send State Variable V(S)
+        # The send state variable is a variable that is internal to the DXE
+        # and is never sent. It contains the next sequential number to be
+        # assigned to the next transmitted I frame. This variable is updated
+        # upon the transmission of each I frame.
+        self._send_state = 0
         self._send_state_name = "V(S)"
-        self._send_seq = 0  # AKA N(S)
+
+        # 2.3.2.4.2 Send Sequence Number N(S)
+        # The send sequence number is found in the control field of all I
+        # frames. It contains the sequence number of the I frame being sent.
+        # Just prior to the transmission of the I frame, N(S) is updated to
+        # equal the send state variable.
+        self._send_seq = 0
         self._send_seq_name = "N(S)"
-        self._recv_state = 0  # AKA V(R)
+
+        # 2.3.2.4.3 Receive State Variable V(R)
+        # The receive state variable is a variable that is internal to the
+        # DXE. It contains the sequence number of the next expected received I
+        # frame. This variable is updated upon the reception of an error-free
+        # I frame whose send sequence number equals the present received state
+        # variable value.
+        self._recv_state = 0
         self._recv_state_name = "V(R)"
-        self._recv_seq = 0  # AKA N(R)
+
+        # 2.3.2.4.4 Received Sequence Number N(R)
+        # The received sequence number is in both I and S frames. Prior to
+        # sending an I or S frame, this variable is updated to equal that of
+        # the received state variable, thus implicitly acknowledging the
+        # proper reception of all frames up to and including N(R)-1.
+        self._recv_seq = 0
         self._recv_seq_name = "N(R)"
-        self._ack_state = 0  # AKA V(A)
-        self._ack_state_name = "V(A)"
+
         self._local_busy = False  # Local end busy, respond to
         # RR and I-frames with RNR.
         self._peer_busy = False  # Peer busy, await RR.

@@ -41,7 +41,6 @@ def test_peer_recv_disc():
     peer._send_seq = 2
     peer._recv_state = 3
     peer._recv_seq = 4
-    peer._ack_state = 5
     peer._pending_iframes = dict(comment="pending data")
     peer._pending_data = ["pending data"]
 
@@ -73,7 +72,6 @@ def test_peer_recv_disc():
     assert peer._send_seq == 0
     assert peer._recv_state == 0
     assert peer._recv_seq == 0
-    assert peer._ack_state == 0
     assert peer._pending_iframes == {}
     assert peer._pending_data == []
 
