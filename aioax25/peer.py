@@ -349,6 +349,7 @@ class AX25Peer(object):
         """
         if self._state is AX25PeerState.DISCONNECTED:
             self._log.info("Initiating connection to remote peer")
+            self._set_conn_state(AX25PeerState.CONNECTING)
             handler = AX25PeerConnectionHandler(self)
             handler.done_sig.connect(self._on_connect_response)
             handler._go()
@@ -887,6 +888,9 @@ class AX25Peer(object):
         """
         Undertake negotiation with the peer station.
         """
+        # Sanity check, ensure we are in the CONNECTING state
+        assert self._state is AX25PeerState.CONNECTING
+
         # Sanity check, don't call this if we know the station won't take it.
         if self._protocol not in (AX25Version.UNKNOWN, AX25Version.AX25_22):
             raise RuntimeError(
@@ -928,8 +932,8 @@ class AX25Peer(object):
             self._protocol = AX25Version.AX25_22
 
         self._negotiated = True
-        self._log.debug("XID negotiation complete")
-        self._set_conn_state(AX25PeerState.DISCONNECTED)
+        self._log.debug("XID negotiation complete, resume connection")
+        self._set_conn_state(AX25PeerState.CONNECTING)
 
     def _init_connection(self, extended):
         """
