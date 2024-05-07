@@ -593,7 +593,7 @@ class AX25Peer(object):
         if frame.ns != self._recv_seq:
             # TODO: should we send a REJ/SREJ after a time-out?
             self._log.debug(
-                "I-frame sequence is %s, expecting %s, ignoring",
+                "I-frame sequence N(S) is %s, expecting N(R) %s, ignoring",
                 frame.ns,
                 self._recv_seq,
             )
@@ -621,10 +621,12 @@ class AX25Peer(object):
         if len(self._pending_data) and (
             len(self._pending_iframes) < self._max_outstanding
         ):
+            self._log.debug("Data pending, will send I-frame in reply")
             return self._send_next_iframe()
 
         # "b) If there are no outstanding I frames, the receiving TNC sends
         # an RR frame with N(R) equal to V(R)."
+        self._log.debug("No data pending, will send RR S-frame in reply")
         self._schedule_rr_notification()
 
     def _on_receive_sframe(self, frame):
@@ -1637,13 +1639,16 @@ class AX25PeerHelper(object):
         self._timeout_handle = self._loop.call_later(
             self._timeout, self._on_timeout
         )
+        self._log.debug("time-out timer started")
 
     def _stop_timer(self):
         if self._timeout_handle is None:
+            self._log.debug("no time-out timer to cancel")
             return
 
         self._timeout_handle.cancel()
         self._timeout_handle = None
+        self._log.debug("time-out timer cancelled")
 
     def _finish(self, **kwargs):
         if self._done:
