@@ -176,6 +176,49 @@ class KISSCmdData(KISSCommand):
 KISSCommand._register(CMD_DATA, KISSCmdData)
 
 
+# Remaining types for identification purposes only
+class KISSCmdTXDelay(KISSCommand):
+    pass
+
+
+KISSCommand._register(CMD_TXDELAY, KISSCmdTXDelay)
+
+
+class KISSCmdP(KISSCommand):
+    pass
+
+
+KISSCommand._register(CMD_P, KISSCmdP)
+
+
+class KISSCmdSlotTime(KISSCommand):
+    pass
+
+
+KISSCommand._register(CMD_SLOTTIME, KISSCmdSlotTime)
+
+
+class KISSCmdTXTail(KISSCommand):
+    pass
+
+
+KISSCommand._register(CMD_TXTAIL, KISSCmdTXTail)
+
+
+class KISSCmdFDuplex(KISSCommand):
+    pass
+
+
+KISSCommand._register(CMD_FDUPLEX, KISSCmdFDuplex)
+
+
+class KISSCmdSetHW(KISSCommand):
+    pass
+
+
+KISSCommand._register(CMD_SETHW, KISSCmdSetHW)
+
+
 # KISS device interface
 
 
