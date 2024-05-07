@@ -4,7 +4,7 @@
 Fixture for initialising an AX25 Peer
 """
 
-from aioax25.peer import AX25Peer
+from aioax25.peer import AX25Peer, AX25RejectMode
 from aioax25.version import AX25Version
 from ..mocks import DummyIOLoop, DummyLogger
 
@@ -27,7 +27,7 @@ class TestingAX25Peer(AX25Peer):
         idle_timeout=900.0,
         protocol=AX25Version.UNKNOWN,
         modulo128=False,
-        reject_mode=AX25Peer.AX25RejectMode.SELECTIVE_RR,
+        reject_mode=AX25RejectMode.SELECTIVE_RR,
         full_duplex=False,
         reply_path=None,
         locked_path=False,

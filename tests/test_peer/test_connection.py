@@ -26,6 +26,7 @@ from aioax25.frame import (
     AX2516BitRejectFrame,
     AX2516BitSelectiveRejectFrame,
 )
+from aioax25.peer import AX25PeerState
 from .peer import TestingAX25Peer
 from ..mocks import DummyStation, DummyTimeout
 
@@ -54,7 +55,7 @@ def test_connect_not_disconnected():
     peer._negotiated = False
 
     # Override the state to ensure connection attempt never happens
-    peer._state = peer.AX25PeerState.CONNECTED
+    peer._state = AX25PeerState.CONNECTED
 
     # Now try connecting
     peer.connect()
@@ -85,7 +86,7 @@ def test_connect_when_disconnected():
     peer._negotiated = False
 
     # Ensure disconnected state
-    peer._state = peer.AX25PeerState.DISCONNECTED
+    peer._state = AX25PeerState.DISCONNECTED
 
     # Now try connecting
     try:
@@ -131,7 +132,7 @@ def test_send_sabm():
     assert str(frame.header.repeaters) == "VK4RZB"
     assert len(sent) == 0
 
-    assert peer._state == peer.AX25PeerState.CONNECTING
+    assert peer._state == AX25PeerState.CONNECTING
 
 
 def test_send_sabme():
@@ -168,7 +169,7 @@ def test_send_sabme():
     assert str(frame.header.repeaters) == "VK4RZB"
     assert len(sent) == 0
 
-    assert peer._state == peer.AX25PeerState.CONNECTING
+    assert peer._state == AX25PeerState.CONNECTING
 
 
 # SABM response handling
@@ -198,7 +199,7 @@ def test_recv_ignore_frmr():
     peer._on_receive_frmr = _on_receive_frmr
 
     # Set the state
-    peer._state = peer.AX25PeerState.CONNECTING
+    peer._state = AX25PeerState.CONNECTING
 
     # Inject a frame
     peer._on_receive(
@@ -242,7 +243,7 @@ def test_recv_ignore_test():
     peer._on_receive_test = _on_receive_test
 
     # Set the state
-    peer._state = peer.AX25PeerState.CONNECTING
+    peer._state = AX25PeerState.CONNECTING
 
     # Inject a frame
     peer._on_receive(
@@ -279,7 +280,7 @@ def test_recv_ua():
     peer._uaframe_handler = _on_receive_ua
 
     # Set the state
-    peer._state = peer.AX25PeerState.CONNECTING
+    peer._state = AX25PeerState.CONNECTING
 
     # Inject a frame
     peer._on_receive(
@@ -323,7 +324,7 @@ def test_recv_disc():
     peer._on_disconnect = _on_disconnect
 
     # Set the state
-    peer._state = peer.AX25PeerState.CONNECTING
+    peer._state = AX25PeerState.CONNECTING
 
     # Inject a frame
     peer._on_receive(
@@ -367,7 +368,7 @@ def test_recv_dm():
     peer._on_disconnect = _on_disconnect
 
     # Set the state
-    peer._state = peer.AX25PeerState.CONNECTING
+    peer._state = AX25PeerState.CONNECTING
 
     # Inject a frame
     peer._on_receive(
@@ -409,7 +410,7 @@ def test_recv_sabm():
     peer._on_receive_sabm = _on_receive_sabm
 
     # Set the state
-    peer._state = peer.AX25PeerState.CONNECTING
+    peer._state = AX25PeerState.CONNECTING
 
     # Inject a frame
     frame = AX25SetAsyncBalancedModeFrame(
@@ -446,7 +447,7 @@ def test_recv_sabme():
     peer._on_receive_sabm = _on_receive_sabm
 
     # Set the state
-    peer._state = peer.AX25PeerState.CONNECTING
+    peer._state = AX25PeerState.CONNECTING
 
     # Inject a frame
     frame = AX25SetAsyncBalancedModeExtendedFrame(
@@ -475,7 +476,7 @@ def test_on_receive_sabm_while_connecting():
     )
 
     # Assume we're already connecting to the station
-    peer._state = peer.AX25PeerState.CONNECTING
+    peer._state = AX25PeerState.CONNECTING
 
     # Stub _init_connection
     count = dict(init=0, sabmframe_handler=0)
@@ -841,7 +842,7 @@ def test_accept_connected_noop():
     )
 
     # Set the state to known value
-    peer._state = peer.AX25PeerState.CONNECTED
+    peer._state = AX25PeerState.CONNECTED
 
     # Stub functions that should not be called
     def _stop_ack_timer():
@@ -857,7 +858,7 @@ def test_accept_connected_noop():
     # Try accepting a ficticious connection
     peer.accept()
 
-    assert peer._state == peer.AX25PeerState.CONNECTED
+    assert peer._state == AX25PeerState.CONNECTED
 
 
 def test_accept_incoming_ua():
@@ -873,7 +874,7 @@ def test_accept_incoming_ua():
     )
 
     # Set the state to known value
-    peer._state = peer.AX25PeerState.INCOMING_CONNECTION
+    peer._state = AX25PeerState.INCOMING_CONNECTION
 
     # Stub functions that should be called
     actions = []
@@ -885,7 +886,7 @@ def test_accept_incoming_ua():
 
     def _send_ua():
         # At this time, we should be in the INCOMING_CONNECTION state
-        assert peer._state is peer.AX25PeerState.INCOMING_CONNECTION
+        assert peer._state is AX25PeerState.INCOMING_CONNECTION
         actions.append("sent-ua")
 
     peer._send_ua = _send_ua
@@ -893,7 +894,7 @@ def test_accept_incoming_ua():
     # Try accepting a ficticious connection
     peer.accept()
 
-    assert peer._state is peer.AX25PeerState.CONNECTED
+    assert peer._state is AX25PeerState.CONNECTED
     assert actions == ["stop-connect-timer", "sent-ua"]
     assert peer._uaframe_handler is None
 
@@ -911,7 +912,7 @@ def test_reject_connected_noop():
     )
 
     # Set the state to known value
-    peer._state = peer.AX25PeerState.CONNECTED
+    peer._state = AX25PeerState.CONNECTED
 
     # Stub functions that should not be called
     def _stop_ack_timer():
@@ -927,7 +928,7 @@ def test_reject_connected_noop():
     # Try rejecting a ficticious connection
     peer.reject()
 
-    assert peer._state == peer.AX25PeerState.CONNECTED
+    assert peer._state == AX25PeerState.CONNECTED
 
 
 def test_reject_incoming_dm():
@@ -943,7 +944,7 @@ def test_reject_incoming_dm():
     )
 
     # Set the state to known value
-    peer._state = peer.AX25PeerState.INCOMING_CONNECTION
+    peer._state = AX25PeerState.INCOMING_CONNECTION
 
     # Stub functions that should be called
     actions = []
@@ -961,7 +962,7 @@ def test_reject_incoming_dm():
     # Try rejecting a ficticious connection
     peer.reject()
 
-    assert peer._state == peer.AX25PeerState.DISCONNECTED
+    assert peer._state == AX25PeerState.DISCONNECTED
     assert actions == ["stop-connect-timer", "sent-dm"]
 
 
@@ -981,7 +982,7 @@ def test_disconnect_disconnected_noop():
     )
 
     # Set the state to known value
-    peer._state = peer.AX25PeerState.CONNECTING
+    peer._state = AX25PeerState.CONNECTING
 
     # A dummy UA handler
     def _dummy_ua_handler():
@@ -1003,7 +1004,7 @@ def test_disconnect_disconnected_noop():
     # Try disconnecting a ficticious connection
     peer.disconnect()
 
-    assert peer._state == peer.AX25PeerState.CONNECTING
+    assert peer._state == AX25PeerState.CONNECTING
     assert peer._uaframe_handler == _dummy_ua_handler
 
 
@@ -1020,7 +1021,7 @@ def test_disconnect_connected_disc():
     )
 
     # Set the state to known value
-    peer._state = peer.AX25PeerState.CONNECTED
+    peer._state = AX25PeerState.CONNECTED
 
     # A dummy UA handler
     def _dummy_ua_handler():
@@ -1044,6 +1045,6 @@ def test_disconnect_connected_disc():
     # Try disconnecting a ficticious connection
     peer.disconnect()
 
-    assert peer._state == peer.AX25PeerState.DISCONNECTING
+    assert peer._state == AX25PeerState.DISCONNECTING
     assert actions == ["sent-disc", "start-ack-timer"]
     assert peer._uaframe_handler == peer._on_disconnect

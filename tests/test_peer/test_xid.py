@@ -18,6 +18,7 @@ from aioax25.frame import (
     AX25ExchangeIdentificationFrame,
     AX25FrameRejectFrame,
 )
+from aioax25.peer import AX25PeerState, AX25RejectMode
 from aioax25.version import AX25Version
 from .peer import TestingAX25Peer
 from ..mocks import DummyStation
@@ -162,7 +163,7 @@ def test_peer_process_xid_hdlcoptfunc_stnssr_peerssr():
         station=station,
         address=AX25Address("VK4MSL"),
         repeaters=None,
-        reject_mode=TestingAX25Peer.AX25RejectMode.SELECTIVE_RR,
+        reject_mode=AX25RejectMode.SELECTIVE_RR,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
@@ -171,7 +172,7 @@ def test_peer_process_xid_hdlcoptfunc_stnssr_peerssr():
     )
 
     # Selective Reject-Reject should be chosen.
-    assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.SELECTIVE_RR
+    assert peer._reject_mode == AX25RejectMode.SELECTIVE_RR
 
 
 def test_peer_process_xid_hdlcoptfunc_stnsr_peerssr():
@@ -183,7 +184,7 @@ def test_peer_process_xid_hdlcoptfunc_stnsr_peerssr():
         station=station,
         address=AX25Address("VK4MSL"),
         repeaters=None,
-        reject_mode=TestingAX25Peer.AX25RejectMode.SELECTIVE,
+        reject_mode=AX25RejectMode.SELECTIVE,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
@@ -192,7 +193,7 @@ def test_peer_process_xid_hdlcoptfunc_stnsr_peerssr():
     )
 
     # Selective Reject should be chosen.
-    assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.SELECTIVE
+    assert peer._reject_mode == AX25RejectMode.SELECTIVE
 
 
 def test_peer_process_xid_hdlcoptfunc_stnssr_peersr():
@@ -204,7 +205,7 @@ def test_peer_process_xid_hdlcoptfunc_stnssr_peersr():
         station=station,
         address=AX25Address("VK4MSL"),
         repeaters=None,
-        reject_mode=TestingAX25Peer.AX25RejectMode.SELECTIVE_RR,
+        reject_mode=AX25RejectMode.SELECTIVE_RR,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
@@ -213,7 +214,7 @@ def test_peer_process_xid_hdlcoptfunc_stnssr_peersr():
     )
 
     # Selective Reject should be chosen.
-    assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.SELECTIVE
+    assert peer._reject_mode == AX25RejectMode.SELECTIVE
 
 
 def test_peer_process_xid_hdlcoptfunc_stnsr_peersr():
@@ -225,7 +226,7 @@ def test_peer_process_xid_hdlcoptfunc_stnsr_peersr():
         station=station,
         address=AX25Address("VK4MSL"),
         repeaters=None,
-        reject_mode=TestingAX25Peer.AX25RejectMode.SELECTIVE,
+        reject_mode=AX25RejectMode.SELECTIVE,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
@@ -234,7 +235,7 @@ def test_peer_process_xid_hdlcoptfunc_stnsr_peersr():
     )
 
     # Selective Reject should be chosen.
-    assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.SELECTIVE
+    assert peer._reject_mode == AX25RejectMode.SELECTIVE
 
 
 def test_peer_process_xid_hdlcoptfunc_stnir_peersr():
@@ -246,7 +247,7 @@ def test_peer_process_xid_hdlcoptfunc_stnir_peersr():
         station=station,
         address=AX25Address("VK4MSL"),
         repeaters=None,
-        reject_mode=TestingAX25Peer.AX25RejectMode.IMPLICIT,
+        reject_mode=AX25RejectMode.IMPLICIT,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
@@ -255,7 +256,7 @@ def test_peer_process_xid_hdlcoptfunc_stnir_peersr():
     )
 
     # Implicit Reject should be chosen.
-    assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.IMPLICIT
+    assert peer._reject_mode == AX25RejectMode.IMPLICIT
 
 
 def test_peer_process_xid_hdlcoptfunc_stnsr_peerir():
@@ -267,7 +268,7 @@ def test_peer_process_xid_hdlcoptfunc_stnsr_peerir():
         station=station,
         address=AX25Address("VK4MSL"),
         repeaters=None,
-        reject_mode=TestingAX25Peer.AX25RejectMode.SELECTIVE,
+        reject_mode=AX25RejectMode.SELECTIVE,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
@@ -276,7 +277,7 @@ def test_peer_process_xid_hdlcoptfunc_stnsr_peerir():
     )
 
     # Implicit Reject should be chosen.
-    assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.IMPLICIT
+    assert peer._reject_mode == AX25RejectMode.IMPLICIT
 
 
 def test_peer_process_xid_hdlcoptfunc_stnir_peerssr():
@@ -288,7 +289,7 @@ def test_peer_process_xid_hdlcoptfunc_stnir_peerssr():
         station=station,
         address=AX25Address("VK4MSL"),
         repeaters=None,
-        reject_mode=TestingAX25Peer.AX25RejectMode.IMPLICIT,
+        reject_mode=AX25RejectMode.IMPLICIT,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
@@ -297,7 +298,7 @@ def test_peer_process_xid_hdlcoptfunc_stnir_peerssr():
     )
 
     # Implicit Reject should be chosen.
-    assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.IMPLICIT
+    assert peer._reject_mode == AX25RejectMode.IMPLICIT
 
 
 def test_peer_process_xid_hdlcoptfunc_stnssr_peerir():
@@ -309,7 +310,7 @@ def test_peer_process_xid_hdlcoptfunc_stnssr_peerir():
         station=station,
         address=AX25Address("VK4MSL"),
         repeaters=None,
-        reject_mode=TestingAX25Peer.AX25RejectMode.SELECTIVE_RR,
+        reject_mode=AX25RejectMode.SELECTIVE_RR,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
@@ -318,7 +319,7 @@ def test_peer_process_xid_hdlcoptfunc_stnssr_peerir():
     )
 
     # Implicit Reject should be chosen.
-    assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.IMPLICIT
+    assert peer._reject_mode == AX25RejectMode.IMPLICIT
 
 
 def test_peer_process_xid_hdlcoptfunc_malformed_rej_srej():
@@ -330,7 +331,7 @@ def test_peer_process_xid_hdlcoptfunc_malformed_rej_srej():
         station=station,
         address=AX25Address("VK4MSL"),
         repeaters=None,
-        reject_mode=TestingAX25Peer.AX25RejectMode.SELECTIVE_RR,
+        reject_mode=AX25RejectMode.SELECTIVE_RR,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
@@ -339,7 +340,7 @@ def test_peer_process_xid_hdlcoptfunc_malformed_rej_srej():
     )
 
     # Implicit Reject should be chosen.
-    assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.IMPLICIT
+    assert peer._reject_mode == AX25RejectMode.IMPLICIT
 
 
 def test_peer_process_xid_hdlcoptfunc_default_rej_srej():
@@ -351,7 +352,7 @@ def test_peer_process_xid_hdlcoptfunc_default_rej_srej():
         station=station,
         address=AX25Address("VK4MSL"),
         repeaters=None,
-        reject_mode=TestingAX25Peer.AX25RejectMode.SELECTIVE_RR,
+        reject_mode=AX25RejectMode.SELECTIVE_RR,
     )
 
     # Pass in a HDLC Optional Functions XID parameter
@@ -362,7 +363,7 @@ def test_peer_process_xid_hdlcoptfunc_default_rej_srej():
     )
 
     # Selective Reject should be chosen.
-    assert peer._reject_mode == TestingAX25Peer.AX25RejectMode.SELECTIVE
+    assert peer._reject_mode == AX25RejectMode.SELECTIVE
 
 
 def test_peer_process_xid_hdlcoptfunc_s128_p128():
@@ -770,7 +771,7 @@ def test_peer_on_receive_xid_ax20_mode():
     assert frame.w
 
     # We should now be in the FRMR state
-    assert peer._state == peer.AX25PeerState.FRMR
+    assert peer._state == AX25PeerState.FRMR
 
 
 def test_peer_on_receive_xid_connecting():
@@ -787,7 +788,7 @@ def test_peer_on_receive_xid_connecting():
     assert interface.transmit_calls == []
 
     # Set state
-    peer._state = TestingAX25Peer.AX25PeerState.CONNECTING
+    peer._state = AX25PeerState.CONNECTING
 
     # Pass in the XID frame to our AX.25 2.2 station.
     peer._on_receive(
@@ -818,7 +819,7 @@ def test_peer_on_receive_xid_disconnecting():
     assert interface.transmit_calls == []
 
     # Set state
-    peer._state = TestingAX25Peer.AX25PeerState.DISCONNECTING
+    peer._state = AX25PeerState.DISCONNECTING
 
     # Pass in the XID frame to our AX.25 2.2 station.
     peer._on_receive(

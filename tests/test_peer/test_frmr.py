@@ -16,6 +16,7 @@ from aioax25.frame import (
     AX25UnnumberedAcknowledgeFrame,
     AX25TestFrame,
 )
+from aioax25.peer import AX25PeerState
 from ..mocks import DummyPeer, DummyStation
 from .peer import TestingAX25Peer
 
@@ -117,7 +118,7 @@ def test_on_receive_in_frmr_drop_test():
         locked_path=True,
     )
 
-    peer._state = peer.AX25PeerState.FRMR
+    peer._state = AX25PeerState.FRMR
 
     def _on_receive_test(*a, **kwa):
         assert False, "Should have ignored frame"
@@ -147,7 +148,7 @@ def test_on_receive_in_frmr_drop_ua():
         locked_path=True,
     )
 
-    peer._state = peer.AX25PeerState.FRMR
+    peer._state = AX25PeerState.FRMR
 
     def _on_receive_ua(*a, **kwa):
         assert False, "Should have ignored frame"
@@ -176,7 +177,7 @@ def test_on_receive_in_frmr_pass_sabm():
         locked_path=True,
     )
 
-    peer._state = peer.AX25PeerState.FRMR
+    peer._state = AX25PeerState.FRMR
 
     frames = []
 
@@ -208,7 +209,7 @@ def test_on_receive_in_frmr_pass_disc():
         locked_path=True,
     )
 
-    peer._state = peer.AX25PeerState.FRMR
+    peer._state = AX25PeerState.FRMR
 
     events = []
 

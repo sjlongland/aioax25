@@ -5,6 +5,7 @@ Test state transition logic
 """
 
 from aioax25.frame import AX25Address, AX25Path
+from aioax25.peer import AX25PeerState
 from .peer import TestingAX25Peer
 from ..mocks import DummyStation
 
@@ -30,9 +31,9 @@ def test_state_unchanged():
 
     peer.connect_state_changed.connect(_on_state_change)
 
-    assert peer._state is peer.AX25PeerState.DISCONNECTED
+    assert peer._state is AX25PeerState.DISCONNECTED
 
-    peer._set_conn_state(peer.AX25PeerState.DISCONNECTED)
+    peer._set_conn_state(AX25PeerState.DISCONNECTED)
 
     assert state_changes == []
 
@@ -56,15 +57,15 @@ def test_state_changed():
 
     peer.connect_state_changed.connect(_on_state_change)
 
-    assert peer._state is peer.AX25PeerState.DISCONNECTED
+    assert peer._state is AX25PeerState.DISCONNECTED
 
-    peer._set_conn_state(peer.AX25PeerState.CONNECTED)
+    peer._set_conn_state(AX25PeerState.CONNECTED)
 
-    assert peer._state is peer.AX25PeerState.CONNECTED
+    assert peer._state is AX25PeerState.CONNECTED
     assert state_changes[1:] == []
 
     change = state_changes.pop(0)
     assert change.pop("station") is station
     assert change.pop("peer") is peer
-    assert change.pop("state") is peer.AX25PeerState.CONNECTED
+    assert change.pop("state") is AX25PeerState.CONNECTED
     assert change == {}

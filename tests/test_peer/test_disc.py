@@ -10,6 +10,7 @@ from aioax25.frame import (
     AX25DisconnectFrame,
     AX25UnnumberedAcknowledgeFrame,
 )
+from aioax25.peer import AX25PeerState
 from aioax25.version import AX25Version
 from .peer import TestingAX25Peer
 from ..mocks import DummyStation, DummyTimeout
@@ -35,7 +36,7 @@ def test_peer_recv_disc():
     # Set some dummy data in fields -- this should be cleared out.
     ack_timer = DummyTimeout(None, None)
     peer._ack_timeout_handle = ack_timer
-    peer._state = peer.AX25PeerState.CONNECTED
+    peer._state = AX25PeerState.CONNECTED
     peer._send_state = 1
     peer._send_seq = 2
     peer._recv_state = 3
@@ -67,7 +68,7 @@ def test_peer_recv_disc():
 
     # We should now be "disconnected"
     assert peer._ack_timeout_handle is None
-    assert peer._state is peer.AX25PeerState.DISCONNECTED
+    assert peer._state is AX25PeerState.DISCONNECTED
     assert peer._send_state == 0
     assert peer._send_seq == 0
     assert peer._recv_state == 0
@@ -127,12 +128,12 @@ def test_peer_ua_timeout_disconnecting():
         full_duplex=True,
     )
 
-    peer._state = peer.AX25PeerState.DISCONNECTING
+    peer._state = AX25PeerState.DISCONNECTING
     peer._ack_timeout_handle = "time-out handle"
 
     peer._on_disc_ua_timeout()
 
-    assert peer._state is peer.AX25PeerState.DISCONNECTED
+    assert peer._state is AX25PeerState.DISCONNECTED
     assert peer._ack_timeout_handle is None
 
 
@@ -148,10 +149,10 @@ def test_peer_ua_timeout_notdisconnecting():
         full_duplex=True,
     )
 
-    peer._state = peer.AX25PeerState.CONNECTED
+    peer._state = AX25PeerState.CONNECTED
     peer._ack_timeout_handle = "time-out handle"
 
     peer._on_disc_ua_timeout()
 
-    assert peer._state is peer.AX25PeerState.CONNECTED
+    assert peer._state is AX25PeerState.CONNECTED
     assert peer._ack_timeout_handle == "time-out handle"

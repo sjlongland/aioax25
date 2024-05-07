@@ -5,6 +5,7 @@ Test handling of clean-up logic
 """
 
 from aioax25.frame import AX25Address, AX25Path
+from aioax25.peer import AX25PeerState
 from .peer import TestingAX25Peer
 from ..mocks import DummyStation, DummyTimeout
 
@@ -119,7 +120,7 @@ def test_cleanup_disconnected():
     peer._send_dm = _send_dm
 
     # Set state
-    peer._state = peer.AX25PeerState.DISCONNECTED
+    peer._state = AX25PeerState.DISCONNECTED
 
     # Do clean-up
     peer._cleanup()
@@ -162,7 +163,7 @@ def test_cleanup_disconnecting():
     peer._send_dm = _send_dm
 
     # Set state
-    peer._state = peer.AX25PeerState.DISCONNECTING
+    peer._state = AX25PeerState.DISCONNECTING
 
     # Do clean-up
     peer._cleanup()
@@ -202,7 +203,7 @@ def test_cleanup_connecting():
     peer._send_dm = _send_dm
 
     # Set state
-    peer._state = peer.AX25PeerState.CONNECTING
+    peer._state = AX25PeerState.CONNECTING
 
     # Do clean-up
     peer._cleanup()
@@ -242,7 +243,7 @@ def test_cleanup_connected():
     peer._send_dm = _send_dm
 
     # Set state
-    peer._state = peer.AX25PeerState.CONNECTED
+    peer._state = AX25PeerState.CONNECTED
 
     # Do clean-up
     peer._cleanup()

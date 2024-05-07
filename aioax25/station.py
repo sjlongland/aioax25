@@ -15,7 +15,7 @@ import weakref
 
 from .frame import AX25Address, AX25Path, AX25TestFrame
 
-from .peer import AX25Peer
+from .peer import AX25Peer, AX25RejectMode
 from .version import AX25Version
 
 
@@ -41,7 +41,7 @@ class AX25Station(object):
         full_duplex=False,
         # HDLC Optional Functions
         modulo128=False,  # Whether to use Mod128 by default
-        reject_mode=AX25Peer.AX25RejectMode.SELECTIVE_RR,
+        reject_mode=AX25RejectMode.SELECTIVE_RR,
         # What reject mode to use?
         # Parameters (AX.25 2.2 sect 6.7.2)
         max_ifield=256,  # aka N1
@@ -83,7 +83,7 @@ class AX25Station(object):
         self._protocol = protocol
         self._ack_timeout = ack_timeout
         self._idle_timeout = idle_timeout
-        self._reject_mode = AX25Peer.AX25RejectMode(reject_mode)
+        self._reject_mode = AX25RejectMode(reject_mode)
         self._modulo128 = modulo128
         self._max_ifield = max_ifield
         self._max_ifield_rx = max_ifield_rx

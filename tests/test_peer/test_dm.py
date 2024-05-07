@@ -5,6 +5,7 @@ Tests for AX25Peer DM handling
 """
 
 from aioax25.frame import AX25Address, AX25Path, AX25DisconnectModeFrame
+from aioax25.peer import AX25PeerState
 from aioax25.version import AX25Version
 from .peer import TestingAX25Peer
 from ..mocks import DummyStation, DummyTimeout
@@ -29,7 +30,7 @@ def test_peer_recv_dm():
     # Set some dummy data in fields -- this should be cleared out.
     ack_timer = DummyTimeout(None, None)
     peer._ack_timeout_handle = ack_timer
-    peer._state = peer.AX25PeerState.CONNECTED
+    peer._state = AX25PeerState.CONNECTED
     peer._send_state = 1
     peer._send_seq = 2
     peer._recv_state = 3
@@ -47,7 +48,7 @@ def test_peer_recv_dm():
 
     # We should now be "disconnected"
     assert peer._ack_timeout_handle is None
-    assert peer._state is peer.AX25PeerState.DISCONNECTED
+    assert peer._state is AX25PeerState.DISCONNECTED
     assert peer._send_state == 0
     assert peer._send_seq == 0
     assert peer._recv_state == 0
@@ -73,7 +74,7 @@ def test_peer_recv_dm_disconnected():
     # Set some dummy data in fields -- this should be cleared out.
     ack_timer = DummyTimeout(None, None)
     peer._ack_timeout_handle = ack_timer
-    peer._state = peer.AX25PeerState.NEGOTIATING
+    peer._state = AX25PeerState.NEGOTIATING
     peer._send_state = 1
     peer._send_seq = 2
     peer._recv_state = 3
@@ -91,7 +92,7 @@ def test_peer_recv_dm_disconnected():
 
     # State should be unchanged from before
     assert peer._ack_timeout_handle is ack_timer
-    assert peer._state is peer.AX25PeerState.NEGOTIATING
+    assert peer._state is AX25PeerState.NEGOTIATING
     assert peer._send_state == 1
     assert peer._send_seq == 2
     assert peer._recv_state == 3
