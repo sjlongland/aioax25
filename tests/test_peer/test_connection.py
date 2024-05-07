@@ -127,8 +127,8 @@ def test_send_sabm():
         assert False, "No frames were sent"
 
     assert isinstance(frame, AX25SetAsyncBalancedModeFrame)
-    assert str(frame.header.destination) == "VK4MSL"
-    assert str(frame.header.source) == "VK4MSL-1"
+    assert str(frame.header.destination) == "VK4MSL*"  # CONTROL set
+    assert str(frame.header.source) == "VK4MSL-1"  # CONTROL clear
     assert str(frame.header.repeaters) == "VK4RZB"
     assert len(sent) == 0
 
@@ -164,8 +164,8 @@ def test_send_sabme():
         assert False, "No frames were sent"
 
     assert isinstance(frame, AX25SetAsyncBalancedModeExtendedFrame)
-    assert str(frame.header.destination) == "VK4MSL"
-    assert str(frame.header.source) == "VK4MSL-1"
+    assert str(frame.header.destination) == "VK4MSL*"  # CONTROL set
+    assert str(frame.header.source) == "VK4MSL-1"  # CONTROL clear
     assert str(frame.header.repeaters) == "VK4RZB"
     assert len(sent) == 0
 

@@ -63,6 +63,6 @@ def test_peer_send_ua():
     (frame,) = tx_args
     assert isinstance(frame, AX25UnnumberedAcknowledgeFrame)
 
-    assert str(frame.header.destination) == "VK4MSL"
+    assert str(frame.header.destination) == "VK4MSL*"
     assert str(frame.header.source) == "VK4MSL-1"
     assert str(frame.header.repeaters) == "VK4MSL-2,VK4MSL-3"

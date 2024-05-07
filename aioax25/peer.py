@@ -1242,8 +1242,8 @@ class AX25Peer(object):
 
         self._transmit_frame(
             SABMClass(
-                destination=self.address,
-                source=self._station().address,
+                destination=self.address.normcopy(ch=True),
+                source=self._station().address.normcopy(ch=False),
                 repeaters=self.reply_path,
             )
         )
@@ -1253,8 +1253,8 @@ class AX25Peer(object):
     def _send_xid(self, cr):
         self._transmit_frame(
             AX25ExchangeIdentificationFrame(
-                destination=self.address,
-                source=self._station().address,
+                destination=self.address.normcopy(ch=True),
+                source=self._station().address.normcopy(ch=False),
                 repeaters=self.reply_path,
                 parameters=[
                     AX25XIDClassOfProceduresParameter(
@@ -1311,8 +1311,8 @@ class AX25Peer(object):
         self._log.info("Sending DM")
         self._transmit_frame(
             AX25DisconnectModeFrame(
-                destination=self.address,
-                source=self._station().address,
+                destination=self.address.normcopy(ch=True),
+                source=self._station().address.normcopy(ch=False),
                 repeaters=self.reply_path,
             )
         )
@@ -1324,8 +1324,8 @@ class AX25Peer(object):
         self._log.info("Sending DISC")
         self._transmit_frame(
             AX25DisconnectFrame(
-                destination=self.address,
-                source=self._station().address,
+                destination=self.address.normcopy(ch=True),
+                source=self._station().address.normcopy(ch=False),
                 repeaters=self.reply_path,
             )
         )
@@ -1337,8 +1337,8 @@ class AX25Peer(object):
         self._log.info("Sending UA")
         self._transmit_frame(
             AX25UnnumberedAcknowledgeFrame(
-                destination=self.address,
-                source=self._station().address,
+                destination=self.address.normcopy(ch=True),
+                source=self._station().address.normcopy(ch=False),
                 repeaters=self.reply_path,
             )
         )
@@ -1360,8 +1360,8 @@ class AX25Peer(object):
         # See https://www.tapr.org/pub_ax25.html
         self._transmit_frame(
             AX25FrameRejectFrame(
-                destination=self.address,
-                source=self._station().address,
+                destination=self.address.normcopy(ch=True),
+                source=self._station().address.normcopy(ch=False),
                 repeaters=self.reply_path,
                 w=w,
                 x=x,
@@ -1406,10 +1406,11 @@ class AX25Peer(object):
             self._log.debug(
                 "Sending RR with N(R) == V(R) == %d", self._recv_state
             )
+            self._update_recv_seq()
             self._transmit_frame(
                 self._RRFrameClass(
-                    destination=self.address,
-                    source=self._station().address,
+                    destination=self.address.normcopy(ch=True),
+                    source=self._station().address.normcopy(ch=False),
                     repeaters=self.reply_path,
                     pf=False,
                     nr=self._recv_state,
@@ -1423,10 +1424,11 @@ class AX25Peer(object):
         if self._state is AX25PeerState.CONNECTED:
             now = self._loop.time()
             if (now - self._last_rnr_sent) > self._rnr_interval:
+                self._update_recv_seq()
                 self._transmit_frame(
                     self._RNRFrameClass(
-                        destination=self.address,
-                        source=self._station().address,
+                        destination=self.address.normcopy(ch=True),
+                        source=self._station().address.normcopy(ch=False),
                         repeaters=self.reply_path,
                         nr=self._recv_seq,
                         pf=False,
@@ -1491,8 +1493,8 @@ class AX25Peer(object):
         )
         self._transmit_frame(
             self._IFrameClass(
-                destination=self.address,
-                source=self._station().address,
+                destination=self.address.normcopy(ch=True),
+                source=self._station().address.normcopy(ch=False),
                 repeaters=self.reply_path,
                 nr=self._recv_state,  # N(R) == V(R)
                 ns=ns,
