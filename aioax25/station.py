@@ -142,14 +142,20 @@ class AX25Station(object):
         )
 
     def getpeer(
-        self, callsign, ssid=None, repeaters=None, create=True, **kwargs
+        self,
+        callsign,
+        ssid=None,
+        repeaters=None,
+        command=True,
+        create=True,
+        **kwargs
     ):
         """
         Retrieve an instance of a peer context.  This creates the peer
         object if it doesn't already exist unless create is set to False
         (in which case it will raise KeyError).
         """
-        address = AX25Address.decode(callsign, ssid).normalised
+        address = AX25Address.decode(callsign, ssid).normcopy(ch=command)
         try:
             return self._peers[address]
         except KeyError:
@@ -199,7 +205,9 @@ class AX25Station(object):
         # If we're still here, then we don't handle unsolicited frames
         # of this type, so pass it to a handler if we have one.
         peer = self.getpeer(
-            frame.header.source, repeaters=frame.header.repeaters.reply
+            frame.header.source,
+            repeaters=frame.header.repeaters.reply,
+            command=frame.header.source.ch,
         )
         self._log.debug("Passing frame to peer %s: %s", peer.address, frame)
         peer._on_receive(frame)

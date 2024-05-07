@@ -132,3 +132,46 @@ def test_route_incoming_msg():
     assert rx_call_kwargs == {}
     assert len(rx_call_args) == 1
     assert rx_call_args[0] is txframe
+
+
+def test_route_incoming_msg_ch():
+    """
+    Test passing a frame considers C/H bits.
+    """
+    interface = DummyInterface()
+    station = AX25Station(interface=interface, callsign="VK4MSL-5")
+
+    # Stub out _on_test_frame
+    def stub_on_test_frame(*args, **kwargs):
+        assert False, "Should not have been called"
+
+    station._on_test_frame = stub_on_test_frame
+
+    # Inject a couple of peers
+    peer1 = DummyPeer(station, AX25Address("VK4BWI", ssid=7, ch=False))
+    peer2 = DummyPeer(station, AX25Address("VK4BWI", ssid=7, ch=True))
+    station._peers[peer1._address] = peer1
+    station._peers[peer2._address] = peer2
+
+    # Pass in the message
+    txframe = AX25UnnumberedInformationFrame(
+        destination="VK4MSL-5",
+        source="VK4BWI-7*",
+        cr=True,
+        pid=0xAB,
+        payload=b"This is a test frame",
+    )
+    station._on_receive(frame=txframe)
+
+    # There should be no replies queued
+    assert interface.bind_calls == []
+    assert interface.unbind_calls == []
+    assert interface.transmit_calls == []
+
+    # This should have gone to peer2, not peer1
+    assert peer1.on_receive_calls == []
+    assert len(peer2.on_receive_calls) == 1
+    (rx_call_args, rx_call_kwargs) = peer2.on_receive_calls.pop()
+    assert rx_call_kwargs == {}
+    assert len(rx_call_args) == 1
+    assert rx_call_args[0] is txframe
