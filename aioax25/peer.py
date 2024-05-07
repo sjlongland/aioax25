@@ -1636,9 +1636,7 @@ class AX25PeerHelper(object):
         if self._timeout_handle is None:
             return
 
-        if not self._timeout_handle.cancelled:
-            self._timeout_handle.cancel()
-
+        self._timeout_handle.cancel()
         self._timeout_handle = None
 
     def _finish(self, **kwargs):
