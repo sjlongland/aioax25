@@ -1515,6 +1515,10 @@ class AX25Peer(object):
             pid,
             payload,
         )
+
+        self._update_send_seq()
+        self._update_recv_seq()
+
         self._transmit_frame(
             self._IFrameClass(
                 destination=self.address.normcopy(ch=True),
@@ -1556,6 +1560,30 @@ class AX25Peer(object):
             "%s = %s" + comment, getattr(self, "%s_name" % prop), value
         )
         setattr(self, prop, value)
+
+    def _update_send_seq(self):
+        """
+        Update the send sequence.  Call this just prior to sending an
+        I-frame.
+        """
+        # "Just prior to the transmission of the I frame, N(S) is updated to
+        # equal the send state variable." § 2.3.2.4.2
+        # _send_seq (aka N(S)) ← _send_state (aka V(S))
+        self._update_state(
+            "_send_seq", value=self._send_state, comment="from V(S)"
+        )
+
+    def _update_recv_seq(self):
+        """
+        Update the send sequence.  Call this just prior to sending an
+        I-frame or S-frame.
+        """
+        # "Prior to sending an I or S frame, this variable is updated to equal
+        # that of the received state variable" § 2.3.2.4.4
+        # _recv_seq (aka N(R)) ← _recv_state (aka V(R))
+        self._update_state(
+            "_recv_seq", value=self._recv_state, comment="from V(R)"
+        )
 
 
 class AX25PeerHelper(object):
