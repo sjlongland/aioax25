@@ -292,6 +292,10 @@ class BaseKISSDevice(object):
         underlying device.  If more than one frame is present, schedule
         ourselves again with the IO loop.
         """
+        # Skip if all we have is a FEND byte
+        if bytes(self._rx_buffer) == bytearray([BYTE_FEND]):
+            return
+
         # Locate the first FEND byte
         try:
             start = self._rx_buffer.index(BYTE_FEND)
@@ -336,11 +340,15 @@ class BaseKISSDevice(object):
 
         # If we just have a FEND, stop here.
         if bytes(self._rx_buffer) == bytearray([BYTE_FEND]):
+            self._log.debug("FEND byte in receive buffer, wait for more.")
             return
 
         # If there is more to send, call ourselves via the IO loop
         if len(self._rx_buffer):
+            self._log.debug("More data in receive buffer, will check again.")
             self._loop.call_soon(self._receive_frame)
+        else:
+            self._log.debug("No data in receive buffer.  Wait for more.")
 
     def _dispatch_rx_frame(self, frame):
         """

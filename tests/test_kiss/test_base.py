@@ -142,6 +142,22 @@ def test_receive_frame_garbage_start():
     assert len(loop.calls) == 0
 
 
+def test_receive_frame_single_fend():
+    """
+    Test _receive_frame does nothing if there's only a FEND byte.
+    """
+    loop = DummyLoop()
+    kissdev = DummyKISSDevice(loop=loop, reset_on_close=True)
+    kissdev._rx_buffer += b"\xc0"
+    kissdev._receive_frame()
+
+    # We should just have the last FEND
+    assert bytes(kissdev._rx_buffer) == b"\xc0"
+
+    # It should leave the last FEND there and wait for more data.
+    assert len(loop.calls) == 0
+
+
 def test_receive_frame_empty():
     """
     Test _receive_frame discards empty frames.
