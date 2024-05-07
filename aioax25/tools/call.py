@@ -34,7 +34,6 @@ class AX25Call(object):
         self._station = AX25Station(
             self._interface,
             source,
-            protocol=AX25Version.AX25_20,
             log=stnlog,
         )
         self._station.attach()
