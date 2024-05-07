@@ -246,6 +246,13 @@ class AX25Peer(object):
         return self._address
 
     @property
+    def state(self):
+        """
+        Return the peer connection state
+        """
+        return self._state
+
+    @property
     def reply_path(self):
         """
         Return the digipeater path to use when contacting this station.
