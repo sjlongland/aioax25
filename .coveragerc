@@ -1,4 +1,6 @@
 [run]
 branch=true
 source=aioax25
-omit=tests
+omit=
+    tests
+    aioax25/tools/**
