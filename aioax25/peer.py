@@ -1584,8 +1584,6 @@ class AX25PeerConnectionHandler(AX25PeerHelper):
             peer, peer._ack_timeout
         )
         self._retries = peer._max_retries
-        self._our_sabm_acked = False
-        self._their_sabm_acked = False
 
     def _go(self):
         if self.peer._negotiated:
@@ -1619,7 +1617,6 @@ class AX25PeerConnectionHandler(AX25PeerHelper):
                 (self.peer._uaframe_handler is not None)
                 or (self.peer._frmrframe_handler is not None)
                 or (self.peer._dmframe_handler is not None)
-                or (self.peer._sabmframe_handler is not None)
             ):
                 # We're handling another frame now.
                 self._log.debug("Received XID, but we're busy")
@@ -1629,7 +1626,6 @@ class AX25PeerConnectionHandler(AX25PeerHelper):
             self._log.debug(
                 "XID done (state %s), beginning connection", response
             )
-            self.peer._sabmframe_handler = self._on_receive_sabm
             self.peer._uaframe_handler = self._on_receive_ua
             self.peer._frmrframe_handler = self._on_receive_frmr
             self.peer._dmframe_handler = self._on_receive_dm
@@ -1642,30 +1638,9 @@ class AX25PeerConnectionHandler(AX25PeerHelper):
     def _on_receive_ua(self):
         # Peer just acknowledged our connection
         self._log.debug("UA received")
-        self._our_sabm_acked = True
-        self._check_connection_init()
-
-    def _on_receive_sabm(self):
-        # Peer sent us a SABM.
-        self._log.debug("SABM received, sending UA")
-        self.peer._send_ua()
-        self._their_sabm_acked = True
-        self._check_connection_init()
-
-    def _check_connection_init(self):
-        self._log.debug(
-            "UA status: ours=%s theirs=%s",
-            self._our_sabm_acked,
-            self._their_sabm_acked,
-        )
-        if not self._our_sabm_acked:
-            self._log.debug("Waiting for peer to send UA for our SABM")
-        elif not self._their_sabm_acked:
-            self._log.debug("Waiting for peer's SABM to us")
-        else:
-            self._log.info("Connection is established")
-            self.peer._init_connection(self.peer._modulo128)
-            self._finish(response="ack")
+        self._log.info("Connection is established")
+        self.peer._init_connection(self.peer._modulo128)
+        self._finish(response="ack")
 
     def _on_receive_frmr(self):
         # Peer just rejected our connect frame, begin FRMR recovery.
@@ -1679,6 +1654,7 @@ class AX25PeerConnectionHandler(AX25PeerHelper):
         self._finish(response="dm")
 
     def _on_timeout(self):
+        self._unhook()
         if self._retries:
             self._retries -= 1
             self._log.debug("Retrying, remaining=%d", self._retries)
@@ -1687,12 +1663,7 @@ class AX25PeerConnectionHandler(AX25PeerHelper):
             self._log.debug("Giving up")
             self._finish(response="timeout")
 
-    def _finish(self, **kwargs):
-        # Clean up hooks
-        if self.peer._sabmframe_handler == self._on_receive_sabm:
-            self._log.debug("Unhooking SABM handler")
-            self.peer._sabmframe_handler = None
-
+    def _unhook(self):
         if self.peer._uaframe_handler == self._on_receive_ua:
             self._log.debug("Unhooking UA handler")
             self.peer._uaframe_handler = None
@@ -1705,6 +1676,8 @@ class AX25PeerConnectionHandler(AX25PeerHelper):
             self._log.debug("Unhooking DM handler")
             self.peer._dmframe_handler = None
 
+    def _finish(self, **kwargs):
+        self._unhook()
         super(AX25PeerConnectionHandler, self)._finish(**kwargs)
 
 
