@@ -1466,7 +1466,8 @@ def test_recv_sframe_rej_req_busy():
         {"comment": "reset", "prop": "_send_seq", "value": 0},
         {"comment": "reset", "prop": "_recv_state", "value": 0},
         {"comment": "reset", "prop": "_recv_seq", "value": 0},
-        {"comment": "ACKed by peer N(R)", "delta": 1, "prop": "_recv_seq"},
+        {"comment": "reset", "prop": "_ack_state", "value": 0},
+        {"comment": "ACKed by peer N(R)", "delta": 1, "prop": "_ack_state"},
     ]
 
     # We should send a RNR in reply
@@ -1536,7 +1537,8 @@ def test_recv_sframe_rej_req_notbusy():
         {"comment": "reset", "prop": "_send_seq", "value": 0},
         {"comment": "reset", "prop": "_recv_state", "value": 0},
         {"comment": "reset", "prop": "_recv_seq", "value": 0},
-        {"comment": "ACKed by peer N(R)", "delta": 1, "prop": "_recv_seq"},
+        {"comment": "reset", "prop": "_ack_state", "value": 0},
+        {"comment": "ACKed by peer N(R)", "delta": 1, "prop": "_ack_state"},
     ]
 
     # We should send a RR in reply
@@ -1606,8 +1608,9 @@ def test_recv_sframe_rej_rep():
         {"comment": "reset", "prop": "_send_seq", "value": 0},
         {"comment": "reset", "prop": "_recv_state", "value": 0},
         {"comment": "reset", "prop": "_recv_seq", "value": 0},
+        {"comment": "reset", "prop": "_ack_state", "value": 0},
         # Peer ACK
-        {"comment": "ACKed by peer N(R)", "delta": 1, "prop": "_recv_seq"},
+        {"comment": "ACKed by peer N(R)", "delta": 1, "prop": "_ack_state"},
         # REJ handling
         {"comment": "from REJ N(R)", "prop": "_send_state", "value": 2},
     ]
@@ -2138,6 +2141,7 @@ def test_init_connection_mod8():
     peer._send_seq = 2
     peer._recv_state = 3
     peer._recv_seq = 4
+    peer._ack_state = 5
     peer._modulo = 6
     peer._max_outstanding = 7
     peer._IFrameClass = None
@@ -2164,6 +2168,7 @@ def test_init_connection_mod8():
     assert peer._send_seq == 0
     assert peer._recv_state == 0
     assert peer._recv_seq == 0
+    assert peer._ack_state == 0
     assert peer._pending_iframes == {}
     assert peer._pending_data == []
 
@@ -2187,6 +2192,7 @@ def test_init_connection_mod128():
     peer._send_seq = 2
     peer._recv_state = 3
     peer._recv_seq = 4
+    peer._ack_state = 5
     peer._modulo = 6
     peer._max_outstanding = 7
     peer._IFrameClass = None
@@ -2213,6 +2219,7 @@ def test_init_connection_mod128():
     assert peer._send_seq == 0
     assert peer._recv_state == 0
     assert peer._recv_seq == 0
+    assert peer._ack_state == 0
     assert peer._pending_iframes == {}
     assert peer._pending_data == []
 

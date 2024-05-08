@@ -201,6 +201,12 @@ class AX25Peer(object):
         self._recv_seq = 0
         self._recv_seq_name = "N(R)"
 
+        # ACK state number.
+        # Used to track the sequence number previously ACKed in an I or S
+        # frame N(R) field.
+        self._ack_state = 0  # AKA V(A)
+        self._ack_state_name = "V(A)"
+
         self._local_busy = False  # Local end busy, respond to
         # RR and I-frames with RNR.
         self._peer_busy = False  # Peer busy, await RR.
@@ -731,14 +737,14 @@ class AX25Peer(object):
         """
         Receive all frames up to N(R)-1
         """
-        self._log.debug("%d through to %d are received", self._recv_seq, nr)
-        while self._recv_seq != nr:
+        self._log.debug("%d through to %d are received", self._ack_state, nr)
+        while self._ack_state != nr:
             if self._log.isEnabledFor(logging.DEBUG):
                 self._log.debug("Pending frames: %r", self._pending_iframes)
 
-            self._log.debug("ACKing N(R)=%s", self._recv_seq)
+            self._log.debug("ACKing N(R)=%s", self._ack_state)
             try:
-                frame = self._pending_iframes.pop(self._recv_seq)
+                frame = self._pending_iframes.pop(self._ack_state)
                 if self._log.isEnabledFor(logging.DEBUG):
                     self._log.debug(
                         "Popped %s off pending queue, N(R)s pending: %r",
@@ -749,12 +755,12 @@ class AX25Peer(object):
                 if self._log.isEnabledFor(logging.DEBUG):
                     self._log.debug(
                         "ACK to unexpected N(R) number %s, pending: %r",
-                        self._recv_seq,
+                        self._ack_state,
                         self._pending_iframes,
                     )
             finally:
                 self._update_state(
-                    "_recv_seq", delta=1, comment="ACKed by peer N(R)"
+                    "_ack_state", delta=1, comment="ACKed by peer N(R)"
                 )
 
     def _on_receive_test(self, frame):
@@ -979,6 +985,7 @@ class AX25Peer(object):
         self._update_state("_send_seq", value=0, comment="reset")
         self._update_state("_recv_state", value=0, comment="reset")
         self._update_state("_recv_seq", value=0, comment="reset")
+        self._update_state("_ack_state", value=0, comment="reset")
 
         # Unacknowledged I-frames to be ACKed
         self._pending_iframes = {}
