@@ -928,10 +928,15 @@ class AX25Peer(object):
             self._process_xid_winszrx(AX25_20_DEFAULT_XID_WINDOWSZRX)
             self._process_xid_acktimer(AX25_20_DEFAULT_XID_ACKTIMER)
             self._process_xid_retrycounter(AX25_20_DEFAULT_XID_RETRIES)
+
+            # Downgrade 2.2 to 2.0, do not unwittingly "upgrade" 1.0 to 2.0!
             if self._protocol in (AX25Version.UNKNOWN, AX25Version.AX25_22):
                 self._log.info("Downgrading to AX.25 2.0 due to failed XID")
                 self._protocol = AX25Version.AX25_20
-                self._modulo128 = False
+
+            # AX.25 2.2 is required for Mod128, so if we get FRMR here,
+            # disable this unconditionally.
+            self._modulo128 = False
         elif self._protocol != AX25Version.AX25_22:
             # Clearly this station understands AX.25 2.2
             self._log.info("Upgrading to AX.25 2.2 due to successful XID")
