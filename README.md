@@ -7,20 +7,6 @@ The aim of this project is to implement a simple-to-understand asynchronous
 AX.25 library built on `asyncio` and `pyserial`, implementing a AX.25 and APRS
 stack in pure Python.
 
-## Python 3.5+ and above is required as of 2021-11-12
-
-I did try to support 3.4, but this proved to be infeasible for the following
-reasons:
-
-* Python 3.8+ makes `asyncio.coroutine` deprecated (apparently will be removed
-  in 3.10).  This meant I needed `coroutine` and `async def` versions of some
-  API functions, and the necessary logic to "hide" the latter from Python 3.4.
-* Trying to coax generator-based coroutines to run "in the background" for unit
-  test purposes proved to be a pain in the arse.
-
-Python 3.5 support is planned to continue until it too, becomes infeasible
-(e.g. if type annotations become required).
-
 ## What works
 
 * We can put a Kantronics KPC-3 TNC into KISS mode automatically
@@ -30,6 +16,7 @@ Python 3.5 support is planned to continue until it too, becomes infeasible
 * We can receive AX.25 UI frames
 * We can send AX.25 UI frames
 * Connecting to AX.25 nodes (*experimental*)
+* Accepting connections from AX.25 nodes (*experimental*)
 
 ## What doesn't work
 
@@ -38,7 +25,6 @@ Python 3.5 support is planned to continue until it too, becomes infeasible
 ## What isn't tested
 
 * Platforms other than GNU/Linux
-* Accepting connections from AX.25 nodes
 
 ## Current plans
 
@@ -47,10 +33,9 @@ focus on UI frames.  We can send and receive APRS message frames, parse some
 kinds of position frames, and do basic UI frame stuff.
 
 Preliminary support for AX.25 connected mode is present, but is _experimental_.
-It was tested connecting to a BPQ32 node, but not a lot of testing has been
-done at this stage.  **More feedback would be appreciated.**  At this stage,
-there is code for accepting a connection, but no testing has been done of this
-code so there could be glaring bugs.
+It was tested connecting to a BPQ32 node, and being connected to by a BPQ32
+node, but not a lot of testing has been done at this stage.  **More feedback
+would be appreciated.**  The API is also very much a work-in-progress.
 
 After that, some things I'd like to tackle in no particular order:
 
