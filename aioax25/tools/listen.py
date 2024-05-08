@@ -13,9 +13,9 @@ $ python3 -m aioax25.tools.listen kiss-config.yml N0CALL-12 -- python -i
 """
 
 import asyncio
+from asyncio import subprocess
 import argparse
 import logging
-import subprocess
 
 from yaml import safe_load
 
@@ -79,11 +79,12 @@ class SubprocProtocol(asyncio.Protocol):
 
 
 class PeerSession(object):
-    def __init__(self, peer, command, log):
+    def __init__(self, peer, command, echo, log):
         self._peer = peer
         self._log = log
         self._command = command
         self._cmd_transport = None
+        self._echo = echo
 
         peer.received_information.connect(self._on_peer_received)
         peer.connect_state_changed.connect(self._on_peer_state_change)
@@ -92,7 +93,8 @@ class PeerSession(object):
         self._log.info("Launching sub-process")
         await asyncio.get_event_loop().subprocess_exec(
             self._make_protocol, *self._command,
-            stderr=subprocess.STDOUT
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT, bufsize=0
         )
 
     def _make_protocol(self):
@@ -143,6 +145,10 @@ class PeerSession(object):
         Pass data from the AX.25 peer to the sub-process.
         """
         self._log.debug("Received from peer: %r", payload)
+        if self._echo:
+            # Echo back to peer
+            self._peer.send(payload)
+
         if self._cmd_transport:
             payload = b"\n".join(payload.split(b"\r"))
             self._log.debug("Writing to subprocess: %r", payload)
@@ -163,7 +169,7 @@ class PeerSession(object):
 
 
 class AX25Listen(object):
-    def __init__(self, source, command, kissparams, port=0):
+    def __init__(self, source, command, kissparams, port=0, echo=False):
         log = logging.getLogger(self.__class__.__name__)
         kisslog = log.getChild("kiss")
         kisslog.setLevel(logging.INFO)  # KISS logs are verbose!
@@ -182,6 +188,7 @@ class AX25Listen(object):
         self._station.attach()
         self._command = command
         self._station.connection_request.connect(self._on_connection_request)
+        self._echo = echo
 
     async def listen(self):
         # Open the KISS interface
@@ -202,7 +209,7 @@ class AX25Listen(object):
     async def _connect_peer(self, peer):
         self._log.info("Incoming connection from %s", peer.address)
         try:
-            session = PeerSession(peer, self._command, self._log.getChild(str(peer.address)))
+            session = PeerSession(peer, self._command, self._echo, self._log.getChild(str(peer.address)))
             await session.init()
         except:
             self._log.exception("Failed to initialise peer connection")
@@ -218,6 +225,8 @@ async def main():
 
     ap.add_argument("--log-level", default="info", type=str, help="Log level")
     ap.add_argument("--port", default=0, type=int, help="KISS port number")
+    ap.add_argument("--echo", default=False, action="store_const", const=True,
+                    help="Echo input back to the caller")
     ap.add_argument(
         "config", type=str, help="KISS serial port configuration file"
     )
@@ -236,7 +245,8 @@ async def main():
     )
     config = safe_load(open(args.config, "r").read())
 
-    ax25listen = AX25Listen(args.source, args.command, config, args.port)
+    ax25listen = AX25Listen(args.source, args.command, config, args.port,
+                            args.echo)
     await ax25listen.listen()
 
 
