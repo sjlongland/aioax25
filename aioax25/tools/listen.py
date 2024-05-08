@@ -92,9 +92,11 @@ class PeerSession(object):
     async def init(self):
         self._log.info("Launching sub-process")
         await asyncio.get_event_loop().subprocess_exec(
-            self._make_protocol, *self._command,
+            self._make_protocol,
+            *self._command,
             stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT, bufsize=0
+            stderr=subprocess.STDOUT,
+            bufsize=0
         )
 
     def _make_protocol(self):
@@ -209,7 +211,12 @@ class AX25Listen(object):
     async def _connect_peer(self, peer):
         self._log.info("Incoming connection from %s", peer.address)
         try:
-            session = PeerSession(peer, self._command, self._echo, self._log.getChild(str(peer.address)))
+            session = PeerSession(
+                peer,
+                self._command,
+                self._echo,
+                self._log.getChild(str(peer.address)),
+            )
             await session.init()
         except:
             self._log.exception("Failed to initialise peer connection")
@@ -225,14 +232,20 @@ async def main():
 
     ap.add_argument("--log-level", default="info", type=str, help="Log level")
     ap.add_argument("--port", default=0, type=int, help="KISS port number")
-    ap.add_argument("--echo", default=False, action="store_const", const=True,
-                    help="Echo input back to the caller")
+    ap.add_argument(
+        "--echo",
+        default=False,
+        action="store_const",
+        const=True,
+        help="Echo input back to the caller",
+    )
     ap.add_argument(
         "config", type=str, help="KISS serial port configuration file"
     )
     ap.add_argument("source", type=str, help="Source callsign/SSID")
-    ap.add_argument("command", type=str, nargs="+",
-                    help="Program + args to run")
+    ap.add_argument(
+        "command", type=str, nargs="+", help="Program + args to run"
+    )
 
     args = ap.parse_args()
 
@@ -245,8 +258,9 @@ async def main():
     )
     config = safe_load(open(args.config, "r").read())
 
-    ax25listen = AX25Listen(args.source, args.command, config, args.port,
-                            args.echo)
+    ax25listen = AX25Listen(
+        args.source, args.command, config, args.port, args.echo
+    )
     await ax25listen.listen()
 
 

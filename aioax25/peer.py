@@ -1580,7 +1580,7 @@ class AX25Peer(object):
             comment += " delta=%s" % delta
 
         # Always apply modulo op (assume 8 if not set)
-        value %= (self._modulo or 8)
+        value %= self._modulo or 8
 
         self._log.debug(
             "%s = %s" + comment, getattr(self, "%s_name" % prop), value
