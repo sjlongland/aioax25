@@ -330,10 +330,9 @@ class BaseKISSDevice(object):
             # TX queue is empty
             return
 
-        if not self._tx_buffer.endswith(bytearray([BYTE_FEND])):
-            self._tx_buffer += bytearray([BYTE_FEND])
-
-        self._tx_buffer += bytes(rawframe) + bytearray([BYTE_FEND])
+        self._tx_buffer += (
+            bytearray([BYTE_FEND]) + bytes(rawframe) + bytearray([BYTE_FEND])
+        )
         self._tx_future = future
 
     def _receive_frame(self):
