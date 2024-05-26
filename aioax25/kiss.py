@@ -540,6 +540,9 @@ class BaseKISSDevice(object):
         # If there is more in the buffer, queue _send_data after a delay.
         if self._tx_buffer:
             self._loop.call_later(self._send_block_delay, self._send_data)
+        elif future:
+            # No more, but there's a future waiting, say we are done!
+            future.set_result(None)
 
     def _mark_closed(self, ex=None):
         """
