@@ -7,6 +7,7 @@ them all in one hit.
 
 from functools import partial
 
+
 class FutureQueue(object):
     """
     A future queue is a helper for managing multiple Future objects that may
@@ -15,6 +16,7 @@ class FutureQueue(object):
     added to it.  When the operation completes or fails, all added futures
     are notified.
     """
+
     def __init__(self, threadsafe=False):
         self._threadsafe = threadsafe
         self._futures = []
@@ -34,20 +36,23 @@ class FutureQueue(object):
     def cancel(self, *args, **kwargs):
         def _cancel(future):
             future.cancel(*args, **kwargs)
+
         self._foreach_future(_cancel)
 
     def set_exception(self, *args, **kwargs):
         def _set_exception(future):
             future.set_exception(*args, **kwargs)
+
         self._foreach_future(_set_exception)
 
     def set_result(self, *args, **kwargs):
         def _set_result(future):
             future.set_result(*args, **kwargs)
+
         self._foreach_future(_set_result)
 
     def _foreach_future(self, action):
-        for (future, call_soon) in self._futures:
+        for future, call_soon in self._futures:
             if future.done():
                 continue
             call_soon(partial(action, future))
