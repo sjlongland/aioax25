@@ -224,6 +224,56 @@ class KISSCmdSetHW(KISSCommand):
 KISSCommand._register(CMD_SETHW, KISSCmdSetHW)
 
 
+def extract_frame(rx_buffer, log):
+    """
+    Extract the first KISS frame from the receive buffer and return it along
+    with the remainder of the buffer.
+    """
+    # Skip if all we have is a FEND byte
+    if bytes(rx_buffer) == bytearray([BYTE_FEND]):
+        return (None, rx_buffer)
+
+    # Locate the first FEND byte
+    try:
+        start = rx_buffer.index(BYTE_FEND)
+    except ValueError:
+        # No frames waiting
+        return (None, bytearray())
+
+    log.debug("RECV FRAME start at %d", start)
+
+    # Discard the proceeding junk
+    rx_buffer = rx_buffer[start:]
+    del start
+    assert rx_buffer[0] == BYTE_FEND
+
+    # Locate the last FEND byte of the frame
+    try:
+        end = rx_buffer.index(BYTE_FEND, 1)
+    except ValueError:
+        # Uhh huh, so frame is incomplete.
+        return (None, rx_buffer)
+
+    log.debug("RECV FRAME end at %d", end)
+
+    # Everything between those points is our frame.
+    return (rx_buffer[1:end], rx_buffer[end:])
+
+
+def buffer_empty(rx_buffer):
+    """
+    Return true if the buffer contains no meaningful buffer (completely empty
+    or containing only one FEND byte)
+    """
+    l = len(rx_buffer)
+    if l > 1:
+        return False
+    elif l == 0:
+        return True
+    else:
+        return rx_buffer[0] == BYTE_FEND
+
+
 # KISS device interface
 
 
@@ -341,44 +391,11 @@ class BaseKISSDevice(object):
         underlying device.  If more than one frame is present, schedule
         ourselves again with the IO loop.
         """
-        # Skip if all we have is a FEND byte
-        if bytes(self._rx_buffer) == bytearray([BYTE_FEND]):
+        (frame, self._rx_buffer) = extract_frame(self._rx_buffer, self._log)
+
+        # Stop here if we had no frame
+        if frame is None:
             return
-
-        # Locate the first FEND byte
-        try:
-            start = self._rx_buffer.index(BYTE_FEND)
-        except ValueError:
-            # No frames waiting
-            self._rx_buffer = bytearray()
-            return
-
-        self._log.debug("RECV FRAME start at %d", start)
-
-        # Discard the proceeding junk
-        self._rx_buffer = self._rx_buffer[start:]
-        del start
-        assert self._rx_buffer[0] == BYTE_FEND
-
-        # Locate the last FEND byte of the frame
-        try:
-            end = self._rx_buffer.index(BYTE_FEND, 1)
-        except ValueError:
-            # Uhh huh, so frame is incomplete.
-            return
-
-        self._log.debug("RECV FRAME end at %d", end)
-
-        # Everything between those points is our frame.
-        frame = self._rx_buffer[1:end]
-        self._rx_buffer = self._rx_buffer[end:]
-
-        if self._log.isEnabledFor(logging.DEBUG):
-            self._log.debug(
-                "RECEIVED FRAME %s, REMAINING %s",
-                b2a_hex(frame).decode(),
-                b2a_hex(self._rx_buffer).decode(),
-            )
 
         # Two consecutive FEND bytes are valid, ignore these "empty" frames
         if len(frame) > 0:
@@ -388,16 +405,11 @@ class BaseKISSDevice(object):
             )
 
         # If we just have a FEND, stop here.
-        if bytes(self._rx_buffer) == bytearray([BYTE_FEND]):
-            self._log.debug("FEND byte in receive buffer, wait for more.")
-            return
-
-        # If there is more to send, call ourselves via the IO loop
-        if len(self._rx_buffer):
+        if buffer_empty(self._rx_buffer):
+            self._log.debug("No meaningful data left in buffer.")
+        else:
             self._log.debug("More data in receive buffer, will check again.")
             self._loop.call_soon(self._receive_frame)
-        else:
-            self._log.debug("No data in receive buffer.  Wait for more.")
 
     def _dispatch_rx_frame(self, frame):
         """
