@@ -11,7 +11,7 @@ from aioax25.kiss import (
     KISSPort,
 )
 from ..loop import DummyLoop
-from asyncio import BaseEventLoop
+from asyncio import BaseEventLoop, Future
 
 
 class DummyKISSDevice(BaseKISSDevice):
@@ -459,6 +459,67 @@ def test_send_data():
 
     # We should now see this was "sent" and now in 'transmitted'
     assert bytes(kissdev.transmitted) == b"test output data"
+
+    # That should be the lot
+    assert len(loop.calls) == 0
+
+    # There should be no failures
+    assert failures == []
+
+
+def test_send_data_emptybuffer():
+    """
+    Test that _send_data will pick the next frame off the transmit queue if
+    it has nothing to send in the buffer.
+    """
+    loop = DummyLoop()
+    kissdev = DummyKISSDevice(loop=loop)
+    my_future = Future()
+    assert bytes(kissdev._tx_buffer) == b""
+
+    kissdev._tx_queue = [(b"test output data", my_future)]
+
+    failures = []
+
+    def _on_fail(**kwargs):
+        failures.append(kwargs)
+
+    kissdev.failed.connect(_on_fail)
+
+    # Send the data out.
+    kissdev._send_data()
+
+    # We should now see this was "sent" and now in 'transmitted'
+    assert bytes(kissdev.transmitted) == b"\xc0test output data\xc0"
+
+    # my_future should be the current transmit future
+    assert kissdev._tx_future is my_future
+
+    # That should be the lot
+    assert len(loop.calls) == 0
+
+    # There should be no failures
+    assert failures == []
+
+
+def test_send_data_emptybuffer_emptyqueue():
+    """
+    Test that _send_data does nothing if all queues are empty.
+    """
+    loop = DummyLoop()
+    kissdev = DummyKISSDevice(loop=loop)
+    assert bytes(kissdev._tx_buffer) == b""
+    assert kissdev._tx_queue == []
+
+    failures = []
+
+    def _on_fail(**kwargs):
+        failures.append(kwargs)
+
+    kissdev.failed.connect(_on_fail)
+
+    # Send the data out.
+    kissdev._send_data()
 
     # That should be the lot
     assert len(loop.calls) == 0
