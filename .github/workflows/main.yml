@@ -26,7 +26,8 @@ jobs:
     strategy:
       matrix:
         python:
-        - "3.5"
+        #- "3.5" -- TODO: reinstate if pip issue is fixed
+        # https://github.com/actions/setup-python/issues/866
         - "3.11"
         - "3.12"
         platform:
@@ -36,14 +37,14 @@ jobs:
         # probably work on Mac and Windows too. But if an OS-specific bug does
         # slip through, we should catch it in pre-release testing.
         - ubuntu-latest
-        exclude:
-        # Python 3.5 does not run on ubuntu-latest
-        - python: "3.5"
-          platform: ubuntu-latest
-        include:
-        - python: "3.5"
-          platform: ubuntu-20.04
-          skip-coverage: true
+        #exclude:
+        ## Python 3.5 does not run on ubuntu-latest
+        #- python: "3.5"
+        #  platform: ubuntu-latest
+        #include:
+        #- python: "3.5"
+        #  platform: ubuntu-20.04
+        #  skip-coverage: true
     with:
       python-version: ${{ matrix.python }}
       platform: ${{ matrix.platform }}
