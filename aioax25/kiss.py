@@ -460,13 +460,22 @@ class BaseKISSDevice(object):
         self._try_send_raw_data(b"\r")
         self._loop.call_later(0.5, self._check_open)
 
-    def _mark_open(self):
-        # Mark the device as open
-        self._open_time = time.time()
-        self._state = KISSDeviceState.OPEN
-        self._rx_buffer = bytearray()
-        # Resolve any pending queues
-        self._open_queue.set_result(None)
+    def _mark_open(self, ex=None):
+        """
+        Mark the port as being open, updating the state and resolving any
+        pending futures waiting for the open event.  If an exception is
+        provided, pass it through instead.
+        """
+        if ex is None:
+            # Mark the device as open
+            self._open_time = time.time()
+            self._state = KISSDeviceState.OPEN
+            self._rx_buffer = bytearray()
+            # Resolve any pending queues
+            self._open_queue.set_result(None)
+        else:
+            # Open failed, pass through exception
+            self._open_queue.set_exception(ex)
         self._open_queue = None
 
     def _check_open(self):
@@ -483,6 +492,7 @@ class BaseKISSDevice(object):
             self._open()
         except:
             (ex_type, ex_value, ex_traceback) = exc_info()
+            self._mark_open(ex_value)
             self._on_fail("open", (ex_type, ex_value, ex_traceback))
             raise
 
