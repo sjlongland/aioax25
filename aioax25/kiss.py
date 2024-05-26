@@ -257,7 +257,6 @@ class BaseKISSDevice(object):
         self._reset_on_close = reset_on_close
         self._kiss_commands = kiss_commands
         self._kiss_rem_commands = None
-        self._frame_seen = False
         self._send_block_size = send_block_size
         self._send_block_delay = send_block_delay
 
