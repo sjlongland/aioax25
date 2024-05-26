@@ -275,6 +275,13 @@ class BaseKISSDevice(object):
         self.failed = Signal()
 
     def _ensure_future(self, future):
+        """
+        Ensure the a future is passed through or created as required:
+        - if we're given a `Future`, pass it through as-is.
+        - if not, and return_future was set to `True`; create one and return
+          it.
+        - otherwise, we're operating in the legacy one-shot mode, do nothing.
+        """
         if future is not None:
             # We're given a future, pass it through
             return future
@@ -313,9 +320,14 @@ class BaseKISSDevice(object):
         return future
 
     def _pick_next_tx(self):
+        """
+        Pick the next to-be-transmitted KISS frame off the queue
+        and add it to the transmit buffer.
+        """
         try:
             (rawframe, future) = self._tx_queue.pop(0)
         except IndexError:
+            # TX queue is empty
             return
 
         if not self._tx_buffer.endswith(bytearray([BYTE_FEND])):
@@ -464,16 +476,20 @@ class BaseKISSDevice(object):
         self._loop.call_soon(self._send_kiss_cmd)
 
     def _try_open(self):
+        """
+        Attempt to open the port, or catch and handle open failures.
+        """
         try:
             self._open()
         except:
             (ex_type, ex_value, ex_traceback) = exc_info()
             self._on_fail("open", (ex_type, ex_value, ex_traceback))
-            self._open_queue.set_exception(ex_value)
-            self._open_queue = None
             raise
 
     def _try_send_raw_data(self, data, future=None):
+        """
+        Attempt to send raw data, or on failure, catch and report the error.
+        """
         try:
             self._send_raw_data(data)
         except:
@@ -516,6 +532,10 @@ class BaseKISSDevice(object):
             self._loop.call_later(self._send_block_delay, self._send_data)
 
     def _mark_closed(self, ex=None):
+        """
+        Mark the device as closed and notify any futures waiting on the close
+        event.  In the event of an error, report the error instead.
+        """
         if ex is None:
             # Mark the device as closed
             self._open_time = None
@@ -529,6 +549,10 @@ class BaseKISSDevice(object):
         self._close_queue = None
 
     def _try_close(self):
+        """
+        Attempt to close the port, if it succeeds, notify callers of the
+        closed status.  Catch and report errors.
+        """
         try:
             self._close()
         except:
@@ -542,6 +566,9 @@ class BaseKISSDevice(object):
             self._mark_closed()
 
     def _on_fail(self, action, exc_info):
+        """
+        Handle a critical device failure.  Mark the device as failed.
+        """
         (ex_t, ex_v, _) = exc_info
         self._log.warning(
             "KISS device has failed: %s: %s", ex_t.__name__, ex_v
