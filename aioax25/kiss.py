@@ -10,6 +10,7 @@ from asyncio import Protocol, ensure_future, get_event_loop
 from serial_asyncio import create_serial_connection
 from serial import EIGHTBITS, PARITY_NONE, STOPBITS_ONE
 from .signal import Signal
+from .futurequeue import FutureQueue
 from binascii import b2a_hex
 import time
 import logging
@@ -238,6 +239,7 @@ class BaseKISSDevice(object):
         send_block_size=128,
         send_block_delay=0.1,
         kiss_commands=["INT KISS", "RESET"],
+        return_future=False,
         log=None,
         loop=None,
         **kwargs
@@ -254,11 +256,14 @@ class BaseKISSDevice(object):
         self._port = {}
         self._state = KISSDeviceState.CLOSED
         self._open_time = 0
+        self._open_queue = None
+        self._close_queue = None
         self._reset_on_close = reset_on_close
         self._kiss_commands = kiss_commands
         self._kiss_rem_commands = None
         self._send_block_size = send_block_size
         self._send_block_delay = send_block_delay
+        self._return_future = return_future
 
         # Signal fired when the device enters the FAILED state
         # Keyword arguments:
@@ -266,6 +271,17 @@ class BaseKISSDevice(object):
         #           ('open', 'send', 'close')
         # - exc_info: the exception trace information for debugging
         self.failed = Signal()
+
+    def _ensure_future(self, future):
+        if future is not None:
+            # We're given a future, pass it through
+            return future
+        elif self._return_future:
+            # We are always expected to return a future, do so
+            return self._loop.create_future()
+        else:
+            # We're being used in one-shot mode
+            return None
 
     def _receive(self, data):
         """
@@ -414,9 +430,8 @@ class BaseKISSDevice(object):
             command = self._kiss_rem_commands.pop(0)
         except IndexError:
             # Should be open now.
-            self._open_time = time.time()
-            self._state = KISSDeviceState.OPEN
-            self._rx_buffer = bytearray()
+            if self._state is not KISSDeviceState.OPEN:
+                self._mark_open()
             return
 
         self._log.debug("Sending %r", command)
@@ -428,6 +443,15 @@ class BaseKISSDevice(object):
         self._try_send_raw_data(b"\r")
         self._loop.call_later(0.5, self._check_open)
 
+    def _mark_open(self):
+        # Mark the device as open
+        self._open_time = time.time()
+        self._state = KISSDeviceState.OPEN
+        self._rx_buffer = bytearray()
+        # Resolve any pending queues
+        self._open_queue.set_result(None)
+        self._open_queue = None
+
     def _check_open(self):
         """
         Handle opening of the port
@@ -438,22 +462,45 @@ class BaseKISSDevice(object):
         try:
             self._open()
         except:
-            self._on_fail("open", exc_info())
+            (ex_type, ex_value, ex_traceback) = exc_info()
+            self._on_fail("open", (ex_type, ex_value, ex_traceback))
+            self._open_queue.set_exception(ex_value)
+            self._open_queue = None
             raise
 
     def _try_send_raw_data(self, data):
         try:
             self._send_raw_data(data)
         except:
+            (ex_type, ex_value, ex_traceback) = exc_info()
             self._on_fail("send", exc_info())
             raise
+
+    def _mark_closed(self, ex=None):
+        if ex is None:
+            # Mark the device as closed
+            self._open_time = None
+            self._state = KISSDeviceState.CLOSED
+            self._rx_buffer = bytearray()
+            # Resolve any pending queues
+            self._close_queue.set_result(None)
+        else:
+            # Pass on exception information
+            self._close_queue.set_exception(ex)
+        self._close_queue = None
 
     def _try_close(self):
         try:
             self._close()
         except:
-            self._on_fail("close", exc_info())
+            (ex_type, ex_value, ex_traceback) = exc_info()
+            self._mark_closed(ex_value)
+            self._on_fail("close", (ex_type, ex_value, ex_traceback))
             raise
+
+        if self.state is KISSDeviceState.CLOSED:
+            # Resolve any pending queues
+            self._mark_closed()
 
     def _on_fail(self, action, exc_info):
         (ex_t, ex_v, _) = exc_info
@@ -481,20 +528,46 @@ class BaseKISSDevice(object):
     def state(self):
         return self._state
 
-    def open(self):
-        assert self.state == KISSDeviceState.CLOSED, "Device is not closed"
+    def open(self, future=None):
+        future = self._ensure_future(future)
+
+        if (future is not None) and (self.state is KISSDeviceState.OPENING):
+            # We're opening and we've been given a future.
+            self._open_queue.add(future)
+            return
+
+        assert self.state is KISSDeviceState.CLOSED, "Device is not closed"
         self._log.debug("Opening device")
         self._state = KISSDeviceState.OPENING
-        self._try_open()
 
-    def close(self):
-        assert self.state == KISSDeviceState.OPEN, "Device is not open"
+        self._open_queue = FutureQueue()
+        if future is not None:
+            self._open_queue.add(future)
+
+        self._try_open()
+        return future
+
+    def close(self, future=None):
+        future = self._ensure_future(future)
+
+        if (future is not None) and (self.state is KISSDeviceState.CLOSING):
+            # We're closing and we've been given a future.
+            self._close_queue.add(future)
+            return
+
+        assert self.state is KISSDeviceState.OPEN, "Device is not open"
         self._log.debug("Closing device")
         self._state = KISSDeviceState.CLOSING
+
+        self._close_queue = FutureQueue()
+        if future is not None:
+            self._close_queue.add(future)
+
         if self._reset_on_close:
             self._send(KISSCmdReturn())
         else:
             self._try_close()
+        return future
 
     def reset(self):
         assert self.state == KISSDeviceState.FAILED, "Device has not failed"

@@ -32,6 +32,31 @@ class DummyKISSDevice(BaseKISSDevice):
         self.transmitted += data
 
 
+class DummyFutureQueue(object):
+    def __init__(self):
+        self._exception = None
+        self._result = None
+        self._state = "unset"
+
+    @property
+    def exception(self):
+        assert self._state == "exception"
+        return self._exception
+
+    @property
+    def result(self):
+        assert self._state == "result"
+        return self._result
+
+    def set_exception(self, ex):
+        self._state = "exception"
+        self._exception = ex
+
+    def set_result(self, v):
+        self._state = "result"
+        self._result = v
+
+
 class DummyKISSDeviceError(IOError):
     pass
 
@@ -517,6 +542,7 @@ def test_send_data_close_after_send():
 
     # Force state
     kissdev._state = KISSDeviceState.CLOSING
+    kissdev._close_queue = DummyFutureQueue()
 
     # No close call made yet
     assert kissdev.close_calls == 0
@@ -599,7 +625,12 @@ def test_getitem():
 def test__send_kiss_cmd():
     kissdev = DummyKISSDevice(loop=DummyLoop())
     kissdev._kiss_rem_commands = []
+    open_queue = DummyFutureQueue()
+    kissdev._open_queue = open_queue
 
     kissdev._send_kiss_cmd()
     assert KISSDeviceState.OPEN == kissdev._state
     assert bytearray() == kissdev._rx_buffer
+
+    assert kissdev._open_queue is None
+    assert open_queue.result is None
