@@ -252,6 +252,8 @@ class BaseKISSDevice(object):
         self._protocol = None
         self._rx_buffer = bytearray()
         self._tx_buffer = bytearray()
+        self._tx_queue = []
+        self._tx_future = None
         self._loop = loop
         self._port = {}
         self._state = KISSDeviceState.CLOSED
@@ -297,7 +299,7 @@ class BaseKISSDevice(object):
         else:
             self._loop.call_soon(self._receive_frame)
 
-    def _send(self, frame):
+    def _send(self, frame, future=None):
         """
         Send a frame via the underlying transport.
         """
@@ -306,11 +308,21 @@ class BaseKISSDevice(object):
         if self._log.isEnabledFor(logging.DEBUG):
             self._log.debug("XMIT FRAME %r", b2a_hex(rawframe).decode())
 
+        self._tx_queue.append((rawframe, future))
+        self._loop.call_soon(self._send_data)
+        return future
+
+    def _pick_next_tx(self):
+        try:
+            (rawframe, future) = self._tx_queue.pop(0)
+        except IndexError:
+            return
+
         if not self._tx_buffer.endswith(bytearray([BYTE_FEND])):
             self._tx_buffer += bytearray([BYTE_FEND])
 
         self._tx_buffer += bytes(rawframe) + bytearray([BYTE_FEND])
-        self._loop.call_soon(self._send_data)
+        self._tx_future = future
 
     def _receive_frame(self):
         """
@@ -401,23 +413,16 @@ class BaseKISSDevice(object):
         """
         Send the next block of data waiting in the buffer.
         """
+        if len(self._tx_buffer) == 0:
+            # Nothing pending to transmit
+            self._pick_next_tx()
+
         data = self._tx_buffer[: self._send_block_size]
-        self._tx_buffer = self._tx_buffer[self._send_block_size :]
 
         if self._log.isEnabledFor(logging.DEBUG):
             self._log.debug("XMIT RAW %r", b2a_hex(data).decode())
 
-        self._try_send_raw_data(data)
-
-        # If we are closing, wait for this to be sent
-        if (self._state == KISSDeviceState.CLOSING) and (
-            len(self._tx_buffer) == 0
-        ):
-            self._try_close()
-            return
-
-        if self._tx_buffer:
-            self._loop.call_later(self._send_block_delay, self._send_data)
+        self._try_send_raw_data(data, self._tx_future)
 
     def _init_kiss(self):
         assert self.state == KISSDeviceState.OPENING, "Device is not opening"
@@ -468,13 +473,47 @@ class BaseKISSDevice(object):
             self._open_queue = None
             raise
 
-    def _try_send_raw_data(self, data):
+    def _try_send_raw_data(self, data, future=None):
         try:
             self._send_raw_data(data)
         except:
             (ex_type, ex_value, ex_traceback) = exc_info()
+            if future:
+                future.set_exception(ex_value)
             self._on_fail("send", exc_info())
             raise
+
+        # We assume it was sent
+        self._mark_sent(data, future)
+
+    def _mark_sent(self, data, future):
+        """
+        Check for the presence of the given data at the start of the buffer,
+        de-queue it and check for anything further.
+        """
+        # Sanity check, ensure the data is in the transmit buffer, then
+        # dequeue it!
+        try:
+            assert self._tx_buffer.startswith(
+                data
+            ), "Did not find sent data in the transmit buffer!"
+            self._tx_buffer = self._tx_buffer[len(data) :]
+        except:
+            (ex_type, ex_value, ex_traceback) = exc_info()
+            if future:
+                future.set_exception(ex_value)
+            self._on_fail("send", exc_info())
+
+        # If we are closing, wait for this to be sent
+        if (self._state == KISSDeviceState.CLOSING) and (
+            len(self._tx_buffer) == 0
+        ):
+            self._try_close()
+            return
+
+        # If there is more in the buffer, queue _send_data after a delay.
+        if self._tx_buffer:
+            self._loop.call_later(self._send_block_delay, self._send_data)
 
     def _mark_closed(self, ex=None):
         if ex is None:
@@ -844,12 +883,14 @@ class KISSPort(object):
     def port(self):
         return self._port
 
-    def send(self, frame):
+    def send(self, frame, future=None):
         """
         Send a raw AX.25 frame to the TNC via this port.
         """
+        future = self._device._ensure_future(future)
         self._log.debug("XMIT AX.25 %s", frame)
-        self._device._send(KISSCmdData(self.port, bytes(frame)))
+        self._device._send(KISSCmdData(self.port, bytes(frame)), future)
+        return future
 
     def _receive_frame(self, frame):
         """

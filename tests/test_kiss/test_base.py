@@ -31,6 +31,9 @@ class DummyKISSDevice(BaseKISSDevice):
     def _send_raw_data(self, data):
         self.transmitted += data
 
+    def _ensure_future(self, future):
+        return future
+
 
 class DummyFutureQueue(object):
     def __init__(self):
@@ -225,8 +228,9 @@ def test_close_reset():
     # Should be in the closing state
     assert kissdev._state == KISSDeviceState.CLOSING
 
-    # A "return from KISS" frame should be in the transmit buffer
-    assert bytes(kissdev._tx_buffer) == b"\xc0\xff\xc0"
+    # A "return from KISS" frame should be in the transmit buffer (minus FEND
+    # bytes)
+    assert kissdev._tx_queue == [(b"\xff", None)]
 
     # A call to _send_data should be pending
     (_, func) = loop.calls.pop()

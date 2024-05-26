@@ -12,8 +12,11 @@ class DummyKISSDevice(object):
     def __init__(self):
         self.sent = []
 
-    def _send(self, frame):
-        self.sent.append(frame)
+    def _send(self, frame, future):
+        self.sent.append((frame, future))
+
+    def _ensure_future(self, future):
+        return future
 
 
 def test_send():
@@ -25,8 +28,9 @@ def test_send():
     port.send(b"this is a test frame")
 
     assert len(dev.sent) == 1
-    last = dev.sent.pop(0)
+    (last, last_future) = dev.sent.pop(0)
 
+    assert last_future is None
     assert isinstance(last, KISSCmdData)
     assert last.port == 5
     assert last.payload == b"this is a test frame"
