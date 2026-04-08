@@ -631,6 +631,17 @@ class AX25Peer(object):
         )
         self._on_receive_isframe_nr_ns(frame)
 
+        # Keep _recv_seq in sync with _recv_state so the next I-frame's
+        # sequence check (frame.ns != self._recv_seq) uses the current
+        # value.  Without this, burst receives leave _recv_seq stale and
+        # frames 2+ are silently dropped.
+        if self._recv_state != self._recv_seq:
+            self._update_state(
+                "_recv_seq",
+                value=self._recv_state,
+                comment="sync after RX",
+            )
+
         # TODO: the payload here may be a repeat of data already seen, or
         # for _future_ data (i.e. there's an I-frame that got missed in between
         # the last one we saw, and this one).  How do we handle this possibly
