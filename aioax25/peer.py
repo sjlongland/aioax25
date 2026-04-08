@@ -1287,6 +1287,8 @@ class AX25Peer(object):
         """
         Send a SABM(E) frame to the remote station.
         """
+        if self._station() is None:
+            return
         self._log.info("Sending SABM%s", "E" if self._modulo128 else "")
         SABMClass = (
             AX25SetAsyncBalancedModeExtendedFrame
@@ -1305,6 +1307,8 @@ class AX25Peer(object):
             self._set_conn_state(AX25PeerState.CONNECTING)
 
     def _send_xid(self, cr):
+        if self._station() is None:
+            return
         self._transmit_frame(
             AX25ExchangeIdentificationFrame(
                 destination=self.address.normcopy(ch=True),
@@ -1362,6 +1366,8 @@ class AX25Peer(object):
         """
         Send a DM frame to the remote station.
         """
+        if self._station() is None:
+            return
         self._log.info("Sending DM")
         self._transmit_frame(
             AX25DisconnectModeFrame(
@@ -1375,6 +1381,8 @@ class AX25Peer(object):
         """
         Send a DISC frame to the remote station.
         """
+        if self._station() is None:
+            return
         self._log.info("Sending DISC")
         self._transmit_frame(
             AX25DisconnectFrame(
@@ -1388,6 +1396,8 @@ class AX25Peer(object):
         """
         Send a UA frame to the remote station.
         """
+        if self._station() is None:
+            return
         self._log.info("Sending UA")
         self._transmit_frame(
             AX25UnnumberedAcknowledgeFrame(
@@ -1401,6 +1411,8 @@ class AX25Peer(object):
         """
         Send a FRMR frame to the remote station.
         """
+        if self._station() is None:
+            return
         self._log.debug("Sending FRMR in reply to %s", frame)
 
         # AX.25 2.0 sect 2.4.5: "After sending the FRMR frame, the sending DXE
@@ -1450,6 +1462,9 @@ class AX25Peer(object):
         """
         Send a RR notification frame
         """
+        if self._station() is None:
+            return
+
         # "If there are no outstanding I frames, the receiving device will
         # send a RR frame with N(R) equal to V(R). The receiving DXE may wait
         # a small period of time before sending the RR frame to be sure
@@ -1475,6 +1490,8 @@ class AX25Peer(object):
         """
         Send a RNR notification if the RNR interval has elapsed.
         """
+        if self._station() is None:
+            return
         if self._state is AX25PeerState.CONNECTED:
             now = self._loop.time()
             if (now - self._last_rnr_sent) > self._rnr_interval:
@@ -1529,6 +1546,8 @@ class AX25Peer(object):
         """
         Transmit the I-frame identified by the given N(S) parameter.
         """
+        if self._station() is None:
+            return
         # "Whenever a DXE has an I frame to transmit, it will send the I frame
         # with N(S) of the control field equal to its current send state
         # variable V(S). Once the I frame is sent, the send state variable is
@@ -1564,6 +1583,8 @@ class AX25Peer(object):
         )
 
     def _transmit_frame(self, frame, callback=None):
+        if self._station() is None:
+            return
         self.sent_frame.emit(frame=frame, peer=self)
 
         # Update the last activity timestamp
