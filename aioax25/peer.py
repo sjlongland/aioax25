@@ -615,13 +615,56 @@ class AX25Peer(object):
         # send sequence number equals the receiver's receive state variable) and
         # is not in the busy condition,…"
         if frame.ns != self._recv_seq:
-            # TODO: should we send a REJ/SREJ after a time-out?
-            self._log.debug(
-                "I-frame sequence N(S) is %s, expecting N(R) %s, ignoring",
-                frame.ns,
-                self._recv_seq,
-            )
+            # Distinguish forward gap from duplicate/old retransmission
+            # using modulo distance.
+            dist = (frame.ns - self._recv_seq) % self._modulo
+            if 0 < dist < self._modulo // 2:
+                # Forward gap — lost frame(s).  AX.25 2.2 sect 6.4.2.3:
+                # send REJ(N(R)=V(R)) to request retransmission.
+                # Sect 6.4.4 (REJ exception): only one REJ per gap.
+                if not getattr(self, "_rej_exception", False):
+                    self._log.warning(
+                        "Forward gap: I-frame N(S)=%d, expected N(R)=%d "
+                        "— sending REJ",
+                        frame.ns,
+                        self._recv_seq,
+                    )
+                    self._rej_exception = True
+                    station = self._station()
+                    if self._REJFrameClass is not None and station is not None:
+                        self._cancel_rr_notification()
+                        self._transmit_frame(
+                            self._REJFrameClass(
+                                destination=self.address.normcopy(ch=True),
+                                source=station.address.normcopy(ch=False),
+                                repeaters=self.reply_path,
+                                pf=False,
+                                nr=self._recv_state,
+                            )
+                        )
+                else:
+                    self._log.debug(
+                        "REJ exception: suppressing REJ for N(S)=%d "
+                        "(waiting for N(R)=%d)",
+                        frame.ns,
+                        self._recv_seq,
+                    )
+            else:
+                # Duplicate/old retransmission — silently ignore.
+                self._log.debug(
+                    "Duplicate I-frame N(S)=%d, V(R)=%d — ignoring",
+                    frame.ns,
+                    self._recv_seq,
+                )
             return
+
+        # In-sequence frame — clear REJ exception condition.
+        if getattr(self, "_rej_exception", False):
+            self._log.info(
+                "REJ exception cleared: received expected N(S)=%d",
+                frame.ns,
+            )
+            self._rej_exception = False
 
         # "…it accepts the received I frame,
         # increments its receive state variable, and acts in one of the
