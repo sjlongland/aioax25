@@ -592,7 +592,10 @@ class AX25Peer(object):
         # proceed to the retransmission procedure in 2.4.4.9."
 
         # Check N(R) for received frames.
-        self._ack_outstanding((frame.nr - 1) % self._modulo)
+        # N(R) means "I have received all frames up to N(R)-1".
+        # Pass N(R) directly — _ack_outstanding loops V(A) until it
+        # reaches nr, acknowledging each frame along the way.
+        self._ack_outstanding(frame.nr)
 
     def _on_receive_iframe(self, frame):
         """
@@ -735,8 +738,20 @@ class AX25Peer(object):
 
     def _ack_outstanding(self, nr):
         """
-        Receive all frames up to N(R)-1
+        Acknowledge all frames up to (but not including) N(R).
         """
+        dist = (nr - self._ack_state) % self._modulo
+        if dist == 0:
+            return
+        if dist > self._max_outstanding:
+            self._log.debug(
+                "Skipping bogus ACK: V(A)=%d nr=%d dist=%d",
+                self._ack_state,
+                nr,
+                dist,
+            )
+            return
+
         self._log.debug("%d through to %d are received", self._ack_state, nr)
         while self._ack_state != nr:
             if self._log.isEnabledFor(logging.DEBUG):  # pragma: no cover
