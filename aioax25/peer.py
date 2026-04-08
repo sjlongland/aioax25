@@ -783,9 +783,46 @@ class AX25Peer(object):
         if self._local_busy:
             self._log.debug("RR poll request from peer: we're busy")
             self._send_rnr_notification()
+            return
+
+        # Track consecutive polls with the same stale V(R).  If in REJ
+        # exception or after 3+ stale polls, respond with REJ instead of
+        # RR to re-request the missing frame and break the loop.
+        poll_count = getattr(self, "_stale_poll_count", 0) + 1
+        last_poll_vr = getattr(self, "_last_poll_vr", None)
+
+        if last_poll_vr == self._recv_state:
+            self._stale_poll_count = poll_count
         else:
-            self._log.debug("RR poll request from peer: we're ready")
-            self._send_rr_notification()
+            self._stale_poll_count = 1
+            self._last_poll_vr = self._recv_state
+
+        in_rej = getattr(self, "_rej_exception", False)
+        if in_rej or poll_count >= 3:
+            station = self._station()
+            if self._REJFrameClass is not None and station is not None:
+                self._log.warning(
+                    "Poll loop detected (count=%d, rej_exception=%s): "
+                    "sending REJ(N(R)=%d) instead of RR",
+                    poll_count,
+                    in_rej,
+                    self._recv_state,
+                )
+                self._rej_exception = True
+                self._cancel_rr_notification()
+                self._transmit_frame(
+                    self._REJFrameClass(
+                        destination=self.address.normcopy(ch=True),
+                        source=station.address.normcopy(ch=False),
+                        repeaters=self.reply_path,
+                        pf=False,
+                        nr=self._recv_state,
+                    )
+                )
+                return
+
+        self._log.debug("RR poll request from peer: we're ready")
+        self._send_rr_notification()
 
     def _ack_outstanding(self, nr):
         """
