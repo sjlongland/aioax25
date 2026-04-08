@@ -592,7 +592,7 @@ class AX25Peer(object):
         # proceed to the retransmission procedure in 2.4.4.9."
 
         # Check N(R) for received frames.
-        self._ack_outstanding((frame.nr - 1) % self._modulo)
+        self._ack_outstanding(frame.nr)
 
     def _on_receive_iframe(self, frame):
         """
@@ -630,6 +630,15 @@ class AX25Peer(object):
             "_recv_state", value=frame.ns + 1, comment="from I-frame N(S)"
         )
         self._on_receive_isframe_nr_ns(frame)
+
+        # Sync _recv_seq from _recv_state so the next I-frame's sequence
+        # check (frame.ns != self._recv_seq) uses the updated value.
+        # Without this, burst receives leave _recv_seq stale and cause
+        # frames 2+ to be silently dropped.
+        if self._recv_state != self._recv_seq:
+            self._update_state(
+                "_recv_seq", value=self._recv_state, comment="sync after RX"
+            )
 
         # TODO: the payload here may be a repeat of data already seen, or
         # for _future_ data (i.e. there's an I-frame that got missed in between
@@ -735,8 +744,18 @@ class AX25Peer(object):
 
     def _ack_outstanding(self, nr):
         """
-        Receive all frames up to N(R)-1
+        Acknowledge all frames up to (but not including) N(R).
         """
+        dist = (nr - self._ack_state) % self._modulo
+        if dist == 0:
+            return
+        if dist > self._max_outstanding:
+            self._log.debug(
+                "Skipping bogus ACK: V(A)=%d nr=%d dist=%d",
+                self._ack_state, nr, dist,
+            )
+            return
+
         self._log.debug("%d through to %d are received", self._ack_state, nr)
         while self._ack_state != nr:
             if self._log.isEnabledFor(logging.DEBUG):  # pragma: no cover
@@ -1550,18 +1569,21 @@ class AX25Peer(object):
         self._update_send_seq()
         self._update_recv_seq()
 
-        self._transmit_frame(
-            self._IFrameClass(
-                destination=self.address.normcopy(ch=True),
-                source=self._station().address.normcopy(ch=False),
-                repeaters=self.reply_path,
-                nr=self._recv_state,  # N(R) == V(R)
-                ns=ns,
-                pf=False,
-                pid=pid,
-                payload=payload,
-            )
+        frame = self._IFrameClass(
+            destination=self.address.normcopy(ch=True),
+            source=self._station().address.normcopy(ch=False),
+            repeaters=self.reply_path,
+            nr=self._recv_state,  # N(R) == V(R)
+            ns=ns,
+            pf=False,
+            pid=pid,
+            payload=payload,
         )
+        # AX.25 2.2 sect 6.1.2: I-frames are commands.
+        # Commands: destination C=1, source C=0.
+        frame._header._cr = True
+        frame._header._src_cr = False
+        self._transmit_frame(frame)
 
     def _transmit_frame(self, frame, callback=None):
         self.sent_frame.emit(frame=frame, peer=self)
