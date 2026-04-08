@@ -680,8 +680,32 @@ class AX25Peer(object):
             self._log.debug(
                 "RR notification received from peer N(R)=%d", frame.nr
             )
+            was_busy = self._peer_busy
             self._peer_busy = False
             self._send_next_iframe()
+
+            # After RNR→RR transition: retransmit pending frames.
+            # The window may be full with already-transmitted frames that
+            # the busy peer never received.  Reset V(S) to frame.nr and
+            # retransmit — same logic as the REJ handler (sect 6.4.7).
+            if (
+                was_busy
+                and self._pending_iframes
+                and frame.nr != self._send_state
+            ):
+                self._log.info(
+                    "RNR recovery: retransmitting from N(R)=%d "
+                    "(V(S)=%d, %d pending)",
+                    frame.nr,
+                    self._send_state,
+                    len(self._pending_iframes),
+                )
+                self._update_state(
+                    "_send_state",
+                    value=frame.nr,
+                    comment="RNR recovery retransmit",
+                )
+                self._send_next_iframe()
 
     def _on_receive_rnr(self, frame):
         if frame.pf:
