@@ -1619,11 +1619,17 @@ def test_recv_sframe_rej_req_busy():
 
     def _update_state(prop, **kwargs):
         kwargs["prop"] = prop
+        value = getattr(peer, prop)
+        kwargs["value_before"] = value
+        value = kwargs.get("value", value)
+        value += kwargs.get("delta", 0)
+        kwargs["value_after"] = value
+
         state_updates.append(kwargs)
         setattr(
             peer,
             prop,
-            kwargs.get("value", getattr(peer, prop)) + kwargs.get("delta", 0),
+            value,
         )
 
     peer._update_state = _update_state
@@ -1645,12 +1651,48 @@ def test_recv_sframe_rej_req_busy():
 
     # We should update due to resets and peer ACKs
     assert state_updates == [
-        {"comment": "reset", "prop": "_send_state", "value": 0},
-        {"comment": "reset", "prop": "_send_seq", "value": 0},
-        {"comment": "reset", "prop": "_recv_state", "value": 0},
-        {"comment": "reset", "prop": "_recv_seq", "value": 0},
-        {"comment": "reset", "prop": "_ack_state", "value": 0},
-        {"comment": "ACKed by peer N(R)", "delta": 1, "prop": "_ack_state"},
+        {
+            "comment": "reset",
+            "prop": "_send_state",
+            "value": 0,
+            "value_before": 0,
+            "value_after": 0,
+        },
+        {
+            "comment": "reset",
+            "prop": "_send_seq",
+            "value": 0,
+            "value_before": 0,
+            "value_after": 0,
+        },
+        {
+            "comment": "reset",
+            "prop": "_recv_state",
+            "value": 0,
+            "value_before": 0,
+            "value_after": 0,
+        },
+        {
+            "comment": "reset",
+            "prop": "_recv_seq",
+            "value": 0,
+            "value_before": 0,
+            "value_after": 0,
+        },
+        {
+            "comment": "reset",
+            "prop": "_ack_state",
+            "value": 0,
+            "value_before": 0,
+            "value_after": 0,
+        },
+        {
+            "comment": "sync V(A) - 1 with peer N(R)",
+            "delta": 1,
+            "prop": "_ack_state",
+            "value_before": 0,
+            "value_after": 1,
+        },
     ]
 
     # We should send a RNR in reply
@@ -1690,11 +1732,17 @@ def test_recv_sframe_rej_req_notbusy():
 
     def _update_state(prop, **kwargs):
         kwargs["prop"] = prop
+        value = getattr(peer, prop)
+        kwargs["value_before"] = value
+        value = kwargs.get("value", value)
+        value += kwargs.get("delta", 0)
+        kwargs["value_after"] = value
+
         state_updates.append(kwargs)
         setattr(
             peer,
             prop,
-            kwargs.get("value", getattr(peer, prop)) + kwargs.get("delta", 0),
+            value,
         )
 
     peer._update_state = _update_state
@@ -1716,12 +1764,48 @@ def test_recv_sframe_rej_req_notbusy():
 
     # State updates should be a reset and peer ACK
     assert state_updates == [
-        {"comment": "reset", "prop": "_send_state", "value": 0},
-        {"comment": "reset", "prop": "_send_seq", "value": 0},
-        {"comment": "reset", "prop": "_recv_state", "value": 0},
-        {"comment": "reset", "prop": "_recv_seq", "value": 0},
-        {"comment": "reset", "prop": "_ack_state", "value": 0},
-        {"comment": "ACKed by peer N(R)", "delta": 1, "prop": "_ack_state"},
+        {
+            "comment": "reset",
+            "prop": "_send_state",
+            "value": 0,
+            "value_before": 0,
+            "value_after": 0,
+        },
+        {
+            "comment": "reset",
+            "prop": "_send_seq",
+            "value": 0,
+            "value_before": 0,
+            "value_after": 0,
+        },
+        {
+            "comment": "reset",
+            "prop": "_recv_state",
+            "value": 0,
+            "value_before": 0,
+            "value_after": 0,
+        },
+        {
+            "comment": "reset",
+            "prop": "_recv_seq",
+            "value": 0,
+            "value_before": 0,
+            "value_after": 0,
+        },
+        {
+            "comment": "reset",
+            "prop": "_ack_state",
+            "value": 0,
+            "value_before": 0,
+            "value_after": 0,
+        },
+        {
+            "comment": "sync V(A) - 1 with peer N(R)",
+            "delta": 1,
+            "prop": "_ack_state",
+            "value_before": 0,
+            "value_after": 1,
+        },
     ]
 
     # We should send a RR in reply
@@ -1761,11 +1845,17 @@ def test_recv_sframe_rej_rep():
 
     def _update_state(prop, **kwargs):
         kwargs["prop"] = prop
+        value = getattr(peer, prop)
+        kwargs["value_before"] = value
+        value = kwargs.get("value", value)
+        value += kwargs.get("delta", 0)
+        kwargs["value_after"] = value
+
         state_updates.append(kwargs)
         setattr(
             peer,
             prop,
-            kwargs.get("value", getattr(peer, prop)) + kwargs.get("delta", 0),
+            value,
         )
 
     peer._update_state = _update_state
@@ -1787,15 +1877,57 @@ def test_recv_sframe_rej_rep():
 
     assert state_updates == [
         # Reset state
-        {"comment": "reset", "prop": "_send_state", "value": 0},
-        {"comment": "reset", "prop": "_send_seq", "value": 0},
-        {"comment": "reset", "prop": "_recv_state", "value": 0},
-        {"comment": "reset", "prop": "_recv_seq", "value": 0},
-        {"comment": "reset", "prop": "_ack_state", "value": 0},
+        {
+            "comment": "reset",
+            "prop": "_send_state",
+            "value": 0,
+            "value_before": 0,
+            "value_after": 0,
+        },
+        {
+            "comment": "reset",
+            "prop": "_send_seq",
+            "value": 0,
+            "value_before": 0,
+            "value_after": 0,
+        },
+        {
+            "comment": "reset",
+            "prop": "_recv_state",
+            "value": 0,
+            "value_before": 0,
+            "value_after": 0,
+        },
+        {
+            "comment": "reset",
+            "prop": "_recv_seq",
+            "value": 0,
+            "value_before": 0,
+            "value_after": 0,
+        },
+        {
+            "comment": "reset",
+            "prop": "_ack_state",
+            "value": 0,
+            "value_before": 0,
+            "value_after": 0,
+        },
         # Peer ACK
-        {"comment": "ACKed by peer N(R)", "delta": 1, "prop": "_ack_state"},
+        {
+            "comment": "sync V(A) - 1 with peer N(R)",
+            "delta": 1,
+            "prop": "_ack_state",
+            "value_before": 0,
+            "value_after": 1,
+        },
         # REJ handling
-        {"comment": "from REJ N(R)", "prop": "_send_state", "value": 2},
+        {
+            "comment": "from REJ N(R)",
+            "prop": "_send_state",
+            "value": 2,
+            "value_before": 0,
+            "value_after": 2,
+        },
     ]
 
     # We should send an I-frame in reply

@@ -752,30 +752,44 @@ class AX25Peer(object):
         Receive all frames up to N(R)-1
         """
         self._log.debug("%d through to %d are received", self._ack_state, nr)
-        while self._ack_state != nr:
+
+        if self._ack_state == nr:
+            # Possibly ACKing the initial frame
+            self._ack_next_outstanding()
+
+        while (self._ack_state != nr) and (len(self._pending_iframes) > 0):
             if self._log.isEnabledFor(logging.DEBUG):  # pragma: no cover
                 self._log.debug("Pending frames: %r", self._pending_iframes)
 
-            self._log.debug("ACKing N(R)=%s", self._ack_state)
-            try:
-                frame = self._pending_iframes.pop(self._ack_state)
-                if self._log.isEnabledFor(logging.DEBUG):  # pragma: no cover
-                    self._log.debug(
-                        "Popped %s off pending queue, N(R)s pending: %r",
-                        frame,
-                        self._pending_iframes,
-                    )
-            except KeyError:
-                if self._log.isEnabledFor(logging.DEBUG):  # pragma: no cover
-                    self._log.debug(
-                        "ACK to unexpected N(R) number %s, pending: %r",
-                        self._ack_state,
-                        self._pending_iframes,
-                    )
-            finally:
-                self._update_state(
-                    "_ack_state", delta=1, comment="ACKed by peer N(R)"
+            self._ack_next_outstanding()
+
+        # V(A) is now equal to N(R) of the last ACKed frame.
+        # We need to advance it one step further according to AX.25 § 4.2.4.5.
+        self._update_state(
+            "_ack_state", delta=1, comment="sync V(A) - 1 with peer N(R)"
+        )
+
+    def _ack_next_outstanding(self):
+        self._log.debug("ACKing N(R)=%s", self._ack_state)
+        try:
+            frame = self._pending_iframes.pop(self._ack_state)
+            if self._log.isEnabledFor(logging.DEBUG):  # pragma: no cover
+                self._log.debug(
+                    "Popped %s off pending queue, N(R)s pending: %r",
+                    frame,
+                    self._pending_iframes,
                 )
+        except KeyError:
+            if self._log.isEnabledFor(logging.DEBUG):  # pragma: no cover
+                self._log.debug(
+                    "ACK to unexpected N(R) number %s, pending: %r",
+                    self._ack_state,
+                    self._pending_iframes,
+                )
+        finally:
+            self._update_state(
+                "_ack_state", delta=1, comment="ACKed by peer N(R)"
+            )
 
     def _on_receive_test(self, frame):
         self._log.debug("Received TEST response: %s", frame)
