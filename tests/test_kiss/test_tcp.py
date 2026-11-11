@@ -17,13 +17,21 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_open_connection():
+async def test_open():
     LOOPMANAGER.loop = None
 
     # This will receive the arguments passed to create_connection
     connection_args = {}
 
     loop = get_event_loop()
+
+    # Make a dummy transport
+    class DummyTransport(object):
+        def close(self, *args, **kwargs):
+            pass
+
+        def write(self, *args, **kwargs):
+            pass
 
     # Stub the create_connection method
     orig_create_connection = loop.create_connection
@@ -35,17 +43,21 @@ async def test_open_connection():
 
         connection_args.update(kwargs)
 
+        # Spoof a connection
+        protocol.connection_made(DummyTransport())
+
     loop.create_connection = _create_connection
 
     try:
         device = kiss.TCPKISSDevice(
             host="localhost",
             port=5432,
+            return_future=True,
             loop=loop,
             log=logging.getLogger(__name__),
         )
 
-        await device._open_connection()
+        await device.open()
 
         # Expect a connection attempt to have been made
         assert connection_args == dict(
@@ -65,7 +77,7 @@ async def test_open_connection():
 
 
 @pytest.mark.asyncio
-async def test_open_connection_fail():
+async def test_open_fail_async():
     LOOPMANAGER.loop = None
 
     # This will receive the arguments passed to create_connection
@@ -76,13 +88,16 @@ async def test_open_connection_fail():
     # Stub the create_connection method
     orig_create_connection = loop.create_connection
 
+    class MyIOError(IOError):
+        pass
+
     async def _create_connection(proto_factory, **kwargs):
         # proto_factory should give us a KISSProtocol object
         protocol = proto_factory()
         assert isinstance(protocol, kiss.KISSProtocol)
 
         connection_args.update(kwargs)
-        raise IOError("Connection failed")
+        raise MyIOError("Connection failed")
 
     loop.create_connection = _create_connection
 
@@ -90,18 +105,16 @@ async def test_open_connection_fail():
         device = kiss.TCPKISSDevice(
             host="localhost",
             port=5432,
+            return_future=True,
             loop=loop,
             log=logging.getLogger(__name__),
         )
 
-        failures = []
-
-        def _on_fail(**kwargs):
-            failures.append(kwargs)
-
-        device.failed.connect(_on_fail)
-
-        await device._open_connection()
+        try:
+            await device.open()
+            assert False, "Open connection did not raise exception"
+        except MyIOError:
+            pass
 
         # Expect a connection attempt to have been made
         assert connection_args == dict(
@@ -118,15 +131,6 @@ async def test_open_connection_fail():
 
         # Connection should be in the failed state
         assert device.state == kiss.KISSDeviceState.FAILED
-
-        # Failure should have been reported
-        assert failures
-        failure = failures.pop(0)
-
-        assert failure.pop("action") == "open"
-        ex_c, ex_v, _ = failure.pop("exc_info")
-        assert ex_c is IOError
-        assert str(ex_v) == "Connection failed"
     finally:
         # Restore mock
         loop.create_connection = orig_create_connection

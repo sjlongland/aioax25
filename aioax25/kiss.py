@@ -847,8 +847,9 @@ class TCPKISSDevice(BaseTransportDevice):
             await self._loop.create_connection(
                 self._make_protocol, **self._conn_args
             )
-        except:
+        except Exception as e:
             self._log.warning("Failed to open TCP connection", exc_info=1)
+            self._mark_open(e)
             self._on_fail("open", exc_info())
 
 
