@@ -942,8 +942,9 @@ class TCPKISSServer(BaseTransportDevice):
             self._server = await self._loop.create_server(
                 self._make_protocol, **self._conn_args
             )
-        except:
+        except Exception as e:
             self._log.warning("Failed to open TCP port", exc_info=1)
+            self._mark_open(e)
             self._on_fail("open", exc_info())
 
     def _on_close(self, exc=None):

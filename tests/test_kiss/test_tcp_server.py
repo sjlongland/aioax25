@@ -16,8 +16,22 @@ from asyncio import get_event_loop
 import pytest
 
 
+# Make a dummy transport
+class DummyTransport(object):
+    def close(self, *args, **kwargs):
+        pass
+
+    def write(self, *args, **kwargs):
+        pass
+
+
+# Dummy exception for code path verification
+class MyIOError(IOError):
+    pass
+
+
 @pytest.mark.asyncio
-async def test_open_connection():
+async def test_open():
     LOOPMANAGER.loop = None
 
     # This will receive the arguments passed to create_connection
@@ -34,17 +48,19 @@ async def test_open_connection():
         assert isinstance(protocol, kiss.KISSProtocol)
 
         connection_args.update(kwargs)
+        protocol.connection_made(DummyTransport())
 
     loop.create_server = _create_server
 
     try:
         device = kiss.TCPKISSServer(
             port=5432,
+            return_future=True,
             loop=loop,
             log=logging.getLogger(__name__),
         )
 
-        await device._open_connection()
+        await device.open()
 
         # Expect a connection attempt to have been made
         assert connection_args == dict(
@@ -64,7 +80,7 @@ async def test_open_connection():
 
 
 @pytest.mark.asyncio
-async def test_open_connection_fail():
+async def test_open_fail():
     LOOPMANAGER.loop = None
 
     # This will receive the arguments passed to create_connection
@@ -81,13 +97,14 @@ async def test_open_connection_fail():
         assert isinstance(protocol, kiss.KISSProtocol)
 
         connection_args.update(kwargs)
-        raise IOError("Connection failed")
+        raise MyIOError("Connection failed")
 
     loop.create_server = _create_server
 
     try:
         device = kiss.TCPKISSServer(
             port=5432,
+            return_future=True,
             loop=loop,
             log=logging.getLogger(__name__),
         )
@@ -99,7 +116,11 @@ async def test_open_connection_fail():
 
         device.failed.connect(_on_fail)
 
-        await device._open_connection()
+        try:
+            await device.open()
+            assert False, "Should not have worked"
+        except MyIOError:
+            pass
 
         # Expect a connection attempt to have been made
         assert connection_args == dict(
@@ -123,7 +144,7 @@ async def test_open_connection_fail():
 
         assert failure.pop("action") == "open"
         ex_c, ex_v, _ = failure.pop("exc_info")
-        assert ex_c is IOError
+        assert ex_c is MyIOError
         assert str(ex_v) == "Connection failed"
     finally:
         # Restore mock
@@ -304,7 +325,7 @@ async def test_on_close_with_exc():
     device._state = kiss.KISSDeviceState.OPEN
 
     transport = DummyKISSTransport()
-    device._on_close(IOError("Whoopsie!"))
+    device._on_close(MyIOError("Whoopsie!"))
 
     assert (
         device._state is kiss.KISSDeviceState.OPENING
