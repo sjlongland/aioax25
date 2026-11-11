@@ -16,8 +16,31 @@ from asyncio import get_event_loop
 import pytest
 
 
+# Mock transport
+class DummyStream(object):
+    def __init__(self):
+        self.written = b""
+
+    def write(self, data):
+        self.written += bytes(data)
+
+
+class DummyTransport(object):
+    def __init__(self):
+        self.stdin = DummyStream()
+
+    def get_pipe_transport(self, fd):
+        assert fd == 0
+        return self.stdin
+
+
+# Exception class for confirming code path
+class MyIOError(IOError):
+    pass
+
+
 @pytest.mark.asyncio
-async def test_open_connection():
+async def test_open():
     """
     Test we can open a subprocess without using a shell.
     """
@@ -37,17 +60,19 @@ async def test_open_connection():
         assert isinstance(protocol, kiss.KISSSubprocessProtocol)
 
         connection_args.extend(args)
+        protocol.connection_made(DummyTransport())
 
     loop.subprocess_exec = _subprocess_exec
 
     try:
         device = kiss.SubprocKISSDevice(
             command=["kisspipecmd", "arg1", "arg2"],
+            return_future=True,
             loop=loop,
             log=logging.getLogger(__name__),
         )
 
-        await device._open_connection()
+        await device.open()
 
         # Expect a connection attempt to have been made
         assert connection_args == ["kisspipecmd", "arg1", "arg2"]
@@ -57,7 +82,7 @@ async def test_open_connection():
 
 
 @pytest.mark.asyncio
-async def test_open_connection_shell():
+async def test_open_shell():
     """
     Test we can open a subprocess using a shell.
     """
@@ -77,6 +102,7 @@ async def test_open_connection_shell():
         assert isinstance(protocol, kiss.KISSSubprocessProtocol)
 
         connection_args.extend(args)
+        protocol.connection_made(DummyTransport())
 
     loop.subprocess_shell = _subprocess_shell
 
@@ -84,11 +110,12 @@ async def test_open_connection_shell():
         device = kiss.SubprocKISSDevice(
             command=["kisspipecmd", "arg1", "arg2"],
             shell=True,
+            return_future=True,
             loop=loop,
             log=logging.getLogger(__name__),
         )
 
-        await device._open_connection()
+        await device.open()
 
         # Expect a connection attempt to have been made
         assert connection_args == ["kisspipecmd arg1 arg2"]
@@ -98,7 +125,7 @@ async def test_open_connection_shell():
 
 
 @pytest.mark.asyncio
-async def test_open_connection_failure():
+async def test_open_failure():
     """
     Test subprocess failure is detected and handled.
     """
@@ -118,7 +145,7 @@ async def test_open_connection_failure():
         assert isinstance(protocol, kiss.KISSSubprocessProtocol)
 
         connection_args.extend(args)
-        raise IOError("Exec failed")
+        raise MyIOError("Exec failed")
 
     loop.subprocess_shell = _subprocess_shell
 
@@ -126,6 +153,7 @@ async def test_open_connection_failure():
         device = kiss.SubprocKISSDevice(
             command=["kisspipecmd", "arg1", "arg2"],
             shell=True,
+            return_future=True,
             loop=loop,
             log=logging.getLogger(__name__),
         )
@@ -137,7 +165,11 @@ async def test_open_connection_failure():
 
         device.failed.connect(_on_fail)
 
-        await device._open_connection()
+        try:
+            await device.open()
+            assert False, "Should not have succeeded"
+        except MyIOError:
+            pass
 
         # Expect a connection attempt to have been made
         assert connection_args == ["kisspipecmd arg1 arg2"]
@@ -151,7 +183,7 @@ async def test_open_connection_failure():
 
         assert failure.pop("action") == "open"
         ex_c, ex_v, _ = failure.pop("exc_info")
-        assert ex_c is IOError
+        assert ex_c is MyIOError
         assert str(ex_v) == "Exec failed"
     finally:
         # Restore mock
@@ -164,22 +196,6 @@ async def test_send_raw_data():
     Test data written to the device gets written to the subprocess ``stdin``.
     """
     LOOPMANAGER.loop = None
-
-    # Mock transport
-    class DummyStream(object):
-        def __init__(self):
-            self.written = b""
-
-        def write(self, data):
-            self.written += bytes(data)
-
-    class DummyTransport(object):
-        def __init__(self):
-            self.stdin = DummyStream()
-
-        def get_pipe_transport(self, fd):
-            assert fd == 0
-            return self.stdin
 
     loop = get_event_loop()
 

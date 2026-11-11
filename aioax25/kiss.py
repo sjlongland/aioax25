@@ -1007,8 +1007,9 @@ class SubprocKISSDevice(BaseTransportDevice):
                 await self._loop.subprocess_exec(
                     self._make_protocol, *self._command
                 )
-        except:
+        except Exception as e:
             self._log.warning("Failed to call subprocess", exc_info=1)
+            self._mark_open(e)
             self._on_fail("open", exc_info())
 
     def _send_raw_data(self, data):
