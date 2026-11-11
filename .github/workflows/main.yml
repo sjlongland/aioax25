@@ -45,7 +45,7 @@ jobs:
         - python: "3.9"
           platform: ubuntu-latest # does not support 3.9 anymore
         include:
-        - python: "3,9"
+        - python: "3.9"
           platform: ubuntu-24.04  # latest to support Python 3.9
     with:
       python-version: ${{ matrix.python }}
