@@ -771,8 +771,9 @@ class SerialKISSDevice(BaseTransportDevice):
                 dsrdtr=False,
                 inter_byte_timeout=None,
             )
-        except:
+        except Exception as e:
             self._log.warning("Failed to open serial connection", exc_info=1)
+            self._mark_open(e)
             self._on_fail("open", exc_info())
 
 

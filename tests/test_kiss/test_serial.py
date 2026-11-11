@@ -96,6 +96,11 @@ create_serial_conn_log = logging.getLogger("create_serial_connection")
 connections = []
 
 
+# Subclassed IO error class for test instrumentation
+class MyIOError(IOError):
+    pass
+
+
 # Stub the serial port connection factory
 async def dummy_create_serial_connection(
     loop, proto_factory, device, *args, **kwargs
@@ -136,7 +141,7 @@ async def dummy_create_serial_connection(
         else:
             # Abort with an error
             create_serial_conn_log.debug("Failing")
-            future.set_exception(IOError("Open device failed"))
+            future.set_exception(MyIOError("Open device failed"))
 
     create_serial_conn_log.debug("Scheduled in IOLoop")
     loop.call_soon(_open)
@@ -155,6 +160,7 @@ class TestDevice(kiss.SerialKISSDevice):
 
     def _init_kiss(self):
         self.init_called = True
+        self._mark_open()
 
 
 @pytest.mark.asyncio
@@ -169,6 +175,31 @@ async def test_open():
 
     kissdev.open()
     await sleep(0.01)
+
+    # We should have created a new port
+    assert len(connections) == 1
+    connection = connections.pop(0)
+
+    # We should have a reference to the transport created.
+    assert kissdev._transport == connection.transport
+
+    # The device should have been initialised
+    assert kissdev.init_called
+
+
+@pytest.mark.asyncio
+async def test_open_async():
+    """
+    Test we can open the port asynchronously.
+    """
+    LOOPMANAGER.loop = None
+    loop = get_event_loop()
+    kissdev = TestDevice(
+        device="/dev/ttyS0", baudrate=9600, return_future=True, loop=loop
+    )
+    assert kissdev._transport is None
+
+    await kissdev.open()
 
     # We should have created a new port
     assert len(connections) == 1
@@ -213,7 +244,48 @@ async def test_open_fail():
 
     assert failure.pop("action") == "open"
     ex_c, ex_v, _ = failure.pop("exc_info")
-    assert ex_c is IOError
+    assert ex_c is MyIOError
+    assert str(ex_v) == "Open device failed"
+
+
+@pytest.mark.asyncio
+async def test_open_fail_async():
+    """
+    Test asynchronous open failures are handled.
+    """
+    LOOPMANAGER.loop = None
+    loop = get_event_loop()
+    kissdev = TestDevice(
+        device="/dev/ttyS1", baudrate=9600, return_future=True, loop=loop
+    )
+    assert kissdev._transport is None
+
+    failures = []
+
+    def _on_fail(**kwargs):
+        failures.append(kwargs)
+
+    kissdev.failed.connect(_on_fail)
+
+    try:
+        await kissdev.open()
+        assert False, "Should not have succeeded"
+    except MyIOError:
+        pass
+
+    # We should NOT have created a new port
+    assert len(connections) == 0
+
+    # Connection should be in the failed state
+    assert kissdev.state == kiss.KISSDeviceState.FAILED
+
+    # Failure should have been reported
+    assert failures
+    failure = failures.pop(0)
+
+    assert failure.pop("action") == "open"
+    ex_c, ex_v, _ = failure.pop("exc_info")
+    assert ex_c is MyIOError
     assert str(ex_v) == "Open device failed"
 
 
