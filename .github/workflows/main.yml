@@ -27,7 +27,8 @@ jobs:
       matrix:
         # See https://raw.githubusercontent.com/actions/python-versions/refs/heads/main/versions-manifest.json for versions
         python:
-        - "3.9"   # Oldest tested; consistent with Debian 11
+        - "3.9"   # Oldest tested; consistent with Debian 11 also
+                  # targetting potential Omegathon compatibility
         - "3.10"  # consistent with Ubuntu 22.04
         - "3.11"  # consistent with Debian 12
         - "3.12"  # consistent with Ubuntu 24.04
@@ -40,6 +41,12 @@ jobs:
         # probably work on Mac and Windows too. But if an OS-specific bug does
         # slip through, we should catch it in pre-release testing.
         - ubuntu-latest
+        exclude:
+        - python: "3.9"
+          platform: ubuntu-latest # does not support 3.9 anymore
+        include:
+        - python: "3,9"
+          platform: ubuntu-24.04  # latest to support Python 3.9
     with:
       python-version: ${{ matrix.python }}
       platform: ${{ matrix.platform }}
